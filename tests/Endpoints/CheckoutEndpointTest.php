@@ -172,7 +172,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
                     'testmode' => true,
                     'redirectUrlSuccess' => 'https://www.sandorian.com/success',
                     'redirectUrlCanceled' => 'https://www.sandorian.com/canceled',
-                    'status' => CheckoutStatus::STATUS_PENDING,
+                    'status' => CheckoutStatus::STATUS_CREATED,
                     'links' => [
                         'checkoutUrl' => [
                             'href' => self::WEBSITE_ENDPOINT_URL.'/checkout/checkout_dummy_id',
@@ -214,7 +214,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $this->assertEquals("merchant_123", $checkout->merchantId);
         $this->assertEquals("order_123", $checkout->orderId);
         $this->assertEquals("checkout", $checkout->resource);
-        $this->assertEquals(CheckoutStatus::STATUS_PENDING, $checkout->status);
+        $this->assertEquals(CheckoutStatus::STATUS_CREATED, $checkout->status);
         $this->assertEquals("https://www.sandorian.com/success", $checkout->redirectUrlSuccess);
         $this->assertEquals("https://www.sandorian.com/canceled", $checkout->redirectUrlCanceled);
         $this->assertTrue($checkout->testmode);
