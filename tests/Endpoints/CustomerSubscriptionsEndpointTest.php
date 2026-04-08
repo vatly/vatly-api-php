@@ -30,7 +30,7 @@ class CustomerSubscriptionsEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/customers/'.$customerId.'/subscriptions?startingAfter=subscription_next_dummy_id',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => null,
+                'prev' => null,
             ],
         ];
 

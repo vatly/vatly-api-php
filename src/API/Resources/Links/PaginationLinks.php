@@ -6,6 +6,6 @@ use Vatly\API\Types\Link;
 
 class PaginationLinks extends BaseLinksResource
 {
-    public ?Link $previous;
+    public ?Link $prev;
     public ?Link $next;
 }

@@ -69,7 +69,7 @@ class OneOffProductEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/one-off-products?startingAfter=one_off_product_next_dummy_id',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => [
+                'prev' => [
                     'href' => self::API_ENDPOINT_URL.'/one-off-products?endingBefore=one_off_product_previous_dummy_id',
                     'type' => 'application/hal+json',
                 ],
@@ -94,8 +94,8 @@ class OneOffProductEndpointTest extends BaseEndpointTest
         $this->assertEquals('application/hal+json', $productCollection->links->self->type);
         $this->assertEquals(self::API_ENDPOINT_URL.'/one-off-products?startingAfter=one_off_product_next_dummy_id', $productCollection->links->next->href);
         $this->assertEquals('application/hal+json', $productCollection->links->next->type);
-        $this->assertEquals(self::API_ENDPOINT_URL.'/one-off-products?endingBefore=one_off_product_previous_dummy_id', $productCollection->links->previous->href);
-        $this->assertEquals('application/hal+json', $productCollection->links->previous->type);
+        $this->assertEquals(self::API_ENDPOINT_URL.'/one-off-products?endingBefore=one_off_product_previous_dummy_id', $productCollection->links->prev->href);
+        $this->assertEquals('application/hal+json', $productCollection->links->prev->type);
     }
 
     /** @test */
@@ -117,7 +117,7 @@ class OneOffProductEndpointTest extends BaseEndpointTest
                         'href' => self::API_ENDPOINT_URL . '/one-off-products?startingAfter=one_off_product_next_dummy_id',
                         'type' => 'application/hal+json',
                     ],
-                    'previous' => null,
+                    'prev' => null,
                 ],
             ],
             [
@@ -131,7 +131,7 @@ class OneOffProductEndpointTest extends BaseEndpointTest
                         'type' => 'application/hal+json',
                     ],
                     'next' => null,
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL . '/one-off-products',
                         'type' => 'application/hal+json',
                     ],

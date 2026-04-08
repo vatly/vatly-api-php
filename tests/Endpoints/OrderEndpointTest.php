@@ -205,7 +205,7 @@ class OrderEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/orders?startingAfter=order_next_dummy_id',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => null,
+                'prev' => null,
             ],
         ];
 
@@ -227,7 +227,7 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('application/hal+json', $orderCollection->links->self->type);
         $this->assertEquals(self::API_ENDPOINT_URL.'/orders?startingAfter=order_next_dummy_id', $orderCollection->links->next->href);
         $this->assertEquals('application/hal+json', $orderCollection->links->next->type);
-        $this->assertNull($orderCollection->links->previous);
+        $this->assertNull($orderCollection->links->prev);
 
         $this->assertNull($orderCollection->previous());
     }
@@ -247,7 +247,7 @@ class OrderEndpointTest extends BaseEndpointTest
                         'type' => 'application/hal+json',
                     ],
                     'next' => null,
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL.'/orders?endingBefore=order_previous_dummy_id',
                         'type' => 'application/hal+json',
                     ],
@@ -267,7 +267,7 @@ class OrderEndpointTest extends BaseEndpointTest
                         'href' => self::API_ENDPOINT_URL.'/orders?startingAfter=order_next_dummy_id',
                         'type' => 'application/hal+json',
                     ],
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL.'/orders',
                         'type' => 'application/hal+json',
                     ],

@@ -197,7 +197,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/checkouts?startingAfter=checkout_next_dummy_id',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => null,
+                'prev' => null,
             ],
 
         ];
@@ -207,7 +207,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $checkoutCollection = $this->client->checkouts->page();
 
         $this->assertInstanceOf(CheckoutCollection::class, $checkoutCollection);
-        $this->assertNull($checkoutCollection->links->previous);
+        $this->assertNull($checkoutCollection->links->prev);
         $this->assertEquals(self::API_ENDPOINT_URL.'/checkouts?startingAfter=checkout_next_dummy_id', $checkoutCollection->links->next->href);
         $this->assertEquals(1, $checkoutCollection->count);
 
@@ -243,7 +243,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
                         'href' => self::API_ENDPOINT_URL.'/checkouts?startingAfter=checkout_next_dummy_id',
                         'type' => 'application/hal+json',
                     ],
-                    'previous' => null,
+                    'prev' => null,
                 ],
 
             ],
@@ -264,7 +264,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
                         'type' => 'application/hal+json',
                     ],
                     'next' => null,
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL.'/checkouts',
                         'type' => 'application/hal+json',
                     ],
@@ -290,7 +290,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $checkout = $nextCheckoutCollection[0];
 
         $this->assertInstanceOf(CheckoutCollection::class, $nextCheckoutCollection);
-        $this->assertEquals(self::API_ENDPOINT_URL.'/checkouts', $nextCheckoutCollection->links->previous->href);
+        $this->assertEquals(self::API_ENDPOINT_URL.'/checkouts', $nextCheckoutCollection->links->prev->href);
         $this->assertNull($nextCheckoutCollection->links->next);
         $this->assertEquals(1, $nextCheckoutCollection->count);
 

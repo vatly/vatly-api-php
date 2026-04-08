@@ -171,7 +171,7 @@ class CustomersEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d19',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => [
+                'prev' => [
                     'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d18',
                     'type' => 'application/hal+json',
                 ],
@@ -201,7 +201,7 @@ class CustomersEndpointTest extends BaseEndpointTest
         $this->assertEquals(self::API_ENDPOINT_URL . '/customers/customer_78b146a7de7d417e9d68d7e6ef193d18', $customer1->links->self->href);
         $this->assertEquals(self::API_ENDPOINT_URL . '/customers/customer_78b146a7de7d417e9d68d7e6ef193d19', $customer2->links->self->href);
         $this->assertEquals(self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d19', $customers->links->next->href);
-        $this->assertEquals(self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d18', $customers->links->previous->href);
+        $this->assertEquals(self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d18', $customers->links->prev->href);
     }
 
     /** @test */
@@ -222,7 +222,7 @@ class CustomersEndpointTest extends BaseEndpointTest
                         'href' => self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d18',
                         'type' => 'application/hal+json',
                     ],
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_previous_id',
                         'type' => 'application/hal+json',
                     ],
@@ -252,7 +252,7 @@ class CustomersEndpointTest extends BaseEndpointTest
                         'type' => 'application/hal+json',
                     ],
                     'next' => null,
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d18',
                         'type' => 'application/hal+json',
                     ],

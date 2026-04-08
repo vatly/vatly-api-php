@@ -169,7 +169,7 @@ class RefundEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/refunds?startingAfter=refund_next_dummy_id',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => null,
+                'prev' => null,
             ],
         ];
 
@@ -199,7 +199,7 @@ class RefundEndpointTest extends BaseEndpointTest
         $this->assertEquals('application/hal+json', $refundCollection->links->self->type);
         $this->assertEquals(self::API_ENDPOINT_URL.'/refunds?startingAfter=refund_next_dummy_id', $refundCollection->links->next->href);
         $this->assertEquals('application/hal+json', $refundCollection->links->next->type);
-        $this->assertNull($refundCollection->links->previous);
+        $this->assertNull($refundCollection->links->prev);
 
         $this->assertNull($refundCollection->previous());
     }
@@ -222,7 +222,7 @@ class RefundEndpointTest extends BaseEndpointTest
                         'type' => 'application/hal+json',
                     ],
                     'next' => null,
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL.'/refunds?endingBefore=refund_previous_dummy_id',
                         'type' => 'application/hal+json',
                     ],
@@ -245,7 +245,7 @@ class RefundEndpointTest extends BaseEndpointTest
                         'href' => self::API_ENDPOINT_URL.'/refunds?startingAfter=refund_next_dummy_id',
                         'type' => 'application/hal+json',
                     ],
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL.'/refunds',
                         'type' => 'application/hal+json',
                     ],

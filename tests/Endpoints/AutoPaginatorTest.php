@@ -27,7 +27,7 @@ class AutoPaginatorTest extends BaseEndpointTest
                             'href' => self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d19',
                             'type' => 'application/hal+json',
                         ],
-                        'previous' => null,
+                        'prev' => null,
                     ],
                 ],
                 [
@@ -45,7 +45,7 @@ class AutoPaginatorTest extends BaseEndpointTest
                             'href' => self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d21',
                             'type' => 'application/hal+json',
                         ],
-                        'previous' => [
+                        'prev' => [
                             'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d20',
                             'type' => 'application/hal+json',
                         ],
@@ -63,7 +63,7 @@ class AutoPaginatorTest extends BaseEndpointTest
                             'type' => 'application/hal+json',
                         ],
                         'next' => null,
-                        'previous' => [
+                        'prev' => [
                             'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d22',
                             'type' => 'application/hal+json',
                         ],
@@ -105,7 +105,7 @@ class AutoPaginatorTest extends BaseEndpointTest
                             'type' => 'application/hal+json',
                         ],
                         'next' => null,
-                        'previous' => [
+                        'prev' => [
                             'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d22',
                             'type' => 'application/hal+json',
                         ],
@@ -126,7 +126,7 @@ class AutoPaginatorTest extends BaseEndpointTest
                             'href' => self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d21',
                             'type' => 'application/hal+json',
                         ],
-                        'previous' => [
+                        'prev' => [
                             'href' => self::API_ENDPOINT_URL . '/customers?endingBefore=customer_78b146a7de7d417e9d68d7e6ef193d20',
                             'type' => 'application/hal+json',
                         ],
@@ -147,7 +147,7 @@ class AutoPaginatorTest extends BaseEndpointTest
                             'href' => self::API_ENDPOINT_URL . '/customers?startingAfter=customer_78b146a7de7d417e9d68d7e6ef193d19',
                             'type' => 'application/hal+json',
                         ],
-                        'previous' => null,
+                        'prev' => null,
                     ],
                 ],
             ];
