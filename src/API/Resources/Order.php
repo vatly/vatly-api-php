@@ -117,7 +117,7 @@ class Order extends BaseResource
     }
 
     /**
-     * Is this order completed?
+     * Is this order pending?
      */
     public function isPending(): bool
     {
