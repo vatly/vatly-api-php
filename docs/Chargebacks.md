@@ -10,7 +10,7 @@ Below you'll find all properties for the Vatly Chargeback resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the chargeback (`chb_...`). |
+| `id` | `string` | Unique identifier for the chargeback (`chargeback_...`). |
 | `resource` | `string` | Always `chargeback`. |
 | `merchantId` | `string` | The merchant ID. |
 | `testmode` | `bool` | Whether this is a test chargeback. |
@@ -35,7 +35,7 @@ Retrieve a chargeback by its ID.
 
 
 ```php
-$chargeback = $vatly->chargebacks->get('chb_abc123');
+$chargeback = $vatly->chargebacks->get('chargeback_abc123');
 
 echo $chargeback->reason;
 echo $chargeback->amount->value . ' ' . $chargeback->amount->currency;
