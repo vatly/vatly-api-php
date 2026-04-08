@@ -25,7 +25,6 @@ class SubscriptionEndpointTest extends BaseEndpointTest
 
         $this->assertEquals('subscription', $subscription->resource);
         $this->assertEquals($subscriptionId, $subscription->id);
-        $this->assertEquals('subscription_plan_12345', $subscription->subscriptionPlanId);
         $this->assertEquals('Test subscription', $subscription->name);
         $this->assertEquals('Test subscription description', $subscription->description);
         $this->assertEquals('10.00', $subscription->basePrice->value);
@@ -245,7 +244,6 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         return [
             'id' => $subscriptionId,
             'resource' => 'subscription',
-            'subscriptionPlanId' => 'subscription_plan_12345',
             'customerId' => 'customer_78b146a7de7d417e9d68d7e6ef193d18',
             'name' => 'Test subscription',
             'description' => 'Test subscription description',

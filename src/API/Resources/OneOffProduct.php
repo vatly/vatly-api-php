@@ -26,5 +26,11 @@ class OneOffProduct extends BaseResource
      */
     public Money $basePrice;
 
+    public bool $testmode;
+
+    public string $status;
+
+    public ?string $createdAt = null;
+
     public OneOffProductLinks $links;
 }

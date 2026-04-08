@@ -8,8 +8,7 @@ use Vatly\API\Types\Address;
 use Vatly\API\Types\Link;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
-use Vatly\API\Types\TaxesCollection;
-
+use Vatly\API\Types\TaxSummaryCollection;
 class Order extends BaseResource
 {
     /**
@@ -43,19 +42,19 @@ class Order extends BaseResource
 
     public Money $subtotal;
 
-    public TaxesCollection $taxes;
+    public TaxSummaryCollection $taxSummary;
 
     /**
      * @example creditcard
      */
-    public string $paymentMethod;
+    public ?string $paymentMethod = null;
 
     public ?string $invoiceNumber = null;
 
     /** @see OrderStatus */
     public string $status;
 
-    public bool $cancelled = false;
+    public $metadata = null;
 
     public OrderLinks $links;
 
@@ -107,14 +106,6 @@ class Order extends BaseResource
     public function isCanceled(): bool
     {
         return $this->status === OrderStatus::STATUS_CANCELED;
-    }
-
-    /**
-     * Is this order completed?
-     */
-    public function isCompleted(): bool
-    {
-        return $this->status === OrderStatus::STATUS_COMPLETED;
     }
 
     /**

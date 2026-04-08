@@ -26,11 +26,6 @@ class Subscription extends BaseResource
      */
     public string $customerId;
 
-    /**
-     * @example subscription_plan_78b146a7de7d417e9d68d7e6ef193d18
-     */
-    public string $subscriptionPlanId;
-
     public bool $testmode;
 
     public string $name;
@@ -66,9 +61,7 @@ class Subscription extends BaseResource
 
     public ?string $nextRenewalAt;
 
-    public ?string $trialEndAt;
-
-    public ?int $trialDays;
+    public ?string $trialUntil = null;
 
     public SubscriptionLinks $links;
 

@@ -21,11 +21,6 @@ class OrderStatus
     public const STATUS_CANCELED = "canceled";
 
     /**
-     * The order is completed.
-     */
-    public const STATUS_COMPLETED = "completed";
-
-    /**
      * The order is expired.
      */
     public const STATUS_EXPIRED = "expired";

@@ -30,5 +30,11 @@ class SubscriptionPlan extends BaseResource
      */
     public Money $basePrice;
 
+    public bool $testmode;
+
+    public string $status;
+
+    public ?string $createdAt = null;
+
     public SubscriptionPlanLinks $links;
 }

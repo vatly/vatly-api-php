@@ -23,6 +23,9 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
             ],
             'interval' => 'month',
             'intervalCount' => 1,
+            'testmode' => false,
+            'status' => 'active',
+            'createdAt' => '2023-01-11T10:50:50+02:00',
             'links' => [
                 'self' => [
                     'href' => self::API_ENDPOINT_URL. '/subscription-plans/' . $productId,
@@ -44,6 +47,9 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
         $this->assertEquals('EUR', $product->basePrice->currency);
         $this->assertEquals('month', $product->interval);
         $this->assertEquals(1, $product->intervalCount);
+        $this->assertFalse($product->testmode);
+        $this->assertEquals('active', $product->status);
+        $this->assertEquals('2023-01-11T10:50:50+02:00', $product->createdAt);
 
         $this->assertEquals(self::API_ENDPOINT_URL. '/subscription-plans/' . $productId, $product->links->self->href);
         $this->assertEquals('application/hal+json', $product->links->self->type);

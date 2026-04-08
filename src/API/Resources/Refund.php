@@ -6,8 +6,7 @@ use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\Links\RefundLinks;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\RefundStatus;
-use Vatly\API\Types\TaxesCollection;
-
+use Vatly\API\Types\TaxSummaryCollection;
 class Refund extends BaseResource
 {
     /**
@@ -39,7 +38,9 @@ class Refund extends BaseResource
 
     public Money $subtotal;
 
-    public TaxesCollection $taxes;
+    public TaxSummaryCollection $taxSummary;
+
+    public string $customerId;
 
     /**
      * @var RefundLine[]|array

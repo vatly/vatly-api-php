@@ -7,7 +7,5 @@ use Vatly\API\Types\Link;
 class OrderLinks extends BaseLinksResource
 {
     public Link $customer;
-    public ?Link $invoice;
-
-    public ?Link $chargebacks;
+    public ?Link $customerInvoice;
 }

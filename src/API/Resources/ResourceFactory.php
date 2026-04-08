@@ -10,7 +10,7 @@ use Vatly\API\Resources\Links\BaseLinksResource;
 use Vatly\API\Resources\Links\LinksResourceFactory;
 use Vatly\API\Types\Address;
 use Vatly\API\Types\Money;
-use Vatly\API\Types\TaxesCollection;
+use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\VatlyApiClient;
 
 #[\AllowDynamicProperties]
@@ -64,8 +64,9 @@ class ResourceFactory
 
                     break;
 
+                case 'taxSummary':
                 case 'taxes':
-                    $resource->{$property} = TaxesCollection::createResourceFromApiResult($value);
+                    $resource->{$property} = TaxSummaryCollection::createResourceFromApiResult($value);
 
                     break;
 

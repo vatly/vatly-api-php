@@ -17,29 +17,7 @@ class Customer extends BaseResource
      */
     public string $resource;
 
-    public ?string $name = null;
-
-    public ?string $streetAndNumber = null;
-
-    public ?string $streetAdditional = null;
-
-    public ?string $postalCode = null;
-
-    public ?string $city = null;
-
-    public ?string $region = null;
-
-    public ?string $countryCode = null;
-
-    public ?string $country = null;
-
-    public ?string $companyName = null;
-
-    public ?string $vatNumber = null;
-
     public ?string $email = null;
-
-    public ?string $locale = null;
 
     public ?string $createdAt = null;
 

@@ -54,6 +54,8 @@ class Checkout extends BaseResource
 
     public ?string $createdAt = null;
 
+    public ?string $expiresAt = null;
+
     /**
      * Is this checkout created and awaiting payment?
      */
