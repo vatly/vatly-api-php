@@ -70,6 +70,25 @@ $checkout = $vatly->checkouts->create([
 $checkoutUrl = $checkout->getCheckoutUrl();
 ```
 
+If you want to provide your own idempotency key for this request, pass it in the optional second argument:
+
+```php
+$checkout = $vatly->checkouts->create([
+    'products' => [
+        [
+            'id' => 'plan_abc123',
+            'quantity' => 1,
+        ],
+    ],
+    'redirectUrlSuccess' => 'https://yourapp.com/success',
+    'redirectUrlCanceled' => 'https://yourapp.com/canceled',
+], [
+    'idempotencyKey' => 'checkout-create-123',
+]);
+```
+
+If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header automatically.
+
 ```json
 {
   "id": "chk_abc123",

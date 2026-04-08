@@ -88,6 +88,38 @@ $subscriptions = $vatly->subscriptions->list([
 
 ---
 
+## Update a subscription
+
+`PATCH /v1/subscriptions/:id`
+
+
+
+Update mutable subscription fields such as quantity.
+
+```php
+$subscription = $vatly->subscriptions->update('subscription_123', [
+    'quantity' => 2,
+], [
+    'idempotencyKey' => 'subscription-update-123',
+]);
+```
+
+If you already have a `Subscription` resource instance, set the key on the client before calling the resource method:
+
+```php
+$vatly->setIdempotencyKey('subscription-update-123');
+
+$subscription->update([
+    'quantity' => 2,
+]);
+```
+
+If you do not provide a custom key, the SDK generates one automatically for the `PATCH` request.
+
+
+
+---
+
 ## Cancel a subscription
 
 `DELETE /v1/subscriptions/:id`

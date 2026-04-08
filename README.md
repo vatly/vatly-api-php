@@ -17,9 +17,61 @@ composer require vatly/vatly-api-php
 ## Usage
 
 ```php
-$vatly = new Vatly\Api\VatlyApiClient;
+use Vatly\API\VatlyApiClient;
+
+$vatly = new VatlyApiClient();
+$vatly->setApiKey('test_your_api_key_here');
 
 $vatly->checkouts->create([...]);
+```
+
+## Idempotency
+
+The SDK automatically sends an `Idempotency-Key` header on every `POST` and `PATCH` request.
+
+```php
+$checkout = $vatly->checkouts->create([
+    'products' => [
+        ['id' => 'plan_abc123', 'quantity' => 1],
+    ],
+    'redirectUrlSuccess' => 'https://yourapp.com/success',
+    'redirectUrlCanceled' => 'https://yourapp.com/canceled',
+]);
+```
+
+To set a custom key for the next mutating request, use `setIdempotencyKey()`. The manual key is cleared after the request is sent.
+
+```php
+$vatly->setIdempotencyKey('checkout-create-123');
+
+$checkout = $vatly->checkouts->create([
+    'products' => [
+        ['id' => 'plan_abc123', 'quantity' => 1],
+    ],
+    'redirectUrlSuccess' => 'https://yourapp.com/success',
+    'redirectUrlCanceled' => 'https://yourapp.com/canceled',
+]);
+```
+
+Some endpoint methods also accept a per-request `idempotencyKey` option:
+
+```php
+$checkout = $vatly->checkouts->create([...], [
+    'idempotencyKey' => 'checkout-create-123',
+]);
+
+$subscription = $vatly->subscriptions->update('subscription_123', [
+    'quantity' => 2,
+], [
+    'idempotencyKey' => 'subscription-update-123',
+]);
+```
+
+You can replace or disable the automatic generator when needed:
+
+```php
+$vatly->setIdempotencyKeyGenerator(new MyIdempotencyKeyGenerator());
+$vatly->clearIdempotencyKeyGenerator();
 ```
 
 ## Testing
