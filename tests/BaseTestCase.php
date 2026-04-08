@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Vatly\API\HttpClient\Idempotency\FakeIdempotencyKeyGenerator;
 use Vatly\API\VatlyApiClient;
 use Vatly\Tests\API\HttpClient\SpyHttpClient;
 use Vatly\Tests\API\HttpClient\SpyHttpClientFactory;
@@ -28,6 +29,7 @@ abstract class BaseTestCase extends TestCase
         $this->httpClient = new SpyHttpClient;
         $this->client = new VatlyApiClient(new SpyHttpClientFactory($this->httpClient));
         $this->client->setApiKey('test_spy_dummy_dummy_dummy_dummy');
+        $this->client->setIdempotencyKeyGenerator(new FakeIdempotencyKeyGenerator());
     }
 
     public function setClientSendReturnObject(object $returnObject): self

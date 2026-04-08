@@ -112,6 +112,39 @@ class CheckoutEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function can_create_checkout_with_idempotency_key()
+    {
+        $responseBodyArray = [
+            'id' => "checkout_dummy_id",
+            'resource' => 'checkout',
+            'status' => \Vatly\API\Types\CheckoutStatus::STATUS_CREATED,
+            'links' => [
+                'checkoutUrl' => [
+                    'href' => self::WEBSITE_ENDPOINT_URL.'/checkout/checkout_dummy_id',
+                    'type' => 'text/html',
+                ],
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/checkouts/checkout_dummy_id',
+                    'type' => 'application/json',
+                ],
+            ],
+        ];
+
+        $this->httpClient->setSendReturnObjectFromArray($responseBodyArray);
+
+        $checkout = $this->client->checkouts->create([
+            'profileId' => 'profile_123',
+        ], [
+            'idempotencyKey' => 'my-custom-idempotency-key',
+        ]);
+
+        $this->assertInstanceOf(Checkout::class, $checkout);
+
+        $headers = $this->httpClient->lastSentHeaders();
+        $this->assertEquals('my-custom-idempotency-key', $headers['Idempotency-Key']);
+    }
+
+    /** @test */
     public function can_get_checkout()
     {
         $responseBodyArray = [

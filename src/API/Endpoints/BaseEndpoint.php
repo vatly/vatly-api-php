@@ -74,10 +74,13 @@ abstract class BaseEndpoint
      */
     protected function rest_create(array $body, array $filters): BaseResource
     {
+        $headers = $this->extractIdempotencyHeaders($filters);
+
         $result = $this->client->performHttpCall(
             self::REST_CREATE,
             $this->getResourcePath() . $this->buildQueryString($filters),
-            $this->parseRequestBody($body)
+            $this->parseRequestBody($body),
+            $headers
         );
 
         return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
@@ -92,17 +95,20 @@ abstract class BaseEndpoint
      * @return null|BaseResource
      * @throws \Vatly\API\Exceptions\ApiException
      */
-    protected function rest_update(string $id, array $body = []): ?BaseResource
+    protected function rest_update(string $id, array $body = [], array $filters = []): ?BaseResource
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
         }
 
+        $headers = $this->extractIdempotencyHeaders($filters);
+
         $id = urlencode($id);
         $result = $this->client->performHttpCall(
             self::REST_UPDATE,
-            "{$this->getResourcePath()}/{$id}",
-            $this->parseRequestBody($body)
+            "{$this->getResourcePath()}/{$id}" . $this->buildQueryString($filters),
+            $this->parseRequestBody($body),
+            $headers
         );
 
         if ($result == null) {
@@ -198,6 +204,18 @@ abstract class BaseEndpoint
         }
 
         return $this->resourcePath;
+    }
+
+    private function extractIdempotencyHeaders(array &$filters): array
+    {
+        $headers = [];
+
+        if (isset($filters['idempotencyKey'])) {
+            $headers['Idempotency-Key'] = $filters['idempotencyKey'];
+            unset($filters['idempotencyKey']);
+        }
+
+        return $headers;
     }
 
     /**

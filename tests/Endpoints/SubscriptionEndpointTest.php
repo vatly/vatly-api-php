@@ -232,6 +232,21 @@ class SubscriptionEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function can_update_subscription_with_idempotency_key()
+    {
+        /** @var Subscription $subscription */
+        $subscription = ResourceFactory::createResourceFromApiResult((object) $this->subscriptionDemoData('subscription_123'), new Subscription($this->client));
+
+        $this->httpClient->setSendReturnObjectFromArray($this->subscriptionDemoData('subscription_123'));
+        $this->client->subscriptions->update('subscription_123', ['quantity' => 3], [
+            'idempotencyKey' => 'my-update-idempotency-key',
+        ]);
+
+        $headers = $this->httpClient->lastSentHeaders();
+        $this->assertEquals('my-update-idempotency-key', $headers['Idempotency-Key']);
+    }
+
+    /** @test */
     public function throws_exception_for_invalid_subscription_id()
     {
         $this->expectException(\InvalidArgumentException::class);
