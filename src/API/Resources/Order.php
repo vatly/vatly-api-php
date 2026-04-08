@@ -8,7 +8,7 @@ use Vatly\API\Types\Address;
 use Vatly\API\Types\Link;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
-use Vatly\API\Types\TaxesCollection;
+use Vatly\API\Types\TaxSummaryCollection;
 
 class Order extends BaseResource
 {
@@ -43,7 +43,7 @@ class Order extends BaseResource
 
     public Money $subtotal;
 
-    public TaxesCollection $taxes;
+    public TaxSummaryCollection $taxSummary;
 
     /**
      * @example creditcard
@@ -54,6 +54,8 @@ class Order extends BaseResource
 
     /** @see OrderStatus */
     public string $status;
+
+    public $metadata = null;
 
     public OrderLinks $links;
 
@@ -66,10 +68,6 @@ class Order extends BaseResource
      */
     public array $lines;
 
-    /**
-     * @var array|object|null
-     */
-    public $metadata = null;
 
     /**
      * Get the line value objects
@@ -88,6 +86,14 @@ class Order extends BaseResource
     }
 
     /**
+     * Is this order created?
+     */
+    public function isCreated(): bool
+    {
+        return $this->status === OrderStatus::STATUS_CREATED;
+    }
+
+    /**
      * Is this order paid for?
      */
     public function isPaid(): bool
@@ -96,19 +102,27 @@ class Order extends BaseResource
     }
 
     /**
+     * Is this order canceled?
+     */
+    public function isCanceled(): bool
+    {
+        return $this->status === OrderStatus::STATUS_CANCELED;
+    }
+
+    /**
+     * Is this order expired?
+     */
+    public function isExpired(): bool
+    {
+        return $this->status === OrderStatus::STATUS_EXPIRED;
+    }
+
+    /**
      * Is this order pending?
      */
     public function isPending(): bool
     {
         return $this->status === OrderStatus::STATUS_PENDING;
-    }
-
-    /**
-     * Is this order failed?
-     */
-    public function isFailed(): bool
-    {
-        return $this->status === OrderStatus::STATUS_FAILED;
     }
 
     /**

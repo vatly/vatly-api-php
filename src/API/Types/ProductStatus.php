@@ -5,17 +5,17 @@ namespace Vatly\API\Types;
 class ProductStatus
 {
     /**
-     * The product/plan is approved and available for use.
+     * Product/plan is active and can be purchased.
      */
-    public const APPROVED = "approved";
+    public const ACTIVE = "active";
 
     /**
-     * The product/plan is in draft and not yet available.
+     * Product/plan is awaiting approval.
      */
-    public const DRAFT = "draft";
+    public const PENDING = "pending";
 
     /**
-     * The product/plan has been archived.
+     * Product/plan has been rejected.
      */
-    public const ARCHIVED = "archived";
+    public const REJECTED = "rejected";
 }

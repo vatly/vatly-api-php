@@ -57,7 +57,7 @@ class Checkout extends BaseResource
     public ?string $expiresAt = null;
 
     /**
-     * Is this created?
+     * Is this checkout created and awaiting payment?
      */
     public function isCreated(): bool
     {
@@ -65,7 +65,7 @@ class Checkout extends BaseResource
     }
 
     /**
-     * Is this paid for?
+     * Is this checkout paid successfully?
      */
     public function isPaid(): bool
     {
@@ -73,7 +73,7 @@ class Checkout extends BaseResource
     }
 
     /**
-     * Is this canceled?
+     * Is this checkout canceled by the customer?
      */
     public function isCanceled(): bool
     {
@@ -81,7 +81,7 @@ class Checkout extends BaseResource
     }
 
     /**
-     * Is this failed?
+     * Did the checkout payment fail?
      */
     public function isFailed(): bool
     {
@@ -89,7 +89,7 @@ class Checkout extends BaseResource
     }
 
     /**
-     * Is this expired?
+     * Is this checkout expired?
      */
     public function isExpired(): bool
     {

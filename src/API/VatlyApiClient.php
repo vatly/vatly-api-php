@@ -15,6 +15,7 @@ use Vatly\API\Endpoints\OrderRefundEndpoint;
 use Vatly\API\Endpoints\RefundEndpoint;
 use Vatly\API\Endpoints\SubscriptionEndpoint;
 use Vatly\API\Endpoints\SubscriptionPlanEndpoint;
+use Vatly\API\Endpoints\TestHelpersEndpoint;
 use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Exceptions\HttpAdapterDoesNotSupportDebuggingException;
 use Vatly\API\HttpClient\DefaultHttpClientFactory;
@@ -81,6 +82,7 @@ class VatlyApiClient
     public RefundEndpoint $refunds;
     public OrderRefundEndpoint $orderRefunds;
     public SubscriptionEndpoint $subscriptions;
+    public TestHelpersEndpoint $testHelpers;
 
     /**
      * @throws \Vatly\API\Exceptions\IncompatiblePlatformException
@@ -118,6 +120,7 @@ class VatlyApiClient
         $this->orderRefunds = new OrderRefundEndpoint($this);
         $this->subscriptions = new SubscriptionEndpoint($this);
         $this->customerSubscriptions = new CustomerSubscriptionEndpoint($this);
+        $this->testHelpers = new TestHelpersEndpoint($this);
     }
 
     protected function initializeVersionString(): void

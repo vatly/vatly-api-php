@@ -3,7 +3,7 @@
 namespace Vatly\API\Resources;
 
 use Vatly\API\Types\Money;
-use Vatly\API\Types\TaxesCollection;
+use Vatly\API\Types\TaxSummaryCollection;
 
 class RefundLine extends BaseResource
 {
@@ -18,11 +18,6 @@ class RefundLine extends BaseResource
     public string $resource;
 
     /**
-     * @example refund_66fc8a40718b46bea50f1a25f456d243
-     */
-    public string $refundId;
-
-    /**
      * @example Refund for PDF Book
      */
     public string $description;
@@ -35,5 +30,5 @@ class RefundLine extends BaseResource
 
     public Money $subtotal;
 
-    public TaxesCollection $taxes;
+    public TaxSummaryCollection $taxes;
 }

@@ -88,7 +88,7 @@ abstract class BaseResourcePage extends ArrayObject
             return null;
         }
 
-        $result = $this->apiClient->performHttpCallToFullUrl(VatlyApiClient::HTTP_GET, $this->links->previous->href);
+        $result = $this->apiClient->performHttpCallToFullUrl(VatlyApiClient::HTTP_GET, $this->links->prev->href);
 
         $collection = new static($this->apiClient, $result->count, $result->links);
 
@@ -116,7 +116,7 @@ abstract class BaseResourcePage extends ArrayObject
      */
     public function hasPrevious(): bool
     {
-        return isset($this->links->previous, $this->links->previous->href);
+        return isset($this->links->prev, $this->links->prev->href);
     }
 
     private function pointsToNextItems(): bool

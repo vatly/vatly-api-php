@@ -4,7 +4,7 @@ namespace Vatly\API\Resources;
 
 use Vatly\API\Resources\Links\OrderLineLinks;
 use Vatly\API\Types\Money;
-use Vatly\API\Types\TaxesCollection;
+use Vatly\API\Types\TaxSummaryCollection;
 
 class OrderLine extends BaseResource
 {
@@ -17,11 +17,6 @@ class OrderLine extends BaseResource
      * @example orderline
      */
     public string $resource;
-
-    /**
-     * @example order_66fc8a40718b46bea50f1a25f456d243
-     */
-    public string $orderId;
 
     /**
      * @example PDF Book
@@ -37,7 +32,7 @@ class OrderLine extends BaseResource
 
     public Money $subtotal;
 
-    public TaxesCollection $taxes;
+    public TaxSummaryCollection $taxes;
 
     public OrderLineLinks $links;
 }

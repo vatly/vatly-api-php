@@ -23,6 +23,9 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
             ],
             'interval' => 'month',
             'intervalCount' => 1,
+            'testmode' => false,
+            'status' => 'active',
+            'createdAt' => '2023-01-11T10:50:50+02:00',
             'links' => [
                 'self' => [
                     'href' => self::API_ENDPOINT_URL. '/subscription-plans/' . $productId,
@@ -44,6 +47,9 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
         $this->assertEquals('EUR', $product->basePrice->currency);
         $this->assertEquals('month', $product->interval);
         $this->assertEquals(1, $product->intervalCount);
+        $this->assertFalse($product->testmode);
+        $this->assertEquals('active', $product->status);
+        $this->assertEquals('2023-01-11T10:50:50+02:00', $product->createdAt);
 
         $this->assertEquals(self::API_ENDPOINT_URL. '/subscription-plans/' . $productId, $product->links->self->href);
         $this->assertEquals('application/hal+json', $product->links->self->type);
@@ -67,7 +73,7 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/subscription-plans?startingAfter=subscription_plan_next_dummy_id',
                     'type' => 'application/hal+json',
                 ],
-                'previous' => [
+                'prev' => [
                     'href' => self::API_ENDPOINT_URL.'/subscription-plans?endingBefore=subscription_plan_previous_dummy_id',
                     'type' => 'application/hal+json',
                 ],
@@ -92,8 +98,8 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
         $this->assertEquals('application/hal+json', $productCollection->links->self->type);
         $this->assertEquals(self::API_ENDPOINT_URL.'/subscription-plans?startingAfter=subscription_plan_next_dummy_id', $productCollection->links->next->href);
         $this->assertEquals('application/hal+json', $productCollection->links->next->type);
-        $this->assertEquals(self::API_ENDPOINT_URL.'/subscription-plans?endingBefore=subscription_plan_previous_dummy_id', $productCollection->links->previous->href);
-        $this->assertEquals('application/hal+json', $productCollection->links->previous->type);
+        $this->assertEquals(self::API_ENDPOINT_URL.'/subscription-plans?endingBefore=subscription_plan_previous_dummy_id', $productCollection->links->prev->href);
+        $this->assertEquals('application/hal+json', $productCollection->links->prev->type);
     }
 
     /** @test */
@@ -115,7 +121,7 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
                         'href' => self::API_ENDPOINT_URL . '/subscription-plans?startingAfter=subscription_plan_next_dummy_id',
                         'type' => 'application/hal+json',
                     ],
-                    'previous' => null,
+                    'prev' => null,
                 ],
             ],
             [
@@ -129,7 +135,7 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
                         'type' => 'application/hal+json',
                     ],
                     'next' => null,
-                    'previous' => [
+                    'prev' => [
                         'href' => self::API_ENDPOINT_URL . '/subscription-plans',
                         'type' => 'application/hal+json',
                     ],
