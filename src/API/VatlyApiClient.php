@@ -21,9 +21,12 @@ use Vatly\API\Exceptions\HttpAdapterDoesNotSupportDebuggingException;
 use Vatly\API\HttpClient\DefaultHttpClientFactory;
 use Vatly\API\HttpClient\HttpClientFactoryInterface;
 use Vatly\API\HttpClient\HttpClientInterface;
+use Vatly\API\HttpClient\Idempotency\DefaultIdempotencyKeyGenerator;
+use Vatly\API\Traits\HandlesIdempotency;
 
 class VatlyApiClient
 {
+    use HandlesIdempotency;
     /**
      * The version of this client.
      */
@@ -102,6 +105,8 @@ class VatlyApiClient
         } else {
             $this->httpClient = (new DefaultHttpClientFactory)->make();
         }
+
+        $this->idempotencyKeyGenerator = new DefaultIdempotencyKeyGenerator();
 
         $this->initializeVersionString();
         $this->initializeEndpoints();
@@ -190,11 +195,11 @@ class VatlyApiClient
      * @return \stdClass
      * @throws ApiException
      */
-    public function performHttpCall(string $httpMethod, string $apiMethod, ?string $httpBody = null): ?object
+    public function performHttpCall(string $httpMethod, string $apiMethod, ?string $httpBody = null, array $requestHeaders = []): ?object
     {
         $url = $this->apiEndpoint . "/" . self::API_VERSION . "/" . $apiMethod;
 
-        return $this->performHttpCallToFullUrl($httpMethod, $url, $httpBody);
+        return $this->performHttpCallToFullUrl($httpMethod, $url, $httpBody, $requestHeaders);
     }
 
     /**
@@ -206,7 +211,7 @@ class VatlyApiClient
      * @return object|null
      * @throws \Vatly\API\Exceptions\ApiException
      */
-    public function performHttpCallToFullUrl(string $httpMethod, string $url, ?string $httpBody = null): ?object
+    public function performHttpCallToFullUrl(string $httpMethod, string $url, ?string $httpBody = null, array $requestHeaders = []): ?object
     {
         if (empty($this->apiKey)) {
             throw new ApiException("You have not set an API key. Please use setApiKey() to set the API key.");
@@ -226,7 +231,25 @@ class VatlyApiClient
             $headers['X-Vatly-Client-Info'] = php_uname();
         }
 
-        return $this->httpClient->send($httpMethod, $url, $headers, $httpBody);
+        if (in_array($httpMethod, [self::HTTP_POST, self::HTTP_PATCH])) {
+            $idempotencyKey = $this->idempotencyKey;
+
+            if ($idempotencyKey === null && $this->idempotencyKeyGenerator !== null) {
+                $idempotencyKey = $this->idempotencyKeyGenerator->generate();
+            }
+
+            if ($idempotencyKey !== null) {
+                $headers['Idempotency-Key'] = $idempotencyKey;
+            }
+        }
+
+        $headers = array_merge($headers, $requestHeaders);
+
+        $response = $this->httpClient->send($httpMethod, $url, $headers, $httpBody);
+
+        $this->resetIdempotencyKey();
+
+        return $response;
     }
 
     /**

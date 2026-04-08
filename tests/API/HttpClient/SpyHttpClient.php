@@ -165,6 +165,7 @@ class SpyHttpClient implements HttpClientInterface
                 'User-Agent',
                 'Content-Type',
                 'X-Vatly-Client-Info',
+                'Idempotency-Key',
             ]);
         }, ARRAY_FILTER_USE_KEY);
 
@@ -173,8 +174,18 @@ class SpyHttpClient implements HttpClientInterface
             'httpMethod' => $httpMethod,
             'url' => $url,
             'headers' => $sanitizedHeaders,
+            'allHeaders' => $headers,
             'httpBody' => $httpBody,
         ];
+    }
+
+    public function lastSentHeaders(): array
+    {
+        if (empty($this->recordedSends)) {
+            return [];
+        }
+
+        return end($this->recordedSends)['allHeaders'];
     }
 
     public function supportsDebugging(): bool

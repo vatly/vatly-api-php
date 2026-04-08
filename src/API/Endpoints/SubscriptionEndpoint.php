@@ -65,11 +65,11 @@ class SubscriptionEndpoint extends BaseEndpoint
     /**
      * @throws ApiException
      */
-    public function update(string $subscriptionId, array $data = []): ?BaseResource
+    public function update(string $subscriptionId, array $data = [], array $filters = []): ?BaseResource
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        return $this->rest_update($subscriptionId, $data);
+        return $this->rest_update($subscriptionId, $data, $filters);
     }
 
     /**
