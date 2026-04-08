@@ -38,21 +38,16 @@ class OrderEndpointTest extends BaseEndpointTest
                 "value" => "80.00",
                 "currency" => "EUR",
             ],
-            'taxes' => [
+            'taxSummary' => [
                 [
-                    'name' => 'VAT',
-                    'percentage' => '20.00',
-                    'amount' => [
-                        'value' => '16.00',
-                        'currency' => 'EUR',
-                    ],
+                    'taxRate' => ['name' => 'VAT', 'percentage' => 21, 'taxablePercentage' => 100],
+                    'amount' => ['value' => '16.00', 'currency' => 'EUR'],
                 ],
             ],
             'lines' => [
                 [
                     "id" => "order_item_2a46f4c01d3b47979f4d7b3f58c98be7",
                     "resource" => "orderline",
-                    "orderId" => $orderId,
                     "description" => "PDF Book",
                     "quantity" => 1,
                     "basePrice" => [
@@ -69,12 +64,8 @@ class OrderEndpointTest extends BaseEndpointTest
                     ],
                     'taxes' => [
                         [
-                            'name' => 'VAT',
-                            'percentage' => '20.00',
-                            'amount' => [
-                                'value' => '16.00',
-                                'currency' => 'EUR',
-                            ],
+                            'taxRate' => ['name' => 'VAT', 'percentage' => 21, 'taxablePercentage' => 100],
+                            'amount' => ['value' => '16.00', 'currency' => 'EUR'],
                         ],
                     ],
                 ],
@@ -112,7 +103,7 @@ class OrderEndpointTest extends BaseEndpointTest
                     'href' => self::API_ENDPOINT_URL.'/customers/customer_123',
                     'type' => 'application/hal+json',
                 ],
-                'invoice' => [
+                'customerInvoice' => [
                     'href' => self::API_ENDPOINT_URL.'/invoices/invoice_dummy_id',
                     'type' => 'application/pdf',
                 ],
@@ -133,10 +124,12 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals(OrderStatus::STATUS_PAID, $order->status);
         $this->assertEquals('96.00', $order->total->value);
         $this->assertEquals('80.00', $order->subtotal->value);
-        $this->assertEquals('VAT', $order->taxes->taxes[0]->name);
-        $this->assertEquals('20.00', $order->taxes->taxes[0]->percentage);
-        $this->assertEquals('16.00', $order->taxes->taxes[0]->amount->value);
-        $this->assertEquals('EUR', $order->taxes->taxes[0]->amount->currency);
+        $this->assertCount(1, $order->taxSummary->items);
+        $this->assertEquals('VAT', $order->taxSummary->items[0]->taxRate->name);
+        $this->assertEquals(21, $order->taxSummary->items[0]->taxRate->percentage);
+        $this->assertEquals(100, $order->taxSummary->items[0]->taxRate->taxablePercentage);
+        $this->assertEquals('16.00', $order->taxSummary->items[0]->amount->value);
+        $this->assertEquals('EUR', $order->taxSummary->items[0]->amount->currency);
         $this->assertEquals('INV 123456', $order->invoiceNumber);
         $this->assertEquals('2023-01-11T10:50:50+02:00', $order->createdAt);
 
@@ -144,8 +137,8 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('application/hal+json', $order->links->self->type);
         $this->assertEquals('https://api.vatly.com/v1/customers/customer_123', $order->links->customer->href);
         $this->assertEquals('application/hal+json', $order->links->customer->type);
-        $this->assertEquals('https://api.vatly.com/v1/invoices/invoice_dummy_id', $order->links->invoice->href);
-        $this->assertEquals('application/pdf', $order->links->invoice->type);
+        $this->assertEquals('https://api.vatly.com/v1/invoices/invoice_dummy_id', $order->links->customerInvoice->href);
+        $this->assertEquals('application/pdf', $order->links->customerInvoice->type);
 
 
         $this->assertEquals('Sandorian Consultancy B.V.', $order->merchantDetails->companyName);
@@ -176,15 +169,16 @@ class OrderEndpointTest extends BaseEndpointTest
         $orderLine = $order->lines()[0];
         $this->assertEquals('order_item_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->id);
         $this->assertEquals('orderline', $orderLine->resource);
-        $this->assertEquals('order_dummy_id', $orderLine->orderId);
         $this->assertEquals('PDF Book', $orderLine->description);
         $this->assertEquals("96.00", $orderLine->total->value);
         $this->assertEquals("80.00", $orderLine->subtotal->value);
         $this->assertEquals("80.00", $orderLine->basePrice->value);
-        $this->assertEquals("VAT", $orderLine->taxes->taxes[0]->name);
-        $this->assertEquals("20.00", $orderLine->taxes->taxes[0]->percentage);
-        $this->assertEquals("16.00", $orderLine->taxes->taxes[0]->amount->value);
-        $this->assertEquals("EUR", $orderLine->taxes->taxes[0]->amount->currency);
+        $this->assertCount(1, $orderLine->taxes->items);
+        $this->assertEquals("VAT", $orderLine->taxes->items[0]->taxRate->name);
+        $this->assertEquals(21, $orderLine->taxes->items[0]->taxRate->percentage);
+        $this->assertEquals(100, $orderLine->taxes->items[0]->taxRate->taxablePercentage);
+        $this->assertEquals("16.00", $orderLine->taxes->items[0]->amount->value);
+        $this->assertEquals("EUR", $orderLine->taxes->items[0]->amount->currency);
     }
 
     /** @test */

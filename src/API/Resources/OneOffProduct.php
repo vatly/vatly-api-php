@@ -4,7 +4,6 @@ namespace Vatly\API\Resources;
 
 use Vatly\API\Resources\Links\OneOffProductLinks;
 use Vatly\API\Types\Money;
-use Vatly\API\Types\ProductStatus;
 
 class OneOffProduct extends BaseResource
 {
@@ -29,25 +28,9 @@ class OneOffProduct extends BaseResource
 
     public bool $testmode;
 
-    /** @see ProductStatus */
     public string $status;
 
-    public string $createdAt;
+    public ?string $createdAt = null;
 
     public OneOffProductLinks $links;
-
-    public function isApproved(): bool
-    {
-        return $this->status === ProductStatus::APPROVED;
-    }
-
-    public function isDraft(): bool
-    {
-        return $this->status === ProductStatus::DRAFT;
-    }
-
-    public function isArchived(): bool
-    {
-        return $this->status === ProductStatus::ARCHIVED;
-    }
 }

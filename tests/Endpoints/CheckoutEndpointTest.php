@@ -22,6 +22,8 @@ class CheckoutEndpointTest extends BaseEndpointTest
             'redirectUrlSuccess' => 'https://www.sandorian.com/success',
             'redirectUrlCanceled' => 'https://www.sandorian.com/canceled',
             'status' => CheckoutStatus::STATUS_CREATED,
+            'createdAt' => '2023-01-11T10:50:50+02:00',
+            'expiresAt' => '2023-01-12T10:50:50+02:00',
             'metadata' => [
                 'order_id' => '123456',
             ],
@@ -75,6 +77,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $this->assertTrue($checkout->testmode);
         $this->assertEquals(self::WEBSITE_ENDPOINT_URL.'/checkout/checkout_dummy_id', $checkout->links->checkoutUrl->href);
         $this->assertEquals(self::API_ENDPOINT_URL.'/checkouts/checkout_dummy_id', $checkout->links->self->href);
+        $this->assertEquals('2023-01-12T10:50:50+02:00', $checkout->expiresAt);
         $this->assertEquals($responseBodyArray['metadata'], (array) $checkout->metadata);
 
         $this->assertWasSentOnly(

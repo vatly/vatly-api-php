@@ -21,6 +21,9 @@ class OneOffProductEndpointTest extends BaseEndpointTest
                 'value' => '10.00',
                 'currency' => 'EUR',
             ],
+            'testmode' => false,
+            'status' => 'active',
+            'createdAt' => '2023-01-11T10:50:50+02:00',
             'links' => [
                 'self' => [
                     'href' => self::API_ENDPOINT_URL. '/one-off-products/' . $productId,
@@ -40,6 +43,9 @@ class OneOffProductEndpointTest extends BaseEndpointTest
         $this->assertEquals('Test product description', $product->description);
         $this->assertEquals('10.00', $product->basePrice->value);
         $this->assertEquals('EUR', $product->basePrice->currency);
+        $this->assertFalse($product->testmode);
+        $this->assertEquals('active', $product->status);
+        $this->assertEquals('2023-01-11T10:50:50+02:00', $product->createdAt);
 
         $this->assertEquals(self::API_ENDPOINT_URL. '/one-off-products/' . $productId, $product->links->self->href);
         $this->assertEquals('application/hal+json', $product->links->self->type);

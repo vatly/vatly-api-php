@@ -6,7 +6,6 @@ use Vatly\API\Types\Link;
 
 class ChargebackLinks extends BaseLinksResource
 {
-    public Link $customer;
     public Link $originalOrder;
 
     public ?Link $order;

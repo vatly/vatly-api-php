@@ -6,8 +6,7 @@ use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\Links\RefundLinks;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\RefundStatus;
-use Vatly\API\Types\TaxesCollection;
-
+use Vatly\API\Types\TaxSummaryCollection;
 class Refund extends BaseResource
 {
     /**
@@ -26,11 +25,6 @@ class Refund extends BaseResource
     public string $merchantId;
 
     /**
-     * @example customer_78b146a7de7d417e9d68d7e6ef193d18
-     */
-    public string $customerId;
-
-    /**
      * @example 2023-08-11T10:48:51+02:00
      */
     public string $createdAt;
@@ -44,7 +38,9 @@ class Refund extends BaseResource
 
     public Money $subtotal;
 
-    public TaxesCollection $taxes;
+    public TaxSummaryCollection $taxSummary;
+
+    public string $customerId;
 
     /**
      * @var RefundLine[]|array
@@ -54,13 +50,13 @@ class Refund extends BaseResource
     public RefundLinks $links;
 
     /**
-     * The associated order ID created from this refund (credit note)
+     * The associated order ID created from this refund
      * @example order_66fc8a40718b46bea50f1a25f456d243
      */
     public ?string $orderId = null;
 
     /**
-     * The associated original order ID from which this refund was created
+     * The associated original refund ID from which this refund was created
      * @example order_66fc8a40718b46bea50f1a25f456d242
      */
     public string $originalOrderId;
@@ -74,38 +70,6 @@ class Refund extends BaseResource
             null,
             RefundLineCollection::class,
         );
-    }
-
-    /**
-     * Is this refund pending?
-     */
-    public function isPending(): bool
-    {
-        return $this->status === RefundStatus::PENDING;
-    }
-
-    /**
-     * Is this refund completed?
-     */
-    public function isCompleted(): bool
-    {
-        return $this->status === RefundStatus::COMPLETED;
-    }
-
-    /**
-     * Is this refund failed?
-     */
-    public function isFailed(): bool
-    {
-        return $this->status === RefundStatus::FAILED;
-    }
-
-    /**
-     * Is this refund canceled?
-     */
-    public function isCanceled(): bool
-    {
-        return $this->status === RefundStatus::CANCELED;
     }
 
     /**

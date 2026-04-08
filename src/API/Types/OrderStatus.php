@@ -5,17 +5,28 @@ namespace Vatly\API\Types;
 class OrderStatus
 {
     /**
-     * The order is awaiting payment.
+     * The order has just been created.
      */
-    public const STATUS_PENDING = "pending";
+    public const STATUS_CREATED = "created";
 
     /**
      * The order has been paid.
      */
     public const STATUS_PAID = "paid";
 
+
     /**
-     * The order payment failed.
+     * The order has been canceled.
      */
-    public const STATUS_FAILED = "failed";
+    public const STATUS_CANCELED = "canceled";
+
+    /**
+     * The order is expired.
+     */
+    public const STATUS_EXPIRED = "expired";
+
+    /**
+     * The order is pending.
+     */
+    public const STATUS_PENDING = "pending";
 }
