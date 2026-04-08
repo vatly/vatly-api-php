@@ -9,6 +9,7 @@ use Vatly\API\Types\Link;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
 use Vatly\API\Types\TaxSummaryCollection;
+
 class Order extends BaseResource
 {
     /**

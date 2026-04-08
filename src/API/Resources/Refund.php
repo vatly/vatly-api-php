@@ -7,6 +7,7 @@ use Vatly\API\Resources\Links\RefundLinks;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\RefundStatus;
 use Vatly\API\Types\TaxSummaryCollection;
+
 class Refund extends BaseResource
 {
     /**
