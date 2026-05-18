@@ -147,17 +147,17 @@ The SDK provides access to all Vatly API resources.
 
 
 
-| Resource | Description |
-|----------|-------------|
-| [Checkouts](/checkouts) | Create hosted payment pages |
-| [Customers](/customers) | Manage customer records |
-| [Subscriptions](/subscriptions) | Recurring billing |
-| [Subscription Plans](/subscription-plans) | Define subscription products |
-| [One-Off Products](/one-off-products) | Single purchase products |
-| [Orders](/orders) | Transaction records |
-| [Refunds](/refunds) | Process refunds |
-| [Chargebacks](/chargebacks) | Handle disputes |
-| [Webhooks](/webhooks) | Real-time event notifications |
+| Resource                                         | Description                   |
+|--------------------------------------------------|-------------------------------|
+| [Checkouts](/docs/Checkouts.md)                  | Create hosted payment pages   |
+| [Customers](/docs/Customers.md)                  | Manage customer records       |
+| [Subscriptions](/docs/Subscriptions.md)          | Recurring billing             |
+| [Subscription Plans](/docs/SubscriptionPlans.md) | Define subscription products  |
+| [One-Off Products](/docs/OneOffProducts.md)      | Single purchase products      |
+| [Orders](/docs/Orders.md)                        | Transaction records           |
+| [Refunds](/docs/Refunds.md)                      | Process refunds               |
+| [Chargebacks](/docs/Chargebacks.md)              | Handle disputes               |
+| [Webhooks](/docs/Webhooks.md)                    | Real-time event notifications |
 
 
 
@@ -195,6 +195,6 @@ try {
 
 ## Requirements
 
-- PHP 8.1+
+- PHP 8.0+
 - cURL extension
 - JSON extension
