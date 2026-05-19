@@ -17,7 +17,6 @@ class ChargebackEndpointTest extends BaseEndpointTest
         $responseBodyArray = [
             'id' => $chargebackId,
             'resource' => 'chargeback',
-            'merchantId' => 'merchant_123',
             'testmode' => false,
             'amount' => [
                 "value" => "100.00",
@@ -55,7 +54,6 @@ class ChargebackEndpointTest extends BaseEndpointTest
         $this->assertInstanceOf(Chargeback::class, $chargeback);
         $this->assertEquals('chargeback', $chargeback->resource);
         $this->assertEquals('chargeback_dummy_id', $chargeback->id);
-        $this->assertEquals('merchant_123', $chargeback->merchantId);
         $this->assertEquals('2020-01-01', $chargeback->createdAt);
         $this->assertFalse($chargeback->testmode);
         $this->assertEquals('100.00', $chargeback->amount->value);

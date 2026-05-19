@@ -122,6 +122,10 @@ tags:
     description: |
       Manage customer subscriptions.
       Update plans, quantities, billing details, or cancel subscriptions.
+  - name: Webhook Events
+    description: |
+      View webhook events that were sent to your webhook endpoints.
+      Each event contains the full resource payload at the time the event occurred.
   - name: Test Helpers
     description: |
       Sandbox-only endpoints for simulating billing events.
@@ -166,7 +170,6 @@ paths:
                 data:
                   - id: checkout_QdEpFhdSrG4Y3DnfsdqsH
                     resource: checkout
-                    merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                     orderId: null
                     testmode: false
                     redirectUrlSuccess: https://example.com/success
@@ -263,7 +266,6 @@ paths:
               example:
                 id: checkout_Bm7xNvPwKr3YjTgHcZaE
                 resource: checkout
-                merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                 orderId: null
                 testmode: false
                 redirectUrlSuccess: https://example.com/success
@@ -308,7 +310,6 @@ paths:
               example:
                 id: checkout_QdEpFhdSrG4Y3DnfsdqsH
                 resource: checkout
-                merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                 orderId: order_Jk4pQrSvWm8NjLhYbUcP
                 testmode: false
                 redirectUrlSuccess: https://example.com/success
@@ -902,7 +903,6 @@ paths:
                 data:
                   - id: order_Hn5xWqVfKm8RjTgYbUcP
                     resource: order
-                    merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                     customerId: customer_Xk9pQrSvWm4NjLhYbUcP
                     testmode: false
                     metadata: {}
@@ -946,15 +946,6 @@ paths:
                             amount:
                               value: '6.09'
                               currency: EUR
-                    merchantDetails:
-                      fullName: Vatly B.V.
-                      companyName: Vatly
-                      vatNumber: NL123456789B01
-                      streetAndNumber: Keizersgracht 123
-                      city: Amsterdam
-                      postalCode: 1015 CJ
-                      country: NL
-                      email: billing@vatly.com
                     customerDetails:
                       fullName: John Doe
                       companyName: Acme Corp
@@ -1004,7 +995,6 @@ paths:
               example:
                 id: order_Hn5xWqVfKm8RjTgYbUcP
                 resource: order
-                merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                 customerId: customer_Xk9pQrSvWm4NjLhYbUcP
                 testmode: false
                 metadata: {}
@@ -1048,15 +1038,6 @@ paths:
                         amount:
                           value: '6.09'
                           currency: EUR
-                merchantDetails:
-                  fullName: Vatly B.V.
-                  companyName: Vatly
-                  vatNumber: NL123456789B01
-                  streetAndNumber: Keizersgracht 123
-                  city: Amsterdam
-                  postalCode: 1015 CJ
-                  country: NL
-                  email: billing@vatly.com
                 customerDetails:
                   fullName: John Doe
                   companyName: Acme Corp
@@ -1154,7 +1135,6 @@ paths:
                   - id: refund_Bm7xNvPwKr3YjTgHcZaE
                     resource: refund
                     orderId: null
-                    merchantId: merchant_Bm7xNvPwKr3YjTgHcZaE
                     customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                     testmode: false
                     createdAt: '2024-01-20T14:00:00Z'
@@ -1280,7 +1260,6 @@ paths:
                 id: refund_Mn6xBtPvKw2RjTgYcZaE
                 resource: refund
                 orderId: null
-                merchantId: merchant_Fp2kQrSvWm8NjLhYbUcP
                 customerId: customer_Lp3mNvBxKw7RjTgYcZaE
                 testmode: false
                 createdAt: '2024-01-15T10:30:00Z'
@@ -1401,7 +1380,6 @@ paths:
                 id: refund_Rk5pQrSvWm8NjLhYbUcP
                 resource: refund
                 orderId: null
-                merchantId: merchant_Bm7xNvPwKr3YjTgHcZaE
                 customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 createdAt: '2024-01-21T09:00:00Z'
@@ -1483,7 +1461,6 @@ paths:
                 id: refund_Xk9pQrSvWm4NjLhYbUcP
                 resource: refund
                 orderId: order_Bm7xNvPwKr3YjTgHcZaE
-                merchantId: merchant_Bm7xNvPwKr3YjTgHcZaE
                 customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 createdAt: '2024-01-20T14:00:00Z'
@@ -1618,7 +1595,6 @@ paths:
                 data:
                   - id: chargeback_Fp2kQrSvWm8NjLhYbUcP
                     resource: chargeback
-                    merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                     testmode: false
                     createdAt: '2024-01-25T16:45:00Z'
                     amount:
@@ -1678,7 +1654,6 @@ paths:
               example:
                 id: chargeback_Mn6xBtPvKw2RjTgYcZaE
                 resource: chargeback
-                merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                 testmode: false
                 createdAt: '2024-01-25T16:45:00Z'
                 amount:
@@ -1746,7 +1721,6 @@ paths:
                   - id: refund_Xk9pQrSvWm4NjLhYbUcP
                     resource: refund
                     orderId: order_Bm7xNvPwKr3YjTgHcZaE
-                    merchantId: merchant_Bm7xNvPwKr3YjTgHcZaE
                     customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                     testmode: false
                     createdAt: '2024-01-20T14:00:00Z'
@@ -1831,7 +1805,6 @@ paths:
                 id: refund_Xk9pQrSvWm4NjLhYbUcP
                 resource: refund
                 orderId: order_Bm7xNvPwKr3YjTgHcZaE
-                merchantId: merchant_Bm7xNvPwKr3YjTgHcZaE
                 customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 createdAt: '2024-01-20T14:00:00Z'
@@ -1932,7 +1905,6 @@ paths:
                 data:
                   - id: chargeback_Mn6xBtPvKw2RjTgYcZaE
                     resource: chargeback
-                    merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                     testmode: false
                     createdAt: '2024-01-15T10:30:00Z'
                     amount:
@@ -1986,7 +1958,6 @@ paths:
               example:
                 id: chargeback_Mn6xBtPvKw2RjTgYcZaE
                 resource: chargeback
-                merchantId: merchant_Tk7mNvBxKw2RjTgYcZaE
                 testmode: false
                 createdAt: '2024-01-25T16:45:00Z'
                 amount:
@@ -2007,6 +1978,51 @@ paths:
                     type: application/json
                   order:
                     href: https://api.vatly.com/v1/orders/order_Rk5pQrSvWm8NjLhYbUcP
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /webhook-events/{eventId}:
+    get:
+      operationId: getWebhookEvent
+      summary: Get webhook event
+      description: |
+        Retrieves a specific webhook event by its ID.
+        Returns the full event payload including the resource data at the time the event occurred.
+      tags:
+        - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/eventId'
+      responses:
+        '200':
+          description: Webhook event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEvent'
+              example:
+                id: webhook_event_Qk8pRtSvWm2NjLhYcZaE
+                resource: webhook_event
+                eventName: order.paid
+                entityType: order
+                entityId: order_Hn5xWqVfKm8RjTgYbUcP
+                object:
+                  id: order_Hn5xWqVfKm8RjTgYbUcP
+                  resource: order
+                  testmode: false
+                  status: paid
+                  total:
+                    value: '29.99'
+                    currency: EUR
+                  subtotal:
+                    value: '24.79'
+                    currency: EUR
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/webhook-events/webhook_event_Qk8pRtSvWm2NjLhYcZaE
                     type: application/json
         '401':
           $ref: '#/components/responses/Unauthorized'
@@ -2095,7 +2111,7 @@ paths:
                     billingAddress:
                       fullName: Jane Smith
                       companyName: TechCorp Ltd
-                      vatNumber: GB123456789
+                      taxId: GB123456789
                       streetAndNumber: 456 Tech Lane
                       city: London
                       postalCode: EC1A 1BB
@@ -2386,7 +2402,7 @@ paths:
               redirectUrlCanceled: https://example.com/account/billing
               billingAddress:
                 companyName: Acme Corp
-                vatNumber: DE123456789
+                taxId: DE123456789
       responses:
         '200':
           description: Billing update flow initiated
@@ -2684,6 +2700,14 @@ components:
       schema:
         type: string
       example: chargeback_Mn6xBtPvKw2RjTgYcZaE
+    eventId:
+      name: eventId
+      in: path
+      description: Unique identifier of the webhook event
+      required: true
+      schema:
+        type: string
+      example: webhook_event_Qk8pRtSvWm2NjLhYcZaE
   responses:
     Unauthorized:
       description: Unauthorized - Authentication credentials were missing or invalid
@@ -2832,11 +2856,11 @@ components:
             - 'null'
           description: Company or organization name
           example: Acme Corp
-        vatNumber:
+        taxId:
           type:
             - string
             - 'null'
-          description: VAT identification number for tax purposes
+          description: Tax identification number for tax purposes
           example: NL123456789B01
         streetAndNumber:
           type:
@@ -2892,11 +2916,11 @@ components:
             - 'null'
           description: Company or organization name
           example: Acme Corp
-        vatNumber:
+        taxId:
           type:
             - string
             - 'null'
-          description: VAT identification number
+          description: Tax identification number
           example: NL123456789B01
         streetAndNumber:
           type:
@@ -3019,7 +3043,6 @@ components:
       required:
         - id
         - resource
-        - merchantId
         - testmode
         - redirectUrlSuccess
         - redirectUrlCanceled
@@ -3037,10 +3060,6 @@ components:
           description: Resource type identifier
           const: checkout
           example: checkout
-        merchantId:
-          type: string
-          description: ID of the merchant that owns this checkout
-          example: merchant_Fp2kQrSvWm8NjLhYbUcP
         orderId:
           type:
             - string
@@ -3419,8 +3438,6 @@ components:
       required:
         - id
         - resource
-        - merchantId
-        - customerId
         - testmode
         - metadata
         - createdAt
@@ -3429,7 +3446,6 @@ components:
         - subtotal
         - taxSummary
         - lines
-        - merchantDetails
         - customerDetails
         - links
       properties:
@@ -3442,13 +3458,11 @@ components:
           description: Resource type identifier
           const: order
           example: order
-        merchantId:
-          type: string
-          description: ID of the merchant that owns this order
-          example: merchant_Fp2kQrSvWm8NjLhYbUcP
         customerId:
-          type: string
-          description: ID of the customer who made this purchase
+          type:
+            - string
+            - 'null'
+          description: ID of the customer who made this purchase. Only present when a customer is associated.
           example: customer_Lp3mNvBxKw7RjTgYcZaE
         testmode:
           type: boolean
@@ -3507,9 +3521,6 @@ components:
           description: Line items in this order
           items:
             $ref: '#/components/schemas/OrderLine'
-        merchantDetails:
-          $ref: '#/components/schemas/BillingDetails'
-          description: Merchant billing details (seller)
         customerDetails:
           $ref: '#/components/schemas/BillingDetails'
           description: Customer billing details (buyer)
@@ -3518,7 +3529,6 @@ components:
           description: HATEOAS links to related resources
           required:
             - self
-            - customer
           properties:
             self:
               allOf:
@@ -3527,7 +3537,7 @@ components:
             customer:
               allOf:
                 - $ref: '#/components/schemas/Link'
-              description: Link to the customer who made this purchase
+              description: Link to the customer who made this purchase. Only present when a customer is associated.
             customerInvoice:
               allOf:
                 - $ref: '#/components/schemas/Link'
@@ -3604,7 +3614,6 @@ components:
       required:
         - id
         - resource
-        - merchantId
         - customerId
         - testmode
         - createdAt
@@ -3633,10 +3642,6 @@ components:
             ID of the credit note order created for this refund.
             Only present after the refund is processed.
           example: order_Vr8kQdFhSrG4Y3DnfsdqH
-        merchantId:
-          type: string
-          description: ID of the merchant
-          example: merchant_Fp2kQrSvWm8NjLhYbUcP
         customerId:
           type: string
           description: ID of the customer receiving the refund
@@ -3787,7 +3792,6 @@ components:
       required:
         - id
         - resource
-        - merchantId
         - testmode
         - createdAt
         - amount
@@ -3805,10 +3809,6 @@ components:
           description: Resource type identifier
           const: chargeback
           example: chargeback
-        merchantId:
-          type: string
-          description: ID of the merchant
-          example: merchant_Fp2kQrSvWm8NjLhYbUcP
         testmode:
           type: boolean
           description: Whether this chargeback is in test mode
@@ -3869,6 +3869,69 @@ components:
                 - $ref: '#/components/schemas/Link'
                 - type: 'null'
               description: Link to the credit note order (if created)
+    WebhookEvent:
+      type: object
+      description: |
+        A webhook event represents a domain event that was sent to a webhook endpoint.
+        Each event contains the full resource payload at the time the event occurred.
+      required:
+        - id
+        - resource
+        - eventName
+        - entityType
+        - entityId
+        - object
+        - links
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the webhook event
+          example: webhook_event_Qk8pRtSvWm2NjLhYcZaE
+        resource:
+          type: string
+          description: Resource type identifier
+          const: webhook_event
+          example: webhook_event
+        eventName:
+          type: string
+          description: |
+            Name of the event that triggered this webhook. Possible values:
+            - `order.paid` - Order payment was successful
+            - `order.canceled` - Order was canceled
+            - `order.chargeback_received` - Chargeback was received for an order
+            - `order.chargeback_reversed` - Chargeback was reversed
+            - `refund.completed` - Refund was processed successfully
+            - `refund.failed` - Refund processing failed
+            - `refund.canceled` - Refund was canceled
+            - `subscription.started` - Subscription was started
+            - `subscription.canceled_immediately` - Subscription was canceled immediately
+            - `subscription.canceled_with_grace_period` - Subscription was canceled with a grace period
+            - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
+            - `checkout.expired` - Checkout session expired
+          example: order.paid
+        entityType:
+          type: string
+          description: Type of the resource this event relates to
+          example: order
+        entityId:
+          type: string
+          description: ID of the resource this event relates to
+          example: order_Hn5xWqVfKm8RjTgYbUcP
+        object:
+          type: object
+          description: |
+            The full resource payload at the time of the event.
+            The shape depends on the `entityType` (e.g., Order, Refund, Chargeback, Subscription, Checkout).
+        links:
+          type: object
+          description: HATEOAS links to related resources
+          required:
+            - self
+          properties:
+            self:
+              allOf:
+                - $ref: '#/components/schemas/Link'
+              description: Link to this webhook event resource
     Subscription:
       type: object
       description: |
@@ -3902,6 +3965,10 @@ components:
           type: string
           description: ID of the customer who owns this subscription
           example: customer_Lp3mNvBxKw7RjTgYcZaE
+        subscriptionPlanId:
+          type: string
+          description: ID of the subscription plan this subscription is based on
+          example: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
         testmode:
           type: boolean
           description: Whether this subscription is in test mode

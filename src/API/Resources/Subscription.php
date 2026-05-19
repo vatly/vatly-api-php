@@ -26,6 +26,11 @@ class Subscription extends BaseResource
      */
     public string $customerId;
 
+    /**
+     * @example subscription_plan_Wt5mNvBxKw7YcZaEjLhR
+     */
+    public string $subscriptionPlanId;
+
     public bool $testmode;
 
     public string $name;

@@ -21,11 +21,6 @@ class Refund extends BaseResource
     public string $resource;
 
     /**
-     * @example merchant_f7f3cbf96f6c444abd76aafaf99ecde9
-     */
-    public string $merchantId;
-
-    /**
      * @example 2023-08-11T10:48:51+02:00
      */
     public string $createdAt;

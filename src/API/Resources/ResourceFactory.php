@@ -46,7 +46,6 @@ class ResourceFactory
                     break;
 
                 case 'customerDetails':
-                case 'merchantDetails':
                 case 'billingAddress':
                 case 'shippingAddress':
                     $resource->{$property} = Address::createResourceFromApiResult($value);

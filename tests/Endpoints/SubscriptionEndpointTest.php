@@ -25,6 +25,7 @@ class SubscriptionEndpointTest extends BaseEndpointTest
 
         $this->assertEquals('subscription', $subscription->resource);
         $this->assertEquals($subscriptionId, $subscription->id);
+        $this->assertEquals('subscription_plan_Wt5mNvBxKw7YcZaEjLhR', $subscription->subscriptionPlanId);
         $this->assertEquals('Test subscription', $subscription->name);
         $this->assertEquals('Test subscription description', $subscription->description);
         $this->assertEquals('10.00', $subscription->basePrice->value);
@@ -260,6 +261,7 @@ class SubscriptionEndpointTest extends BaseEndpointTest
             'id' => $subscriptionId,
             'resource' => 'subscription',
             'customerId' => 'customer_78b146a7de7d417e9d68d7e6ef193d18',
+            'subscriptionPlanId' => 'subscription_plan_Wt5mNvBxKw7YcZaEjLhR',
             'name' => 'Test subscription',
             'description' => 'Test subscription description',
             'startedAt' => '2023-01-11T10:50:50+02:00',
@@ -282,7 +284,7 @@ class SubscriptionEndpointTest extends BaseEndpointTest
                 'fullName' => 'John Doe',
                 'city' => 'New York',
                 'country' => 'US',
-                'vatNumber' => 'US123456789',
+                'taxId' => 'US123456789',
                 'email' => 'johndoe@example.com',
             ],
             'basePrice' => [
