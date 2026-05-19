@@ -25,6 +25,8 @@ $vatly->setApiKey('test_your_api_key_here');
 $vatly->checkouts->create([...]);
 ```
 
+For detailed documentation, see [docs/README.md](docs/README.md).
+
 ## Idempotency
 
 The SDK automatically sends an `Idempotency-Key` header on every `POST` and `PATCH` request.
