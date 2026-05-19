@@ -203,11 +203,11 @@ class SubscriptionEndpointTest extends BaseEndpointTest
             'fullName' => 'John Doe',
             'city' => 'New York',
         ];
-        $response = $subscription->requestLinkForBillingDetailsUpdate($updatedBilling);
+        $response = $subscription->createBillingUpdateLink($updatedBilling);
 
         $this->assertWasSentOnly(
-            VatlyApiClient::HTTP_PATCH,
-            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/update-billing',
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/billing-update-link',
             [],
             json_encode($updatedBilling)
         );

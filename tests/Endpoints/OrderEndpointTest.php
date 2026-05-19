@@ -267,7 +267,7 @@ class OrderEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
-    public function can_get_order_update_address_link(): void
+    public function can_create_invoice_update_link(): void
     {
         $orderId = 'order_dummy_id';
         $responseBodyArray = [
@@ -277,11 +277,11 @@ class OrderEndpointTest extends BaseEndpointTest
 
         $this->httpClient->setSendReturnObjectFromArray($responseBodyArray);
 
-        $response = $this->client->orders->requestAddressUpdateLink($orderId, []);
+        $response = $this->client->orders->createInvoiceUpdateLink($orderId, []);
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
-            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/request-address-update-link',
+            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/invoice-update-link',
             [],
             null
         );

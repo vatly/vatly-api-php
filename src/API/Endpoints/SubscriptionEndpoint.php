@@ -73,26 +73,29 @@ class SubscriptionEndpoint extends BaseEndpoint
     }
 
     /**
-     * Get the link to update the billing details (address and/or payment method) of a subscription.
-     * You can use the $data parameter to prefill the form with the new billing address details.
-     * @param string $subscriptionId The subscription's ID, for example: subscription_66fc8a40718b46bea50f1a25f456d243
-     * @param array $data An array containing the new billing details.
+     * Create a signed URL where the customer can update the billing details for this subscription
+     * (billing address, VAT number, company name).
      *
-     * @return Link The link is used to redirect the customer to the website to update their billing details
+     * Use the $data parameter to prefill the hosted form with a billing address.
+     *
+     * @param string $subscriptionId The subscription's ID, for example: subscription_66fc8a40718b46bea50f1a25f456d243
+     * @param array $data Pre-fill data (`redirectUrlSuccess`, `redirectUrlCanceled`, optional `billingAddress`).
+     *
+     * @return Link Redirect the customer to this URL to let them update their billing details.
      * @throws ApiException
      */
-    public function requestLinkForBillingDetailsUpdate(string $subscriptionId, array $data = []): Link
+    public function createBillingUpdateLink(string $subscriptionId, array $data = []): Link
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/update-billing";
+        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/billing-update-link";
 
         $body = null;
         if (count($data) > 0) {
             $body = json_encode($data);
         }
 
-        $result = $this->client->performHttpCall(self::REST_UPDATE, $resource, $body);
+        $result = $this->client->performHttpCall(self::REST_CREATE, $resource, $body);
 
         return new Link($result->href, $result->type);
     }

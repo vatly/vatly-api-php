@@ -46,11 +46,17 @@ class OrderEndpoint extends BaseEndpoint
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
-    public function requestAddressUpdateLink(string $id, array $data = []): Link
+    /**
+     * Create a signed URL where the customer can update the invoice details for this order
+     * (billing address, VAT number, company name).
+     *
+     * @throws ApiException
+     */
+    public function createInvoiceUpdateLink(string $id, array $data = []): Link
     {
         $this->validateOrderId($id);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/request-address-update-link";
+        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/invoice-update-link";
 
         $body = null;
         if (count($data) > 0) {

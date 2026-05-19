@@ -62,6 +62,27 @@ info:
 
     Values are strings to preserve decimal precision.
 
+    ## Email Format
+
+    Email addresses are accepted and returned in their **Punycode (ASCII)** form
+    per [RFC 3492](https://www.rfc-editor.org/rfc/rfc3492). Internationalized
+    domains must be encoded before submission:
+
+    - Submit: `user@xn--mller-kva.de` (✓)
+    - Reject: `user@müller.de` (returns `422` with `email_domain_not_ascii`)
+
+    Responses always return the canonical ASCII form — what the caller sent in
+    is what the caller gets back. This keeps email values stable for
+    programmatic use (equality checks, deduplication, hashing) and matches
+    Mollie's own API contract.
+
+    For human-friendly display in your own UI, decode the domain back to
+    Unicode. Most languages provide this in the standard library — for
+    example, PHP's `idn_to_utf8()`, Python's `idna.decode()`, or Node's
+    [`url.domainToUnicode()`](https://nodejs.org/api/url.html#urldomaintounicodedomain).
+
+    Local-part Unicode (EAI / SMTPUTF8) is not supported.
+
     ## Errors
 
     The API returns standard HTTP status codes and JSON error responses:
@@ -531,6 +552,7 @@ paths:
                   - id: subscription_Lp3mNvBxKw7RjTgYcZaE
                     resource: subscription
                     customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                    subscriptionPlanId: subscription_plan_Rk5pQrSvWm8NjLhYbUcP
                     testmode: false
                     name: Pro Monthly
                     description: Full access to all Pro features
@@ -601,6 +623,7 @@ paths:
                 id: subscription_Lp3mNvBxKw7RjTgYcZaE
                 resource: subscription
                 customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                subscriptionPlanId: subscription_plan_Rk5pQrSvWm8NjLhYbUcP
                 testmode: false
                 name: Pro Monthly
                 description: Full access to all Pro features
@@ -961,6 +984,9 @@ paths:
                       customer:
                         href: https://api.vatly.com/v1/customers/customer_Xk9pQrSvWm4NjLhYbUcP
                         type: application/json
+                      customerInvoice:
+                        href: https://vatly.com/invoices/order_Hn5xWqVfKm8RjTgYbUcP
+                        type: application/json
                 count: 1
                 links:
                   self:
@@ -1053,21 +1079,25 @@ paths:
                   customer:
                     href: https://api.vatly.com/v1/customers/customer_Xk9pQrSvWm4NjLhYbUcP
                     type: application/json
+                  customerInvoice:
+                    href: https://vatly.com/invoices/order_Hn5xWqVfKm8RjTgYbUcP
+                    type: application/json
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-  /orders/{orderId}/request-address-update-link:
+  /orders/{orderId}/invoice-update-link:
     post:
-      operationId: requestOrderAddressUpdateLink
-      summary: Request address update link
+      operationId: createOrderInvoiceUpdateLink
+      summary: Create invoice update link
       description: |
-        Generates a signed URL that allows the customer to update their billing address for this order.
+        Generates a signed URL that allows the customer to update the invoice details for this order
+        (billing address, VAT number, company name).
 
         The link is valid for a limited time (typically 24 hours) and can be sent to the customer
-        to self-service update their invoice details.
+        to self-service update their invoice.
 
         **Use cases:**
         - Customer needs to add/update VAT number
@@ -1079,7 +1109,7 @@ paths:
         - $ref: '#/components/parameters/orderId'
       responses:
         '200':
-          description: Address update link generated
+          description: Invoice update link generated
           content:
             application/json:
               schema:
@@ -2071,6 +2101,7 @@ paths:
                   - id: subscription_Lp3mNvBxKw7RjTgYcZaE
                     resource: subscription
                     customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                    subscriptionPlanId: subscription_plan_Rk5pQrSvWm8NjLhYbUcP
                     testmode: false
                     name: Pro Monthly
                     description: Full access to all Pro features
@@ -2105,6 +2136,7 @@ paths:
                   - id: subscription_Wt5mNvBxKw7YcZaEjLhR
                     resource: subscription
                     customerId: customer_Mn6xBtPvKw2RjTgYcZaE
+                    subscriptionPlanId: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
                     testmode: false
                     name: Enterprise Yearly
                     description: Enterprise features with priority support
@@ -2170,6 +2202,7 @@ paths:
                 id: subscription_Lp3mNvBxKw7RjTgYcZaE
                 resource: subscription
                 customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                subscriptionPlanId: subscription_plan_Rk5pQrSvWm8NjLhYbUcP
                 testmode: false
                 name: Pro Monthly
                 description: Full access to all Pro features
@@ -2264,7 +2297,11 @@ paths:
                   applyImmediately: false
               extendTrial:
                 summary: Extend trial period
+                description: |
+                  `trialUntil` cannot be sent on its own — at least one of
+                  `subscriptionPlanId` or `quantity` is required.
                 value:
+                  quantity: 1
                   trialUntil: '2024-02-28T00:00:00Z'
       responses:
         '200':
@@ -2277,6 +2314,7 @@ paths:
                 id: subscription_Lp3mNvBxKw7RjTgYcZaE
                 resource: subscription
                 customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                subscriptionPlanId: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 name: Pro Yearly
                 description: Full access to all Pro features, billed yearly
@@ -2367,15 +2405,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /subscriptions/{subscriptionId}/update-billing:
-    patch:
-      operationId: updateSubscriptionBilling
-      summary: Update billing details (hosted)
+  /subscriptions/{subscriptionId}/billing-update-link:
+    post:
+      operationId: createSubscriptionBillingUpdateLink
+      summary: Create billing update link
       description: |
-        Initiates a hosted billing update flow for the subscription.
-
-        Returns a redirect URL where the customer can update their billing address,
-        VAT number, and other invoice details.
+        Generates a signed URL that allows the customer to update the billing details for this
+        subscription (billing address, VAT number, company name) via a hosted flow.
 
         **Flow:**
         1. Call this endpoint with redirect URLs
@@ -2405,7 +2441,7 @@ paths:
                 taxId: DE123456789
       responses:
         '200':
-          description: Billing update flow initiated
+          description: Billing update link generated
           content:
             application/json:
               schema:
@@ -2460,6 +2496,7 @@ paths:
                 id: subscription_Lp3mNvBxKw7RjTgYcZaE
                 resource: subscription
                 customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                subscriptionPlanId: subscription_plan_Rk5pQrSvWm8NjLhYbUcP
                 testmode: true
                 name: Pro Monthly
                 description: Full access to all Pro features
@@ -2963,7 +3000,10 @@ components:
             - string
             - 'null'
           format: email
-          description: Email address
+          description: |
+            Email address.
+            Internationalized domains must use their Punycode (ASCII) form
+            per RFC 3492 — e.g. `billing@xn--mller-kva.de`.
           example: billing@acme.com
     Metadata:
       type:
@@ -3001,7 +3041,13 @@ components:
           description: Link to the previous page (null if on the first page)
     Error:
       type: object
-      description: Standard error response
+      description: |
+        Standard error response.
+
+        Every non-validation error path returns this shape — `message` is
+        always present, and `details` (if present) is an object carrying
+        structured context attached by the originating exception. HTTP
+        status code is the primary programmatic discriminator.
       required:
         - message
       properties:
@@ -3009,6 +3055,17 @@ components:
           type: string
           description: Human-readable error message
           example: The requested resource was not found.
+        details:
+          type: object
+          description: |
+            Optional structured context attached by the originating exception.
+            Shape depends on the specific error case; clients should treat
+            unknown keys as forward-compatible additions and rely on the HTTP
+            status code for branching logic.
+          additionalProperties: true
+          example:
+            resource_type: checkout
+            resource_id: checkout_abc123
     ValidationError:
       type: object
       description: Validation error response with field-specific errors
@@ -3240,7 +3297,11 @@ components:
         email:
           type: string
           format: email
-          description: Customer's email address
+          description: |
+            Customer's email address.
+            Internationalized domains are stored and returned in their
+            Punycode (ASCII) form per RFC 3492 — e.g. `user@xn--mller-kva.de`.
+            Convert back to Unicode for display in your own UI.
           example: customer@example.com
         createdAt:
           type: string
@@ -3270,6 +3331,10 @@ components:
           description: |
             Customer's email address.
             Must be unique within the merchant's account for the given testmode.
+            Internationalized domains must be submitted in their Punycode (ASCII)
+            form per RFC 3492 — e.g. `user@xn--mller-kva.de` instead of
+            `user@müller.de`. Submitting a Unicode domain returns a validation
+            error.
           example: customer@example.com
         metadata:
           $ref: '#/components/schemas/Metadata'
@@ -3529,6 +3594,7 @@ components:
           description: HATEOAS links to related resources
           required:
             - self
+            - customerInvoice
           properties:
             self:
               allOf:
@@ -3941,6 +4007,7 @@ components:
         - id
         - resource
         - customerId
+        - subscriptionPlanId
         - testmode
         - name
         - description
@@ -3950,6 +4017,13 @@ components:
         - interval
         - intervalCount
         - status
+        - startedAt
+        - endedAt
+        - cancelledAt
+        - renewedAt
+        - renewedUntil
+        - nextRenewalAt
+        - trialUntil
         - links
       properties:
         id:
@@ -4136,9 +4210,21 @@ components:
             - 'null'
           format: date
           description: |
-            Reset the billing anchor to this date.
-            Cannot be combined with `trialUntil`.
+            Set the billing anchor to a specific date.
+            The new cycle is recalculated around this anchor.
+            Cannot be combined with `resetAnchor`.
           example: '2024-02-01'
+        resetAnchor:
+          type: boolean
+          description: |
+            Reset the billing anchor to "now" — the moment the update
+            is processed becomes the new cycle anchor, and future
+            renewals align to it. Useful when a customer upgrades
+            mid-cycle and you want the new plan's billing period to
+            start fresh from today.
+            Cannot be combined with `anchor`.
+          default: false
+          example: true
         trialUntil:
           type:
             - string

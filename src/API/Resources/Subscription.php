@@ -80,13 +80,13 @@ class Subscription extends BaseResource
     }
 
     /**
-     * @param array $data An array containing the new billing details.
-     * @return Link The link is used to redirect the customer to the website to update their billing details.
+     * @param array $data Pre-fill data (`redirectUrlSuccess`, `redirectUrlCanceled`, optional `billingAddress`).
+     * @return Link Redirect the customer to this URL to let them update their billing details.
      * @throws ApiException
      */
-    public function requestLinkForBillingDetailsUpdate(array $data = []): Link
+    public function createBillingUpdateLink(array $data = []): Link
     {
-        return $this->apiClient->subscriptions->requestLinkForBillingDetailsUpdate($this->id, $data);
+        return $this->apiClient->subscriptions->createBillingUpdateLink($this->id, $data);
     }
 
     /**
