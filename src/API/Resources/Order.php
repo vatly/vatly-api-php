@@ -140,8 +140,8 @@ class Order extends BaseResource
         return $this->apiClient->orderRefunds->createFullRefundForOrderId($this->id, $data);
     }
 
-    public function requestAddressUpdateLink(array $data = []): Link
+    public function createInvoiceUpdateLink(array $data = []): Link
     {
-        return $this->apiClient->orders->requestAddressUpdateLink($this->id, $data);
+        return $this->apiClient->orders->createInvoiceUpdateLink($this->id, $data);
     }
 }
