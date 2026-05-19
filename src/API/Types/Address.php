@@ -22,7 +22,7 @@ class Address
 
     public string $companyName = '';
 
-    public string $vatNumber = '';
+    public string $taxId = '';
 
     public string $email = '';
 
@@ -47,7 +47,7 @@ class Address
         $address->countryCode = $value->countryCode ?? '';
         $address->country = $value->country ?? '';
         $address->companyName = $value->companyName ?? '';
-        $address->vatNumber = $value->vatNumber ?? '';
+        $address->taxId = $value->taxId ?? '';
         $address->email = $value->email ?? '';
 
         return $address;

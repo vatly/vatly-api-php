@@ -20,7 +20,6 @@ class RefundEndpointTest extends BaseEndpointTest
         $responseBodyArray = [
             'id' => $refundId,
             'resource' => 'refund',
-            'merchantId' => 'merchant_123',
             'customerId' => 'customer_123',
             'testmode' => false,
             'status' => RefundStatus::REFUNDED,
@@ -104,7 +103,6 @@ class RefundEndpointTest extends BaseEndpointTest
 
         $this->assertEquals($refundId, $refund->id);
         $this->assertEquals('refund', $refund->resource);
-        $this->assertEquals('merchant_123', $refund->merchantId);
         $this->assertEquals('customer_123', $refund->customerId);
         $this->assertEquals('order_dummy_id', $refund->orderId);
         $this->assertEquals('original_order_dummy_id', $refund->originalOrderId);

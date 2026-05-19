@@ -23,14 +23,11 @@ class Order extends BaseResource
     public string $resource;
 
     /**
-     * @example merchant_f7f3cbf96f6c444abd76aafaf99ecde9
-     */
-    public string $merchantId;
-
-    /**
+     * Only present when a customer is associated with the order.
+     *
      * @example customer_78b146a7de7d417e9d68d7e6ef193d18
      */
-    public string $customerId;
+    public ?string $customerId = null;
 
     /**
      * @example 2023-08-11T10:48:51+02:00
@@ -60,8 +57,6 @@ class Order extends BaseResource
     public OrderLinks $links;
 
     public Address $customerDetails;
-
-    public Address $merchantDetails;
 
     /**
      * @var OrderLine[]|array

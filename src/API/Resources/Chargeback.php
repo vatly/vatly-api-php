@@ -18,11 +18,6 @@ class Chargeback extends BaseResource
     public string $resource;
 
     /**
-     * @example merchant_f7f3cbf96f6c444abd76aafaf99ecde9
-     */
-    public string $merchantId;
-
-    /**
      * @example 2020-01-01
      */
     public string $createdAt;

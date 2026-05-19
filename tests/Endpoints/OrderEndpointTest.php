@@ -20,7 +20,6 @@ class OrderEndpointTest extends BaseEndpointTest
         $responseBodyArray = [
             'id' => $orderId,
             'resource' => 'order',
-            'merchantId' => 'merchant_123',
             'customerId' => 'customer_123',
             'testmode' => false,
             'metadata' => [
@@ -70,18 +69,6 @@ class OrderEndpointTest extends BaseEndpointTest
                     ],
                 ],
             ],
-            'merchantDetails' => [
-                'companyName' => 'Sandorian Consultancy B.V.',
-                'streetAndNumber' => 'Korte Leidsedwarsstraat 12',
-                'streetAdditional' => '2nd floor',
-                'postalCode' => '1017 PN',
-                'region' => 'Amsterdam',
-                'fullName' => '',
-                'city' => 'Amsterdam',
-                'country' => 'NL',
-                'vatNumber' => 'NL855555555B01',
-                'email' => 'office@vatly.com',
-            ],
             'customerDetails' => [
                 'companyName' => 'JOHN DOE INC.',
                 'streetAndNumber' => '112 Main Street',
@@ -91,7 +78,7 @@ class OrderEndpointTest extends BaseEndpointTest
                 'fullName' => 'John Doe',
                 'city' => 'New York',
                 'country' => 'US',
-                'vatNumber' => 'US123456789',
+                'taxId' => 'US123456789',
                 'email' => 'johndoe@example.com',
             ],
             'links' => [
@@ -117,7 +104,6 @@ class OrderEndpointTest extends BaseEndpointTest
 
         $this->assertEquals($orderId, $order->id);
         $this->assertEquals('order', $order->resource);
-        $this->assertEquals('merchant_123', $order->merchantId);
         $this->assertEquals('customer_123', $order->customerId);
         $this->assertFalse($order->testmode);
         $this->assertEquals('ideal', $order->paymentMethod);
@@ -141,17 +127,6 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('application/pdf', $order->links->customerInvoice->type);
 
 
-        $this->assertEquals('Sandorian Consultancy B.V.', $order->merchantDetails->companyName);
-        $this->assertEquals('Korte Leidsedwarsstraat 12', $order->merchantDetails->streetAndNumber);
-        $this->assertEquals('2nd floor', $order->merchantDetails->streetAdditional);
-        $this->assertEquals('1017 PN', $order->merchantDetails->postalCode);
-        $this->assertEquals('Amsterdam', $order->merchantDetails->region);
-        $this->assertEquals('', $order->merchantDetails->fullName);
-        $this->assertEquals('Amsterdam', $order->merchantDetails->city);
-        $this->assertEquals('NL', $order->merchantDetails->country);
-        $this->assertEquals('NL855555555B01', $order->merchantDetails->vatNumber);
-        $this->assertEquals('office@vatly.com', $order->merchantDetails->email);
-
         $this->assertEquals('JOHN DOE INC.', $order->customerDetails->companyName);
         $this->assertEquals('112 Main Street', $order->customerDetails->streetAndNumber);
         $this->assertEquals('3nd floor', $order->customerDetails->streetAdditional);
@@ -160,7 +135,7 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('John Doe', $order->customerDetails->fullName);
         $this->assertEquals('New York', $order->customerDetails->city);
         $this->assertEquals('US', $order->customerDetails->country);
-        $this->assertEquals('US123456789', $order->customerDetails->vatNumber);
+        $this->assertEquals('US123456789', $order->customerDetails->taxId);
         $this->assertEquals('johndoe@example.com', $order->customerDetails->email);
 
         $this->assertEquals(1, $order->lines()->count());
