@@ -6,6 +6,12 @@
 
 Sell worldwide, today, with Vatly. Dedicated to EU based SAAS merchants and software companies, accept creditcard, PayPal, ApplePay, iDEAL and more.
 
+## Using a framework?
+
+This is the raw API client. If you're building a Laravel application, you almost certainly want [`vatly/vatly-laravel`](https://github.com/Vatly/vatly-laravel) instead — it provides a Cashier-style `Billable` trait, Eloquent models, a wired webhook endpoint, and event-bus integration on top of this SDK.
+
+Other framework drivers (Symfony, WordPress) are on the roadmap. To build one, see the [Driver Author Guide](https://github.com/Vatly/vatly-fluent-php/blob/main/CONTRIBUTING.md) in [`vatly/vatly-fluent-php`](https://github.com/Vatly/vatly-fluent-php).
+
 ## Installation
 
 You can install the package via composer:
