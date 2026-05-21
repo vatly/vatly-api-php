@@ -84,18 +84,18 @@ class SubscriptionEndpoint extends BaseEndpoint
      * @return Link Redirect the customer to this URL to let them update their billing details.
      * @throws ApiException
      */
-    public function createBillingUpdateLink(string $subscriptionId, array $data = []): Link
+    public function updateBilling(string $subscriptionId, array $data = []): Link
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/billing-update-link";
+        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/update-billing";
 
         $body = null;
         if (count($data) > 0) {
             $body = json_encode($data);
         }
 
-        $result = $this->client->performHttpCall(self::REST_CREATE, $resource, $body);
+        $result = $this->client->performHttpCall(self::REST_UPDATE, $resource, $body);
 
         return new Link($result->href, $result->type);
     }
