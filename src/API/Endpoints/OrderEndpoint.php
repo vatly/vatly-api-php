@@ -47,16 +47,16 @@ class OrderEndpoint extends BaseEndpoint
     }
 
     /**
-     * Create a signed URL where the customer can update the invoice details for this order
-     * (billing address, VAT number, company name).
+     * Request a signed URL where the customer can update their billing address for this order
+     * (VAT number, company name, address). Valid for a limited time (typically 24 hours).
      *
      * @throws ApiException
      */
-    public function createInvoiceUpdateLink(string $id, array $data = []): Link
+    public function requestAddressUpdateLink(string $id, array $data = []): Link
     {
         $this->validateOrderId($id);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/invoice-update-link";
+        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/request-address-update-link";
 
         $body = null;
         if (count($data) > 0) {

@@ -2,7 +2,6 @@
 
 namespace Vatly\API\Resources;
 
-use Vatly\API\Resources\Links\OrderLineLinks;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 
@@ -29,10 +28,7 @@ class OrderLine extends BaseResource
 
     public Money $total;
 
-
     public Money $subtotal;
 
     public TaxSummaryCollection $taxes;
-
-    public OrderLineLinks $links;
 }

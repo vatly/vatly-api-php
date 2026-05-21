@@ -84,9 +84,9 @@ class Subscription extends BaseResource
      * @return Link Redirect the customer to this URL to let them update their billing details.
      * @throws ApiException
      */
-    public function createBillingUpdateLink(array $data = []): Link
+    public function updateBilling(array $data = []): Link
     {
-        return $this->apiClient->subscriptions->createBillingUpdateLink($this->id, $data);
+        return $this->apiClient->subscriptions->updateBilling($this->id, $data);
     }
 
     /**
