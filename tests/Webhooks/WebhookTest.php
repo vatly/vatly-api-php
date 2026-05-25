@@ -147,4 +147,3 @@ class WebhookTest extends TestCase
         $this->assertSame('subscription.renewed', $event->eventName);
     }
 }
-
