@@ -10,9 +10,9 @@ Below you'll find all properties for the Vatly One-Off Product resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the product (`prod_...`). |
+| `id` | `string` | Unique identifier for the product (`one_off_product_...`). |
 | `name` | `string` | Display name of the product. |
-| `description` | `string|null` | Description of the product. |
+| `description` | `string \| null` | Description of the product. |
 | `amount` | `integer` | Price in cents. |
 | `currency` | `string` | Three-letter ISO currency code. |
 | `testmode` | `bool` | Whether this is a test product. |
@@ -33,7 +33,7 @@ Retrieve a one-off product by its ID.
 
 
 ```php
-$product = $vatly->oneOffProducts->get('prod_abc123');
+$product = $vatly->oneOffProducts->get('one_off_product_abc123');
 
 echo $product->name;
 echo $product->amount / 100 . ' ' . $product->currency;
