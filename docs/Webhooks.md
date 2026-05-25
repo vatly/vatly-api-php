@@ -33,16 +33,19 @@ The SDK provides a helper to parse and verify incoming webhooks.
 | Name | Type | Description |
 | --- | --- | --- |
 | `id` | `string` | Unique webhook event ID. |
-| `type` | `string` | Event type (e.g., `checkout.paid`). |
-| `data` | `object` | The resource object that triggered the event. |
-| `createdAt` | `string` | When the event occurred (ISO 8601). |
+| `resource` | `string` | Always `webhook_event`. |
+| `eventName` | `string` | Event type (e.g., `order.paid`). |
+| `entityType` | `string` | Type of the resource this event relates to (e.g., `order`). |
+| `entityId` | `string` | ID of the resource this event relates to. |
+| `object` | `object\|null` | The full resource payload at the time of the event. |
+| `createdAt` | `string\|null` | When the event occurred (ISO 8601). |
 
 
 
 
 ```php
 use Vatly\API\VatlyApiClient;
-use Vatly\API\Webhook;
+use Vatly\API\Webhooks\Webhook;
 
 $vatly = new VatlyApiClient();
 $vatly->setApiKey('live_your_api_key_here');
@@ -55,19 +58,19 @@ $secret = 'your_webhook_secret';
 // Parse and verify the webhook
 $event = Webhook::parse($payload, $signature, $secret);
 
-switch ($event->type) {
+switch ($event->eventName) {
     case 'checkout.paid':
-        $checkout = $event->data;
+        $checkout = $event->object;
         // Fulfill the order
         break;
 
     case 'subscription.renewed':
-        $subscription = $event->data;
+        $subscription = $event->object;
         // Extend access
         break;
 
     case 'chargeback.created':
-        $chargeback = $event->data;
+        $chargeback = $event->object;
         // Suspend account, notify team
         break;
 }
@@ -90,7 +93,7 @@ Always verify webhook signatures to ensure the request came from Vatly.
 
 
 ```php
-use Vatly\API\Webhook;
+use Vatly\API\Webhooks\Webhook;
 use Vatly\API\Exceptions\InvalidSignatureException;
 
 try {
@@ -120,7 +123,7 @@ For Laravel applications, you can use controller middleware and route handling.
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Vatly\API\Webhook;
+use Vatly\API\Webhooks\Webhook;
 
 class VatlyWebhookController extends Controller
 {
@@ -132,9 +135,9 @@ class VatlyWebhookController extends Controller
             config('services.vatly.webhook_secret')
         );
 
-        match ($event->type) {
-            'checkout.paid' => $this->handleCheckoutPaid($event->data),
-            'subscription.canceled' => $this->handleCanceled($event->data),
+        match ($event->eventName) {
+            'checkout.paid' => $this->handleCheckoutPaid($event->object),
+            'subscription.canceled' => $this->handleCanceled($event->object),
             default => null,
         };
 
