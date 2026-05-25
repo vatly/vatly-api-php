@@ -10,14 +10,14 @@ Below you'll find all properties for the Vatly Subscription Plan resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the plan (`plan_...`). |
+| `id` | `string` | Unique identifier for the plan (`subscription_plan_...`). |
 | `name` | `string` | Display name of the plan. |
-| `description` | `string|null` | Description of the plan. |
+| `description` | `string \| null` | Description of the plan. |
 | `amount` | `integer` | Price in cents. |
 | `currency` | `string` | Three-letter ISO currency code. |
 | `interval` | `string` | Billing interval: `day`, `week`, `month`, or `year`. |
 | `intervalCount` | `integer` | Number of intervals between billings. |
-| `trialDays` | `integer|null` | Default trial period in days. |
+| `trialDays` | `integer \| null` | Default trial period in days. |
 | `testmode` | `bool` | Whether this is a test plan. |
 | `status` | `string` | The status: `approved`, `draft`, or `archived`. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
@@ -36,7 +36,7 @@ Retrieve a subscription plan by its ID.
 
 
 ```php
-$plan = $vatly->subscriptionPlans->get('plan_abc123');
+$plan = $vatly->subscriptionPlans->get('subscription_plan_abc123');
 
 echo $plan->name;
 echo $plan->amount / 100 . ' ' . $plan->currency;

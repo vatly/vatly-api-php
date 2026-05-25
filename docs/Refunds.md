@@ -10,12 +10,12 @@ Below you'll find all properties for the Vatly Refund resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the refund (`ref_...`). |
+| `id` | `string` | Unique identifier for the refund (`refund_...`). |
 | `status` | `string` | The status: `pending`, `completed`, `failed`, or `canceled`. |
 | `orderId` | `string` | The order ID being refunded. |
 | `amount` | `integer` | Refund amount in cents. |
 | `currency` | `string` | Three-letter ISO currency code. |
-| `reason` | `string|null` | Reason for the refund. |
+| `reason` | `string \| null` | Reason for the refund. |
 | `testmode` | `bool` | Whether this is a test refund. |
 | `metadata` | `array` | Your custom metadata. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
@@ -49,13 +49,13 @@ Create a refund for an order.
 ```php
 // Full refund
 $refund = $vatly->refunds->create([
-    'orderId' => 'ord_abc123',
+    'orderId' => 'order_abc123',
     'reason' => 'Customer requested refund',
 ]);
 
 // Partial refund
 $refund = $vatly->refunds->create([
-    'orderId' => 'ord_abc123',
+    'orderId' => 'order_abc123',
     'amount' => 1000,  // Refund €10.00
 ]);
 
@@ -79,7 +79,7 @@ Retrieve a refund by its ID.
 
 
 ```php
-$refund = $vatly->refunds->get('ref_abc123');
+$refund = $vatly->refunds->get('refund_abc123');
 
 echo $refund->status;
 echo $refund->amount / 100 . ' ' . $refund->currency;

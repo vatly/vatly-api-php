@@ -18,7 +18,7 @@ Below you'll find all properties for the Vatly Chargeback resource.
 | `settlementAmount` | `object` | Amount deducted from settlement (may differ from `amount`). |
 | `reason` | `string` | Reason code for the dispute (e.g. `fraud`, `product_not_received`, `duplicate`). |
 | `originalOrderId` | `string` | The ID of the original order that was disputed. |
-| `orderId` | `string\|null` | The credit note order ID (after processing). |
+| `orderId` | `string \| null` | The credit note order ID (after processing). |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 
 ---

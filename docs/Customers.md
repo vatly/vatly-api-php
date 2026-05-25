@@ -10,9 +10,9 @@ Below you'll find all properties for the Vatly Customer resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the customer (`cus_...`). |
+| `id` | `string` | Unique identifier for the customer (`customer_...`). |
 | `email` | `string` | Customer's email address. |
-| `name` | `string|null` | Customer's name. |
+| `name` | `string \| null` | Customer's name. |
 | `testmode` | `bool` | Whether this is a test customer. |
 | `metadata` | `array` | Your custom metadata. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
@@ -52,7 +52,7 @@ $customer = $vatly->customers->create([
     ],
 ]);
 
-echo $customer->id;  // cus_abc123
+echo $customer->id;  // customer_abc123
 ```
 
 
@@ -71,7 +71,7 @@ Retrieve a customer by their ID.
 
 
 ```php
-$customer = $vatly->customers->get('cus_abc123');
+$customer = $vatly->customers->get('customer_abc123');
 
 echo $customer->email;
 echo $customer->name;
@@ -109,6 +109,6 @@ foreach ($customers as $customer) {
 // Pagination
 $customers = $vatly->customers->list([
     'limit' => 25,
-    'startingAfter' => 'cus_last_id',
+    'startingAfter' => 'customer_last_id',
 ]);
 ```

@@ -8,21 +8,21 @@ Below you'll find all properties for the Vatly Subscription resource.
 
 ### Properties
 
-| Name | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | Unique identifier for the subscription (`sub_...`). |
-| `status` | `string` | The status: `active`, `created`, `trial`, `on_grace_period`, or `paused`. |
-| `customerId` | `string` | The customer ID. |
-| `planId` | `string` | The subscription plan ID. |
-| `testmode` | `bool` | Whether this is a test subscription. |
-| `currentPeriodStart` | `string` | Current billing period start (ISO 8601). |
-| `currentPeriodEnd` | `string` | Current billing period end (ISO 8601). |
-| `canceledAt` | `string|null` | When the subscription was canceled (ISO 8601). |
-| `endedAt` | `string|null` | When the subscription ended (ISO 8601). |
-| `trialStart` | `string|null` | Trial period start (ISO 8601). |
-| `trialEnd` | `string|null` | Trial period end (ISO 8601). |
-| `metadata` | `array` | Your custom metadata. |
-| `createdAt` | `string` | Creation timestamp (ISO 8601). |
+| Name | Type             | Description |
+| --- |------------------| --- |
+| `id` | `string`         | Unique identifier for the subscription (`subscription_...`). |
+| `status` | `string`         | The status: `active`, `created`, `trial`, `on_grace_period`, or `paused`. |
+| `customerId` | `string`         | The customer ID. |
+| `planId` | `string`         | The subscription plan ID. |
+| `testmode` | `bool`           | Whether this is a test subscription. |
+| `currentPeriodStart` | `string`         | Current billing period start (ISO 8601). |
+| `currentPeriodEnd` | `string`         | Current billing period end (ISO 8601). |
+| `canceledAt` | `string \| null` | When the subscription was canceled (ISO 8601). |
+| `endedAt` | `string \| null` | When the subscription ended (ISO 8601). |
+| `trialStart` | `string \| null` | Trial period start (ISO 8601). |
+| `trialEnd` | `string \| null` | Trial period end (ISO 8601). |
+| `metadata` | `array`          | Your custom metadata. |
+| `createdAt` | `string`         | Creation timestamp (ISO 8601). |
 
 ---
 
@@ -38,7 +38,7 @@ Retrieve a subscription by its ID.
 
 
 ```php
-$subscription = $vatly->subscriptions->get('sub_abc123');
+$subscription = $vatly->subscriptions->get('subscription_abc123');
 
 echo $subscription->status;
 echo $subscription->planId;
@@ -80,7 +80,7 @@ foreach ($subscriptions as $subscription) {
 
 // Filter by customer
 $subscriptions = $vatly->subscriptions->list([
-    'customerId' => 'cus_abc123',
+    'customerId' => 'customer_abc123',
 ]);
 ```
 
@@ -132,7 +132,7 @@ Cancel a subscription. The subscription will remain active until the end of the 
 
 
 ```php
-$subscription = $vatly->subscriptions->cancel('sub_abc123');
+$subscription = $vatly->subscriptions->cancel('subscription_abc123');
 
 // Subscription is now on grace period until current period ends
 echo $subscription->status;        // 'on_grace_period'

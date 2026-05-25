@@ -10,15 +10,15 @@ Below you'll find all properties for the Vatly Checkout resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the checkout (`chk_...`). |
+| `id` | `string` | Unique identifier for the checkout (`checkout_...`). |
 | `status` | `string` | The status of the checkout: `created`, `paid`, `canceled`, `failed`, or `expired`. |
 | `merchantId` | `string` | Your merchant ID. |
-| `orderId` | `string|null` | Order ID (available after successful payment). |
+| `orderId` | `string \| null` | Order ID (available after successful payment). |
 | `testmode` | `bool` | Whether this is a test checkout. |
 | `redirectUrlSuccess` | `string` | Success redirect URL. |
 | `redirectUrlCanceled` | `string` | Cancel redirect URL. |
 | `metadata` | `array` | Your custom metadata. |
-| `expiresAt` | `string|null` | Expiration timestamp (ISO 8601). |
+| `expiresAt` | `string \| null` | Expiration timestamp (ISO 8601). |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 
 ---
@@ -53,14 +53,14 @@ Create a new hosted checkout for your customer.
 $checkout = $vatly->checkouts->create([
     'products' => [
         [
-            'id' => 'plan_abc123',
+            'id' => 'subscription_plan_abc123',
             'quantity' => 1,
             'trialDays' => 14,
         ]
     ],
     'redirectUrlSuccess' => 'https://yourapp.com/success',
     'redirectUrlCanceled' => 'https://yourapp.com/canceled',
-    'customerId' => 'cus_xyz789',
+    'customerId' => 'customer_xyz789',
     'metadata' => [
         'user_id' => '12345',
     ],
@@ -76,7 +76,7 @@ If you want to provide your own idempotency key for this request, pass it in the
 $checkout = $vatly->checkouts->create([
     'products' => [
         [
-            'id' => 'plan_abc123',
+            'id' => 'subscription_plan_abc123',
             'quantity' => 1,
         ],
     ],
@@ -91,7 +91,7 @@ If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header auto
 
 ```json
 {
-  "id": "chk_abc123",
+  "id": "checkout_abc123",
   "status": "created",
   "merchantId": "merchant_xyz",
   "orderId": null,
@@ -101,7 +101,7 @@ If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header auto
   "metadata": {"user_id": "12345"},
   "createdAt": "2024-12-14T13:32:24.000Z",
   "_links": {
-    "checkoutUrl": "https://pay.vatly.com/chk_abc123"
+    "checkoutUrl": "https://pay.vatly.com/checkout_abc123"
   }
 }
 ```
@@ -122,7 +122,7 @@ Retrieve a checkout by its ID.
 
 
 ```php
-$checkout = $vatly->checkouts->get('chk_abc123');
+$checkout = $vatly->checkouts->get('checkout_abc123');
 
 echo $checkout->id;
 echo $checkout->status;
@@ -166,7 +166,7 @@ foreach ($checkouts as $checkout) {
 // Pagination
 $checkouts = $vatly->checkouts->list([
     'limit' => 25,
-    'startingAfter' => 'chk_last_id',
+    'startingAfter' => 'checkout_last_id',
 ]);
 ```
 
