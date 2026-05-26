@@ -36,7 +36,7 @@ Every delivery carries a [`WebhookEvent`](../src/API/Resources/WebhookEvent.php)
 | `eventName` | `string` | One of the events listed above (e.g. `order.paid`). |
 | `entityType` | `string` | Type of the related resource (e.g. `order`, `refund`, `subscription`). |
 | `entityId` | `string` | ID of the related resource (e.g. `order_Hn5xWqVfKm8RjTgYbUcP`). |
-| `object` | `object` | The full resource payload at the time of the event. Shape depends on `entityType`. |
+| `object` | `object\|null` | The full resource payload at the time of the event. Shape depends on `entityType`. |
 | `links` | `object` | HATEOAS links — `links.self.href` points to this webhook event. |
 
 ### Example payload
@@ -78,30 +78,33 @@ The signature scheme prefix (`v1=`) leaves room for future algorithm versions; r
 
 ---
 
-## Verifying signatures
+## Handling webhooks
 
-Always verify the `Vatly-Signature` header before processing a webhook. The SDK ships [`WebhookSignatureValidator`](../src/API/Webhooks/WebhookSignatureValidator.php) for exactly that.
+The SDK ships [`Webhook::parse()`](../src/API/Webhooks/Webhook.php) — a one-shot helper that verifies the signature, decodes the JSON, and returns a typed [`WebhookPayload`](../src/API/Webhooks/WebhookPayload.php) ready to dispatch on.
 
 Verification is performed against the **raw request body bytes**. JSON that is parsed and re-encoded will not match the signature — read the body directly (e.g. `file_get_contents('php://input')`) before any framework deserialises it.
 
 ```php
 use Vatly\API\Exceptions\InvalidSignatureException;
-use Vatly\API\Webhooks\WebhookSignatureValidator;
+use Vatly\API\Webhooks\Webhook;
 
 $payload   = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_VATLY_SIGNATURE'] ?? '';
 $secret    = getenv('VATLY_WEBHOOK_SECRET');
 
-$validator = new WebhookSignatureValidator($secret);
-
 try {
-    $validator->verify($payload, $signature);
+    $event = Webhook::parse($payload, $signature, $secret);
 } catch (InvalidSignatureException $e) {
     http_response_code(401);
     exit('Invalid signature');
 }
 
-$event = json_decode($payload);
+// Dedupe with Vatly-Event-Id (stable across retry attempts).
+$eventId = $_SERVER['HTTP_VATLY_EVENT_ID'] ?? $event->id;
+if (alreadyProcessed($eventId)) {
+    http_response_code(200);
+    exit;
+}
 
 match ($event->eventName) {
     'order.paid'         => handleOrderPaid($event),
@@ -110,33 +113,28 @@ match ($event->eventName) {
     default              => null,
 };
 
+markProcessed($eventId);
 http_response_code(200);
 ```
 
-If you prefer a non-throwing check, use `isValid()`:
-
-```php
-if (! $validator->isValid($payload, $signature)) {
-    http_response_code(401);
-    exit('Invalid signature');
-}
-```
+`Webhook::parse()` throws `Vatly\API\Exceptions\InvalidSignatureException` when the signature header is malformed, the timestamp is outside the tolerance window, or the HMAC does not match. It throws `InvalidArgumentException` when the body is not valid JSON or is missing required fields.
 
 ### Replay-window tolerance
 
-The signed timestamp (`t=...`) lets receivers reject stale deliveries. By default `WebhookSignatureValidator` accepts signatures up to **300 seconds** old; anything outside that window throws `InvalidSignatureException`.
-
-Override the window via the `toleranceSeconds` constructor argument when you have a specific need (e.g. running against recorded fixtures in a test suite):
+The signed timestamp (`t=...`) lets receivers reject stale deliveries. By default signatures more than **300 seconds** old are rejected. If you need a custom window — for example when replaying captured fixtures in a test suite — instantiate [`WebhookSignatureValidator`](../src/API/Webhooks/WebhookSignatureValidator.php) directly:
 
 ```php
+use Vatly\API\Webhooks\WebhookSignatureValidator;
+
 $validator = new WebhookSignatureValidator($secret, toleranceSeconds: 60);
+$validator->verify($payload, $signature);
 ```
 
-We recommend keeping the default in production. A tighter window makes a leaked signature less useful; a much wider window weakens the replay-defense guarantee.
+Keep the default in production. A tighter window makes a leaked signature less useful; a much wider window weakens the replay-defense guarantee.
 
-### Header name constants
+### Lower-level access
 
-Header names are exposed as class constants so you don't have to hardcode the strings.
+If you only need signature verification (e.g. handling the decoded body yourself, or operating on a non-standard payload shape), use [`WebhookSignatureValidator`](../src/API/Webhooks/WebhookSignatureValidator.php) directly. It exposes `verify()`, `isValid()`, and `calculateSignature()`, plus header-name constants:
 
 ```php
 WebhookSignatureValidator::SIGNATURE_HEADER_NAME; // 'Vatly-Signature'

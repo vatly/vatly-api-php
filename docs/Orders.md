@@ -10,17 +10,17 @@ Below you'll find all properties for the Vatly Order resource.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique identifier for the order (`ord_...`). |
+| `id` | `string` | Unique identifier for the order (`order_...`). |
 | `status` | `string` | The status: `pending`, `paid`, or `failed`. |
 | `customerId` | `string` | The customer ID. |
-| `checkoutId` | `string|null` | The checkout ID (for initial orders). |
-| `subscriptionId` | `string|null` | The subscription ID (for recurring orders). |
+| `checkoutId` | `string \| null` | The checkout ID (for initial orders). |
+| `subscriptionId` | `string \| null` | The subscription ID (for recurring orders). |
 | `amount` | `integer` | Total amount in cents. |
 | `currency` | `string` | Three-letter ISO currency code. |
 | `taxAmount` | `integer` | Tax amount in cents. |
 | `testmode` | `bool` | Whether this is a test order. |
 | `metadata` | `array` | Your custom metadata. |
-| `paidAt` | `string|null` | When the order was paid (ISO 8601). |
+| `paidAt` | `string \| null` | When the order was paid (ISO 8601). |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 
 ---
@@ -37,7 +37,7 @@ Retrieve an order by its ID.
 
 
 ```php
-$order = $vatly->orders->get('ord_abc123');
+$order = $vatly->orders->get('order_abc123');
 
 echo $order->status;
 echo $order->amount / 100 . ' ' . $order->currency;
@@ -79,7 +79,7 @@ foreach ($orders as $order) {
 
 // Filter by customer
 $orders = $vatly->orders->list([
-    'customerId' => 'cus_abc123',
+    'customerId' => 'customer_abc123',
 ]);
 ```
 
