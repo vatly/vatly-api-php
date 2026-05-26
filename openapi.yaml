@@ -2050,6 +2050,8 @@ paths:
                   subtotal:
                     value: '24.79'
                     currency: EUR
+                createdAt: '2024-01-15T10:30:00Z'
+                testmode: false
                 links:
                   self:
                     href: https://api.vatly.com/v1/webhook-events/webhook_event_Qk8pRtSvWm2NjLhYcZaE
@@ -3947,6 +3949,8 @@ components:
         - entityType
         - entityId
         - object
+        - createdAt
+        - testmode
         - links
       properties:
         id:
@@ -3988,6 +3992,15 @@ components:
           description: |
             The full resource payload at the time of the event.
             The shape depends on the `entityType` (e.g., Order, Refund, Chargeback, Subscription, Checkout).
+        createdAt:
+          type: string
+          format: date-time
+          description: When this event occurred (ISO 8601 format)
+          example: '2024-01-15T10:30:00Z'
+        testmode:
+          type: boolean
+          description: Whether this event was produced in test mode
+          example: false
         links:
           type: object
           description: HATEOAS links to related resources

@@ -37,6 +37,8 @@ Every delivery carries a [`WebhookEvent`](../src/API/Resources/WebhookEvent.php)
 | `entityType` | `string` | Type of the related resource (e.g. `order`, `refund`, `subscription`). |
 | `entityId` | `string` | ID of the related resource (e.g. `order_Hn5xWqVfKm8RjTgYbUcP`). |
 | `object` | `object\|null` | The full resource payload at the time of the event. Shape depends on `entityType`. |
+| `createdAt` | `string` | When the event occurred, ISO 8601 (e.g. `2024-01-15T10:30:00+00:00`). |
+| `testmode` | `bool` | `true` when the event was produced by a test-mode resource. |
 | `links` | `object` | HATEOAS links — `links.self.href` points to this webhook event. |
 
 ### Example payload
@@ -54,6 +56,8 @@ Every delivery carries a [`WebhookEvent`](../src/API/Resources/WebhookEvent.php)
         "status": "paid",
         "total": { "value": "29.99", "currency": "EUR" }
     },
+    "createdAt": "2024-01-15T10:30:00+00:00",
+    "testmode": false,
     "links": {
         "self": {
             "href": "https://api.vatly.com/v1/webhook-events/webhook_event_Qk8pRtSvWm2NjLhYcZaE",

@@ -47,5 +47,17 @@ class WebhookEvent extends BaseResource
      */
     public $object = null;
 
+    /**
+     * When this event occurred (ISO 8601 format).
+     *
+     * @example 2023-08-11T10:48:51+02:00
+     */
+    public string $createdAt;
+
+    /**
+     * Whether this event was produced in test mode.
+     */
+    public bool $testmode;
+
     public WebhookEventLinks $links;
 }

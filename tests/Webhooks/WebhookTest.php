@@ -23,6 +23,8 @@ class WebhookTest extends TestCase
             'entityType' => 'order',
             'entityId' => 'order_Hn5xWqVfKm8RjTgYbUcP',
             'object' => ['id' => 'order_Hn5xWqVfKm8RjTgYbUcP', 'resource' => 'order'],
+            'createdAt' => '2024-01-15T10:30:00+00:00',
+            'testmode' => false,
         ], $overrides);
 
         return json_encode($data);
@@ -50,8 +52,20 @@ class WebhookTest extends TestCase
         $this->assertSame('order.paid', $event->eventName);
         $this->assertSame('order', $event->entityType);
         $this->assertSame('order_Hn5xWqVfKm8RjTgYbUcP', $event->entityId);
+        $this->assertSame('2024-01-15T10:30:00+00:00', $event->createdAt);
+        $this->assertFalse($event->testmode);
         $this->assertIsObject($event->object);
         $this->assertSame('order_Hn5xWqVfKm8RjTgYbUcP', $event->object->id);
+    }
+
+    public function test_it_parses_testmode_true(): void
+    {
+        $payload = $this->makePayload(['testmode' => true]);
+        $signature = $this->sign($payload);
+
+        $event = Webhook::parse($payload, $signature, $this->secret);
+
+        $this->assertTrue($event->testmode);
     }
 
     public function test_it_parses_a_webhook_without_object(): void
@@ -62,6 +76,8 @@ class WebhookTest extends TestCase
             'eventName' => 'order.paid',
             'entityType' => 'order',
             'entityId' => 'order_Hn5xWqVfKm8RjTgYbUcP',
+            'createdAt' => '2024-01-15T10:30:00+00:00',
+            'testmode' => false,
         ];
         $payload = json_encode($data);
         $signature = $this->sign($payload);
@@ -112,6 +128,8 @@ class WebhookTest extends TestCase
             'eventName' => 'order.paid',
             'entityType' => 'order',
             'entityId' => 'order_Hn5xWqVfKm8RjTgYbUcP',
+            'createdAt' => '2024-01-15T10:30:00+00:00',
+            'testmode' => false,
         ];
         unset($data[$field]);
 
@@ -128,6 +146,8 @@ class WebhookTest extends TestCase
             'eventName' => ['eventName'],
             'entityType' => ['entityType'],
             'entityId' => ['entityId'],
+            'createdAt' => ['createdAt'],
+            'testmode' => ['testmode'],
         ];
     }
 

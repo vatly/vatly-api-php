@@ -54,12 +54,26 @@ class WebhookPayload
      */
     public ?object $object;
 
+    /**
+     * When this event occurred (ISO 8601 format).
+     *
+     * @example 2023-08-11T10:48:51+02:00
+     */
+    public string $createdAt;
+
+    /**
+     * Whether this event was produced in test mode.
+     */
+    public bool $testmode;
+
     public function __construct(
         string $id,
         string $resource,
         string $eventName,
         string $entityType,
         string $entityId,
+        string $createdAt,
+        bool $testmode,
         ?object $object = null,
     ) {
         $this->id = $id;
@@ -67,6 +81,8 @@ class WebhookPayload
         $this->eventName = $eventName;
         $this->entityType = $entityType;
         $this->entityId = $entityId;
+        $this->createdAt = $createdAt;
+        $this->testmode = $testmode;
         $this->object = $object;
     }
 }

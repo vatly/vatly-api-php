@@ -30,6 +30,8 @@ class WebhookEventEndpointTest extends BaseEndpointTest
                 'total' => ['value' => '29.99', 'currency' => 'EUR'],
                 'subtotal' => ['value' => '24.79', 'currency' => 'EUR'],
             ],
+            'createdAt' => '2024-01-15T10:30:00+00:00',
+            'testmode' => false,
             'links' => [
                 'self' => [
                     'href' => self::API_ENDPOINT_URL.'/webhook-events/'.$webhookEventId,
@@ -56,6 +58,8 @@ class WebhookEventEndpointTest extends BaseEndpointTest
         $this->assertEquals(WebhookEventType::ORDER_PAID, $event->eventName);
         $this->assertEquals('order', $event->entityType);
         $this->assertEquals($orderId, $event->entityId);
+        $this->assertEquals('2024-01-15T10:30:00+00:00', $event->createdAt);
+        $this->assertFalse($event->testmode);
         $this->assertIsObject($event->object);
         $this->assertEquals($orderId, $event->object->id);
         $this->assertEquals('paid', $event->object->status);
