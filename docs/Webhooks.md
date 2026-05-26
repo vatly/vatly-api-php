@@ -39,6 +39,7 @@ The SDK provides a helper to parse and verify incoming webhooks.
 | `entityId` | `string` | ID of the resource this event relates to. |
 | `object` | `object\|null` | The full resource payload at the time of the event. |
 | `createdAt` | `string\|null` | When the event occurred (ISO 8601). |
+| `testmode` | `bool` | Whether this event was generated in test mode. |
 
 
 

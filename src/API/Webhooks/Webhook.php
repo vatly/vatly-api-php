@@ -35,7 +35,7 @@ class Webhook
             );
         }
 
-        foreach (['id', 'resource', 'eventName', 'entityType', 'entityId'] as $field) {
+        foreach (['id', 'resource', 'eventName', 'entityType', 'entityId', 'createdAt', 'testmode'] as $field) {
             if (! isset($decoded->{$field})) {
                 throw new \InvalidArgumentException(
                     "Webhook payload is missing required field: {$field}"
@@ -56,6 +56,8 @@ class Webhook
             $decoded->eventName,
             $decoded->entityType,
             $decoded->entityId,
+            $decoded->testmode,
+            $decoded->createdAt,
             $object,
         );
     }

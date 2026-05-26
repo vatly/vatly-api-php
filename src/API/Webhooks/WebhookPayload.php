@@ -54,12 +54,21 @@ class WebhookPayload
      */
     public ?object $object;
 
+    /**
+     * @example 2023-08-11T10:48:51+02:00
+     */
+    public string $createdAt;
+
+    public bool $testmode;
+
     public function __construct(
         string $id,
         string $resource,
         string $eventName,
         string $entityType,
         string $entityId,
+        bool $testmode,
+        string $createdAt,
         ?object $object = null,
     ) {
         $this->id = $id;
@@ -68,5 +77,7 @@ class WebhookPayload
         $this->entityType = $entityType;
         $this->entityId = $entityId;
         $this->object = $object;
+        $this->testmode = $testmode;
+        $this->createdAt = $createdAt;
     }
 }
