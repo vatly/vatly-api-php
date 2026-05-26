@@ -23,6 +23,8 @@ class WebhookTest extends TestCase
             'entityType' => 'order',
             'entityId' => 'order_Hn5xWqVfKm8RjTgYbUcP',
             'object' => ['id' => 'order_Hn5xWqVfKm8RjTgYbUcP', 'resource' => 'order'],
+            'createdAt' => '2023-01-11T10:50:50+02:00',
+            'testmode' => true,
         ], $overrides);
 
         return json_encode($data);
@@ -52,6 +54,9 @@ class WebhookTest extends TestCase
         $this->assertSame('order_Hn5xWqVfKm8RjTgYbUcP', $event->entityId);
         $this->assertIsObject($event->object);
         $this->assertSame('order_Hn5xWqVfKm8RjTgYbUcP', $event->object->id);
+        $this->assertSame('order', $event->object->resource);
+        $this->assertTrue($event->testmode);
+        $this->assertSame('2023-01-11T10:50:50+02:00', $event->createdAt);
     }
 
     public function test_it_parses_a_webhook_without_object(): void
@@ -62,6 +67,8 @@ class WebhookTest extends TestCase
             'eventName' => 'order.paid',
             'entityType' => 'order',
             'entityId' => 'order_Hn5xWqVfKm8RjTgYbUcP',
+            'createdAt' => '2023-01-11T10:50:50+02:00',
+            'testmode' => true,
         ];
         $payload = json_encode($data);
         $signature = $this->sign($payload);
