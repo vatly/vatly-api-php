@@ -1,142 +1,193 @@
 # Webhooks
 
-Vatly sends webhooks to notify your application when events happen, like successful checkouts, subscription renewals, or chargebacks.
+Vatly sends webhooks to notify your application when events happen — for example, an order being paid, a refund completing, or a subscription being canceled.
 
-## Webhook Events
+## Webhook events
+
+The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Types\WebhookEvent`](../src/API/Types/WebhookEvent.php) for the constants.
 
 | Event | Description |
 |-------|-------------|
-| `checkout.paid` | Checkout completed successfully |
-| `checkout.failed` | Checkout payment failed |
-| `checkout.expired` | Checkout expired |
-| `subscription.created` | New subscription started |
-| `subscription.renewed` | Subscription renewed |
-| `subscription.canceled` | Subscription canceled |
-| `subscription.ended` | Subscription ended |
-| `order.paid` | Order payment received |
-| `refund.created` | Refund initiated |
-| `refund.completed` | Refund completed |
-| `chargeback.created` | Chargeback received |
-| `chargeback.won` | Chargeback dispute won |
-| `chargeback.lost` | Chargeback dispute lost |
+| `order.paid` | Order payment was successful. |
+| `order.canceled` | Order was canceled. |
+| `order.chargeback_received` | Chargeback was received for an order. |
+| `order.chargeback_reversed` | Chargeback was reversed. |
+| `refund.completed` | Refund was processed successfully. |
+| `refund.failed` | Refund processing failed. |
+| `refund.canceled` | Refund was canceled. |
+| `subscription.started` | Subscription was started. |
+| `subscription.canceled_immediately` | Subscription was canceled immediately. |
+| `subscription.canceled_with_grace_period` | Subscription was canceled, customer keeps access until the period ends. |
+| `subscription.cancellation_grace_period_completed` | Grace period after cancellation ended. |
+| `checkout.expired` | Checkout session expired. |
 
 ---
 
-## Handling webhooks
+## The WebhookEvent resource
 
+Every delivery carries a [`WebhookEvent`](../src/API/Resources/WebhookEvent.php) JSON object in the request body. This is the same shape returned by `GET /v1/webhook-events/:id`.
 
-
-The SDK provides a helper to parse and verify incoming webhooks.
-
-### Webhook payload
+### Properties
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `id` | `string` | Unique webhook event ID. |
-| `type` | `string` | Event type (e.g., `checkout.paid`). |
-| `data` | `object` | The resource object that triggered the event. |
-| `createdAt` | `string` | When the event occurred (ISO 8601). |
+| `id` | `string` | Unique identifier for the webhook event (`webhook_event_...`). |
+| `resource` | `string` | Always `webhook_event`. |
+| `eventName` | `string` | One of the events listed above (e.g. `order.paid`). |
+| `entityType` | `string` | Type of the related resource (e.g. `order`, `refund`, `subscription`). |
+| `entityId` | `string` | ID of the related resource (e.g. `order_Hn5xWqVfKm8RjTgYbUcP`). |
+| `object` | `object` | The full resource payload at the time of the event. Shape depends on `entityType`. |
+| `links` | `object` | HATEOAS links — `links.self.href` points to this webhook event. |
 
+### Example payload
 
-
-
-```php
-use Vatly\API\VatlyApiClient;
-use Vatly\API\Webhook;
-
-$vatly = new VatlyApiClient();
-$vatly->setApiKey('live_your_api_key_here');
-
-// Get the raw webhook payload
-$payload = file_get_contents('php://input');
-$signature = $_SERVER['HTTP_VATLY_SIGNATURE'] ?? '';
-$secret = 'your_webhook_secret';
-
-// Parse and verify the webhook
-$event = Webhook::parse($payload, $signature, $secret);
-
-switch ($event->type) {
-    case 'checkout.paid':
-        $checkout = $event->data;
-        // Fulfill the order
-        break;
-
-    case 'subscription.renewed':
-        $subscription = $event->data;
-        // Extend access
-        break;
-
-    case 'chargeback.created':
-        $chargeback = $event->data;
-        // Suspend account, notify team
-        break;
+```json
+{
+    "id": "webhook_event_Qk8pRtSvWm2NjLhYcZaE",
+    "resource": "webhook_event",
+    "eventName": "order.paid",
+    "entityType": "order",
+    "entityId": "order_Hn5xWqVfKm8RjTgYbUcP",
+    "object": {
+        "id": "order_Hn5xWqVfKm8RjTgYbUcP",
+        "resource": "order",
+        "status": "paid",
+        "total": { "value": "29.99", "currency": "EUR" }
+    },
+    "links": {
+        "self": {
+            "href": "https://api.vatly.com/v1/webhook-events/webhook_event_Qk8pRtSvWm2NjLhYcZaE",
+            "type": "application/json"
+        }
+    }
 }
-
-// Return 200 OK
-http_response_code(200);
 ```
-
-
 
 ---
 
-## Signature verification
+## Delivery headers
 
+Each webhook request includes two Vatly-specific headers.
 
+| Header | Description |
+| --- | --- |
+| `Vatly-Signature` | Structured signature value: `t=<unix_seconds>,v1=<hex_hmac_sha256>`. Verify this before trusting the payload. |
+| `Vatly-Event-Id` | The `id` of the underlying webhook event. Stable across retry attempts — use it as your idempotency / dedup key. |
 
-Always verify webhook signatures to ensure the request came from Vatly.
+The signature scheme prefix (`v1=`) leaves room for future algorithm versions; receivers that verify against `v1` will keep working if additional versions appear alongside it.
 
+---
 
+## Verifying signatures
 
+Always verify the `Vatly-Signature` header before processing a webhook. The SDK ships [`WebhookSignatureValidator`](../src/API/Webhooks/WebhookSignatureValidator.php) for exactly that.
+
+Verification is performed against the **raw request body bytes**. JSON that is parsed and re-encoded will not match the signature — read the body directly (e.g. `file_get_contents('php://input')`) before any framework deserialises it.
 
 ```php
-use Vatly\API\Webhook;
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Webhooks\WebhookSignatureValidator;
+
+$payload   = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_VATLY_SIGNATURE'] ?? '';
+$secret    = getenv('VATLY_WEBHOOK_SECRET');
+
+$validator = new WebhookSignatureValidator($secret);
 
 try {
-    $event = Webhook::parse($payload, $signature, $secret);
-    // Signature valid, process event
+    $validator->verify($payload, $signature);
 } catch (InvalidSignatureException $e) {
-    // Invalid signature, reject request
+    http_response_code(401);
+    exit('Invalid signature');
+}
+
+$event = json_decode($payload);
+
+match ($event->eventName) {
+    'order.paid'         => handleOrderPaid($event),
+    'refund.completed'   => handleRefundCompleted($event),
+    'checkout.expired'   => handleCheckoutExpired($event),
+    default              => null,
+};
+
+http_response_code(200);
+```
+
+If you prefer a non-throwing check, use `isValid()`:
+
+```php
+if (! $validator->isValid($payload, $signature)) {
     http_response_code(401);
     exit('Invalid signature');
 }
 ```
 
+### Replay-window tolerance
 
+The signed timestamp (`t=...`) lets receivers reject stale deliveries. By default `WebhookSignatureValidator` accepts signatures up to **300 seconds** old; anything outside that window throws `InvalidSignatureException`.
+
+Override the window via the `toleranceSeconds` constructor argument when you have a specific need (e.g. running against recorded fixtures in a test suite):
+
+```php
+$validator = new WebhookSignatureValidator($secret, toleranceSeconds: 60);
+```
+
+We recommend keeping the default in production. A tighter window makes a leaked signature less useful; a much wider window weakens the replay-defense guarantee.
+
+### Header name constants
+
+Header names are exposed as class constants so you don't have to hardcode the strings.
+
+```php
+WebhookSignatureValidator::SIGNATURE_HEADER_NAME; // 'Vatly-Signature'
+WebhookSignatureValidator::EVENT_ID_HEADER_NAME;  // 'Vatly-Event-Id'
+```
 
 ---
 
 ## Laravel integration
 
-
-
-For Laravel applications, you can use controller middleware and route handling.
-
-
-
+For Laravel applications, route the webhook to a dedicated controller and read the raw request body so the signature lines up with what was actually sent.
 
 ```php
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Vatly\API\Webhook;
+use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Webhooks\WebhookSignatureValidator;
 
 class VatlyWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        $event = Webhook::parse(
-            $request->getContent(),
-            $request->header('Vatly-Signature'),
-            config('services.vatly.webhook_secret')
+        $validator = new WebhookSignatureValidator(
+            config('services.vatly.webhook_secret'),
         );
 
-        match ($event->type) {
-            'checkout.paid' => $this->handleCheckoutPaid($event->data),
-            'subscription.canceled' => $this->handleCanceled($event->data),
-            default => null,
+        try {
+            $validator->verify(
+                $request->getContent(),
+                $request->header(WebhookSignatureValidator::SIGNATURE_HEADER_NAME, ''),
+            );
+        } catch (InvalidSignatureException) {
+            return response()->json(['error' => 'invalid signature'], 401);
+        }
+
+        $event   = json_decode($request->getContent());
+        $eventId = $request->header(WebhookSignatureValidator::EVENT_ID_HEADER_NAME);
+
+        // Skip if you've already processed this event id.
+        if ($this->alreadyProcessed($eventId)) {
+            return response()->json(['received' => true]);
+        }
+
+        match ($event->eventName) {
+            'order.paid'         => $this->handleOrderPaid($event),
+            'refund.completed'   => $this->handleRefundCompleted($event),
+            default              => null,
         };
+
+        $this->markProcessed($eventId);
 
         return response()->json(['received' => true]);
     }
@@ -148,14 +199,12 @@ Route::post('/webhooks/vatly', [VatlyWebhookController::class, 'handle'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 ```
 
-
-
 ---
 
 ## Best practices
 
-1. **Always verify signatures** before processing webhooks
-2. **Return 200 quickly** to avoid timeout retries
-3. **Process asynchronously** for long-running tasks (queue jobs)
-4. **Handle duplicates** using the event ID (webhooks may be retried)
-5. **Log webhook events** for debugging and auditing
+1. **Always verify signatures** before processing webhook payloads.
+2. **Verify against the raw body**, not parsed-and-reserialised JSON.
+3. **Dedupe with `Vatly-Event-Id`** — retries reuse the same event id, while the signature deliberately rotates per attempt.
+4. **Return 200 quickly** to avoid timeout retries. Offload long-running work to a queue.
+5. **Log webhook events** for debugging and auditing.
