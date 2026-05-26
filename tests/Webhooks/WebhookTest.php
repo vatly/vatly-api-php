@@ -30,9 +30,13 @@ class WebhookTest extends TestCase
         return json_encode($data);
     }
 
-    private function sign(string $payload): string
+    private function sign(string $payload, ?string $secret = null, ?int $timestamp = null): string
     {
-        return hash_hmac('sha256', $payload, $this->secret);
+        $secret ??= $this->secret;
+        $timestamp ??= time();
+        $v1 = hash_hmac('sha256', $timestamp.'.'.$payload, $secret);
+
+        return "t={$timestamp},v1={$v1}";
     }
 
     public function test_it_parses_a_valid_webhook(): void
@@ -87,7 +91,7 @@ class WebhookTest extends TestCase
         $this->expectException(InvalidSignatureException::class);
 
         $payload = $this->makePayload();
-        $signature = hash_hmac('sha256', $payload, 'wrong_secret');
+        $signature = $this->sign($payload, 'wrong_secret');
         Webhook::parse($payload, $signature, $this->secret);
     }
 

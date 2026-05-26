@@ -234,7 +234,12 @@ class VatlyApiClient
             $headers['X-Vatly-Client-Info'] = php_uname();
         }
 
-        if (in_array($httpMethod, [self::HTTP_POST, self::HTTP_PATCH])) {
+        // Auto-attach Idempotency-Key on every mutating verb the Vatly API
+        // dedupes for. The server-side middleware accepts the header on
+        // POST/PATCH/PUT/DELETE (see vatlify's EnsureRequestIsOnlyHandledOnce
+        // ALLOWED_METHODS); PUT isn't enumerated here because no spec
+        // endpoint uses it today and CurlHttpClient doesn't wire it up.
+        if (in_array($httpMethod, [self::HTTP_POST, self::HTTP_PATCH, self::HTTP_DELETE])) {
             $idempotencyKey = $this->idempotencyKey;
 
             if ($idempotencyKey === null && $this->idempotencyKeyGenerator !== null) {
