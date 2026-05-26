@@ -68,14 +68,33 @@ class VatlyApiClientIdempotencyTest extends BaseTestCase
     }
 
     /** @test */
-    public function no_idempotency_key_header_on_delete()
+    public function auto_generates_idempotency_key_on_delete_by_default()
     {
+        // The vatlify API accepts Idempotency-Key on DELETE per its middleware's
+        // ALLOWED_METHODS (POST, PATCH, PUT, DELETE), so we auto-key DELETE too.
+        // This makes transient retries safe for cancel-style endpoints.
+        $this->client->setIdempotencyKeyGenerator(new DefaultIdempotencyKeyGenerator());
+
         $this->httpClient->setSendReturnNull();
 
-        $this->client->performHttpCall(VatlyApiClient::HTTP_DELETE, 'checkouts/checkout_123');
+        $this->client->performHttpCall(VatlyApiClient::HTTP_DELETE, 'subscriptions/subscription_123');
 
         $headers = $this->httpClient->lastSentHeaders();
-        $this->assertArrayNotHasKey('Idempotency-Key', $headers);
+        $this->assertArrayHasKey('Idempotency-Key', $headers);
+        $this->assertEquals(16, strlen($headers['Idempotency-Key']));
+    }
+
+    /** @test */
+    public function manual_key_applies_to_delete()
+    {
+        $this->client->setIdempotencyKey('my-cancel-key');
+
+        $this->httpClient->setSendReturnNull();
+
+        $this->client->performHttpCall(VatlyApiClient::HTTP_DELETE, 'subscriptions/subscription_123');
+
+        $headers = $this->httpClient->lastSentHeaders();
+        $this->assertEquals('my-cancel-key', $headers['Idempotency-Key']);
     }
 
     /** @test */
