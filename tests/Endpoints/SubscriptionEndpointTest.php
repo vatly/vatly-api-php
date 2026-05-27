@@ -190,6 +190,37 @@ class SubscriptionEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function can_resume_subscription()
+    {
+        /** @var Subscription $subscription */
+        $subscription = ResourceFactory::createResourceFromApiResult((object) $this->subscriptionDemoData('subscription_123', SubscriptionStatus::ON_GRACE_PERIOD), new Subscription($this->client));
+
+        $this->httpClient->setSendReturnObjectFromArray($this->subscriptionDemoData('subscription_123', SubscriptionStatus::ACTIVE));
+        $resumed = $subscription->resume();
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/resume',
+            [],
+            null
+        );
+
+        $this->assertInstanceOf(Subscription::class, $resumed);
+        $this->assertEquals(SubscriptionStatus::ACTIVE, $resumed->status);
+    }
+
+    /** @test */
+    public function can_resume_subscription_with_idempotency_key()
+    {
+        $this->httpClient->setSendReturnObjectFromArray($this->subscriptionDemoData('subscription_123'));
+        $this->client->setIdempotencyKey('my-resume-idempotency-key');
+        $this->client->subscriptions->resume('subscription_123');
+
+        $headers = $this->httpClient->lastSentHeaders();
+        $this->assertEquals('my-resume-idempotency-key', $headers['Idempotency-Key']);
+    }
+
+    /** @test */
     public function can_update_billing_details()
     {
         /** @var Subscription $subscription */
