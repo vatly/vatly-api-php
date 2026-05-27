@@ -8,6 +8,7 @@ use Vatly\API\Resources\BaseResource;
 use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Customer;
 use Vatly\API\Resources\Links\PaginationLinks;
+use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
 use Vatly\API\Types\Link;
@@ -108,6 +109,34 @@ class SubscriptionEndpoint extends BaseEndpoint
         $this->validateSubscriptionId($subscriptionId);
 
         return $this->rest_delete($subscriptionId, $data);
+    }
+
+    /**
+     * Resume a subscription that is currently on grace period.
+     *
+     * Reverses a pending cancellation while the subscription is still active
+     * (i.e. before `renewedUntil`). Once a subscription has fully ended it
+     * cannot be resumed.
+     *
+     * @throws ApiException
+     */
+    public function resume(string $subscriptionId, array $data = []): ?BaseResource
+    {
+        $this->validateSubscriptionId($subscriptionId);
+
+        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/resume";
+
+        $result = $this->client->performHttpCall(
+            self::REST_CREATE,
+            $resource,
+            $this->parseRequestBody($data),
+        );
+
+        if ($result === null) {
+            return null;
+        }
+
+        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
     }
 
     /**

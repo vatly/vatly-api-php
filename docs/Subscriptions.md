@@ -143,6 +143,33 @@ echo $subscription->currentPeriodEnd;  // When it ends
 
 ---
 
+## Resume a subscription
+
+`POST /v1/subscriptions/:id/resume`
+
+
+
+Reverse a pending cancellation while the subscription is still on its grace period. Once a subscription has fully ended it cannot be resumed.
+
+
+
+
+```php
+$subscription = $vatly->subscriptions->resume('subscription_abc123');
+
+echo $subscription->status; // 'active'
+```
+
+If you already have a `Subscription` resource instance:
+
+```php
+$subscription->resume();
+```
+
+
+
+---
+
 ## Subscription statuses
 
 | Status | Description |

@@ -2373,7 +2373,8 @@ paths:
         - **Immediate:** Subscription ends immediately when `immediately=true` is specified
 
         **Notes:**
-        - Canceled subscriptions cannot be reactivated through the API
+        - Subscriptions on grace period can be reactivated via `POST /subscriptions/{subscriptionId}/resume`
+        - Subscriptions that have fully ended cannot be reactivated
         - Customers retain access until `renewedUntil` date (unless canceled immediately)
         - No refunds are issued automatically; use the Refunds API if needed
       tags:
@@ -2401,6 +2402,41 @@ paths:
           $ref: '#/components/responses/NotFound'
         '422':
           description: Subscription cannot be canceled (already canceled or ended)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /subscriptions/{subscriptionId}/resume:
+    post:
+      operationId: resumeSubscription
+      summary: Resume a subscription
+      description: |
+        Reverses a pending cancellation while the subscription is still on its grace
+        period (i.e. before `renewedUntil`). The subscription returns to `active` status
+        and will continue renewing on its existing schedule.
+
+        **Notes:**
+        - Only subscriptions in the `on_grace_period` status can be resumed
+        - Subscriptions that have fully ended cannot be resumed
+      tags:
+        - Subscriptions
+      parameters:
+        - $ref: '#/components/parameters/subscriptionId'
+      responses:
+        '200':
+          description: Subscription resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          description: Subscription cannot be resumed (not on grace period, already ended, or canceled)
           content:
             application/json:
               schema:

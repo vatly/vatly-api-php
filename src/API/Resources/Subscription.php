@@ -97,6 +97,14 @@ class Subscription extends BaseResource
         return $this->apiClient->subscriptions->cancel($this->id, $data);
     }
 
+    /**
+     * @throws ApiException
+     */
+    public function resume(array $data = []): ?BaseResource
+    {
+        return $this->apiClient->subscriptions->resume($this->id, $data);
+    }
+
     public function isCanceled(): bool
     {
         return $this->status === SubscriptionStatus::CANCELED;
