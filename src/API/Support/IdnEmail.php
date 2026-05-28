@@ -43,12 +43,21 @@ class IdnEmail
      * Walk a request payload and normalize any string value at a key named
      * 'email' to its Punycode (ASCII) form. Recurses into nested arrays.
      *
+     * The `metadata` key is treated as opaque: the OpenAPI spec defines it
+     * as arbitrary application-defined key/value data, so the SDK must not
+     * rewrite values nested inside it (e.g. a caller storing their own
+     * `metadata.email` key should get it through to the API untouched).
+     *
      * @param array<int|string, mixed> $payload
      * @return array<int|string, mixed>
      */
     public static function normalizePayload(array $payload): array
     {
         foreach ($payload as $key => $value) {
+            if ($key === 'metadata') {
+                continue;
+            }
+
             if (is_array($value)) {
                 $payload[$key] = self::normalizePayload($value);
 

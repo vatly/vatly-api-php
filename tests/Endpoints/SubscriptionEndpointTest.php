@@ -247,6 +247,29 @@ class SubscriptionEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function update_billing_punycodes_email_domains_in_billing_address(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray([
+            'href' => self::WEBSITE_ENDPOINT_URL.'/checkout/checkout_dummy_id/update',
+            'type' => 'text/html',
+        ]);
+
+        $this->client->subscriptions->updateBilling('subscription_123', [
+            'billingAddress' => [
+                'email' => 'billing@müller.de',
+                'city' => 'München',
+            ],
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_PATCH,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/update-billing',
+            [],
+            '{"billingAddress":{"email":"billing@xn--mller-kva.de","city":"München"}}'
+        );
+    }
+
+    /** @test */
     public function can_update_subscription_quantity()
     {
         /** @var Subscription $subscription */

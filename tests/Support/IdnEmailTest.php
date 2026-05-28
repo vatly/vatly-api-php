@@ -89,4 +89,29 @@ class IdnEmailTest extends TestCase
 
         $this->assertSame($input, IdnEmail::normalizePayload($input));
     }
+
+    /** @test */
+    public function normalize_payload_leaves_metadata_untouched(): void
+    {
+        // `metadata` is opaque application-defined data per the OpenAPI spec.
+        // The SDK must not rewrite values nested inside it, even when a caller
+        // happens to use a key named `email` for their own purposes.
+        $input = [
+            'email' => 'user@müller.de',
+            'metadata' => [
+                'email' => 'tracker+user@müller.de',
+                'nested' => ['email' => 'should-also-be-left-alone@münchen.de'],
+            ],
+        ];
+
+        $expected = [
+            'email' => 'user@xn--mller-kva.de',
+            'metadata' => [
+                'email' => 'tracker+user@müller.de',
+                'nested' => ['email' => 'should-also-be-left-alone@münchen.de'],
+            ],
+        ];
+
+        $this->assertSame($expected, IdnEmail::normalizePayload($input));
+    }
 }

@@ -58,12 +58,11 @@ class OrderEndpoint extends BaseEndpoint
 
         $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/request-address-update-link";
 
-        $body = null;
-        if (count($data) > 0) {
-            $body = json_encode($data);
-        }
-
-        $result = $this->client->performHttpCall(self::REST_CREATE, $resource, $body);
+        $result = $this->client->performHttpCall(
+            self::REST_CREATE,
+            $resource,
+            $this->parseRequestBody($data),
+        );
 
         return new Link($result->href, $result->type);
     }
