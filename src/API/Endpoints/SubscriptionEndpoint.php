@@ -91,12 +91,11 @@ class SubscriptionEndpoint extends BaseEndpoint
 
         $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/update-billing";
 
-        $body = null;
-        if (count($data) > 0) {
-            $body = json_encode($data);
-        }
-
-        $result = $this->client->performHttpCall(self::REST_UPDATE, $resource, $body);
+        $result = $this->client->performHttpCall(
+            self::REST_UPDATE,
+            $resource,
+            $this->parseRequestBody($data),
+        );
 
         return new Link($result->href, $result->type);
     }
