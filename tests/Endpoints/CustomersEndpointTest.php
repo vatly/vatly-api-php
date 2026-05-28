@@ -96,6 +96,37 @@ class CustomersEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function it_punycodes_the_email_domain_before_sending(): void
+    {
+        $responseBodyArray = [
+            'id' => 'customer_78b146a7de7d417e9d68d7e6ef193d18',
+            'resource' => 'customer',
+            'email' => 'user@xn--mnchen-3ya.de',
+            'createdAt' => '2020-01-01T00:00:00+00:00',
+            'testmode' => true,
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL . '/customers/customer_78b146a7de7d417e9d68d7e6ef193d18',
+                    'type' => 'application/hal+json',
+                ],
+            ],
+        ];
+
+        $this->httpClient->setSendReturnObjectFromArray($responseBodyArray);
+
+        $this->client->customers->create([
+            'email' => 'user@münchen.de',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL . '/customers',
+            [],
+            '{"email":"user@xn--mnchen-3ya.de"}'
+        );
+    }
+
+    /** @test */
     public function it_can_get_a_customer(): void
     {
         $responseBodyArray = [

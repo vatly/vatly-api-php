@@ -24,6 +24,7 @@
     "require": {
         "php": "^8.0",
         "ext-curl": "*",
+        "ext-intl": "*",
         "ext-json": "*",
         "ext-openssl": "*",
         "composer/ca-bundle": "^1.3"

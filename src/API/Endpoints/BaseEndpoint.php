@@ -10,6 +10,7 @@ use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\LinksResourceFactory;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\ResourceFactory;
+use Vatly\API\Support\IdnEmail;
 use Vatly\API\VatlyApiClient;
 
 abstract class BaseEndpoint
@@ -228,7 +229,7 @@ abstract class BaseEndpoint
             return null;
         }
 
-        return @json_encode($body);
+        return @json_encode(IdnEmail::normalizePayload($body));
     }
 
     /**
