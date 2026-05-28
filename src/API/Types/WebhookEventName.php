@@ -2,7 +2,7 @@
 
 namespace Vatly\API\Types;
 
-class WebhookEvent
+class WebhookEventName
 {
     public const ORDER_PAID = 'order.paid';
     public const ORDER_CANCELED = 'order.canceled';
