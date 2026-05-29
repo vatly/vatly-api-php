@@ -96,9 +96,11 @@ Verification is performed against the **raw request body bytes**. JSON that is p
 ```php
 use Vatly\API\Exceptions\InvalidSignatureException;
 use Vatly\API\Webhooks\Webhook;
+use Vatly\API\Webhooks\WebhookSetupCallPayload;
+use Vatly\API\Webhooks\WebhookSignatureValidator;
 
 $payload   = file_get_contents('php://input');
-$signature = $_SERVER['HTTP_VATLY_SIGNATURE'] ?? '';
+$signature = $_SERVER[WebhookSignatureValidator::SIGNATURE_HEADER_NAME] ?? '';
 $secret    = getenv('VATLY_WEBHOOK_SECRET');
 
 try {
@@ -108,8 +110,13 @@ try {
     exit('Invalid signature');
 }
 
+if ($event instanceof WebhookSetupCallPayload) {
+    http_response_code(200);
+    exit;
+}
+
 // Dedupe with Vatly-Event-Id (stable across retry attempts).
-$eventId = $_SERVER['HTTP_VATLY_EVENT_ID'] ?? $event->id;
+$eventId = $_SERVER[WebhookSignatureValidator::EVENT_ID_HEADER_NAME] ?? $event->id;
 if (alreadyProcessed($eventId)) {
     http_response_code(200);
     exit;
@@ -125,6 +132,8 @@ match ($event->eventName) {
 markProcessed($eventId);
 http_response_code(200);
 ```
+
+When a webhook endpoint is registered, Vatly sends a signed setup call with `{"message":"Setup call","testmode":true}`. `Webhook::parse()` returns a `WebhookSetupCallPayload` for this body so receivers can acknowledge it without running normal event handling.
 
 `Webhook::parse()` throws `Vatly\API\Exceptions\InvalidSignatureException` when the signature header is malformed, the timestamp is outside the tolerance window, or the HMAC does not match. It throws `InvalidArgumentException` when the body is not valid JSON or is missing required fields.
 

@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Vatly\API\Exceptions\InvalidSignatureException;
 use Vatly\API\Webhooks\Webhook;
 use Vatly\API\Webhooks\WebhookPayload;
+use Vatly\API\Webhooks\WebhookSetupCallPayload;
 
 class WebhookTest extends TestCase
 {
@@ -75,6 +76,24 @@ class WebhookTest extends TestCase
 
         $event = Webhook::parse($payload, $signature, $this->secret);
 
+        $this->assertNull($event->object);
+    }
+
+    public function test_it_parses_the_webhook_setup_call(): void
+    {
+        $payload = json_encode([
+            'message' => 'Setup call',
+            'testmode' => true,
+        ]);
+        $signature = $this->sign($payload);
+
+        $event = Webhook::parse($payload, $signature, $this->secret);
+
+        $this->assertInstanceOf(WebhookSetupCallPayload::class, $event);
+        $this->assertSame('Setup call', $event->message);
+        $this->assertSame(WebhookSetupCallPayload::RESOURCE, $event->resource);
+        $this->assertSame(WebhookSetupCallPayload::EVENT_NAME, $event->eventName);
+        $this->assertTrue($event->testmode);
         $this->assertNull($event->object);
     }
 

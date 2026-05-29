@@ -35,6 +35,10 @@ class Webhook
             );
         }
 
+        if (self::isSetupCall($decoded)) {
+            return new WebhookSetupCallPayload($decoded->message, $decoded->testmode);
+        }
+
         foreach (['id', 'resource', 'eventName', 'entityType', 'entityId', 'createdAt', 'testmode'] as $field) {
             if (! isset($decoded->{$field})) {
                 throw new \InvalidArgumentException(
@@ -60,5 +64,16 @@ class Webhook
             $decoded->createdAt,
             $object,
         );
+    }
+
+    private static function isSetupCall($decoded): bool
+    {
+        if (! is_object($decoded)) {
+            return false;
+        }
+
+        return isset($decoded->message, $decoded->testmode)
+            && is_bool($decoded->testmode)
+            && ! isset($decoded->id);
     }
 }
