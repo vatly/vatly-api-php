@@ -38,7 +38,7 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         $this->assertTrue($subscription->testmode);
         $this->assertEquals('2023-01-11T10:50:50+02:00', $subscription->startedAt);
         $this->assertNull($subscription->endedAt);
-        $this->assertNull($subscription->cancelledAt);
+        $this->assertNull($subscription->canceledAt);
         $this->assertNull($subscription->renewedAt);
         $this->assertNull($subscription->renewedUntil);
         $this->assertEquals('2023-02-11T10:50:50+02:00', $subscription->nextRenewalAt);
@@ -339,7 +339,7 @@ class SubscriptionEndpointTest extends BaseEndpointTest
             'description' => 'Test subscription description',
             'startedAt' => '2023-01-11T10:50:50+02:00',
             'endedAt' => null,
-            'cancelledAt' => null,
+            'canceledAt' => null,
             'renewedAt' => null,
             'renewedUntil' => null,
             'nextRenewalAt' => '2023-02-11T10:50:50+02:00',

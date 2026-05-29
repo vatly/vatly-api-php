@@ -59,7 +59,7 @@ class Subscription extends BaseResource
 
     public ?string $endedAt;
 
-    public ?string $cancelledAt;
+    public ?string $canceledAt;
 
     public ?string $renewedAt;
 
