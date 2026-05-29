@@ -5,6 +5,7 @@ namespace Vatly\Tests\Endpoints;
 use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
+use Vatly\API\Types\Mandate;
 use Vatly\API\Types\SubscriptionStatus;
 use Vatly\API\VatlyApiClient;
 
@@ -43,6 +44,9 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         $this->assertEquals('2023-02-11T10:50:50+02:00', $subscription->nextRenewalAt);
         $this->assertEquals('US', $subscription->billingAddress->country);
         $this->assertEquals('New York', $subscription->billingAddress->city);
+        $this->assertInstanceOf(Mandate::class, $subscription->mandate);
+        $this->assertEquals('card', $subscription->mandate->method);
+        $this->assertEquals('4242', $subscription->mandate->maskedIdentifier);
         $this->assertTrue($subscription->isActive());
         $this->assertFalse($subscription->isCanceled());
         $this->assertFalse($subscription->isOnGracePeriod());
@@ -57,6 +61,21 @@ class SubscriptionEndpointTest extends BaseEndpointTest
             [],
             null
         );
+    }
+
+    /** @test */
+    public function mandate_can_be_null()
+    {
+        $subscriptionId = 'subscription_no_mandate';
+        $responseBodyArray = $this->subscriptionDemoData($subscriptionId);
+        $responseBodyArray['mandate'] = null;
+
+        $this->httpClient->setSendReturnObjectFromArray($responseBodyArray);
+
+        /** @var Subscription $subscription */
+        $subscription = $this->client->subscriptions->get($subscriptionId);
+
+        $this->assertNull($subscription->mandate);
     }
 
     /** @test */
@@ -344,6 +363,10 @@ class SubscriptionEndpointTest extends BaseEndpointTest
             'basePrice' => [
                 'value' => '10.00',
                 'currency' => 'EUR',
+            ],
+            'mandate' => [
+                'method' => 'card',
+                'maskedIdentifier' => '4242',
             ],
             'links' => [
                 'self' => [

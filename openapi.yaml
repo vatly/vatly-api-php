@@ -611,6 +611,9 @@ paths:
                     interval: month
                     intervalCount: 1
                     status: active
+                    mandate:
+                      method: card
+                      maskedIdentifier: '4242'
                     startedAt: '2024-01-15T10:30:00Z'
                     endedAt: null
                     cancelledAt: null
@@ -682,6 +685,9 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                mandate:
+                  method: card
+                  maskedIdentifier: '4242'
                 startedAt: '2024-01-15T10:30:00Z'
                 endedAt: null
                 cancelledAt: null
@@ -2194,6 +2200,9 @@ paths:
                     interval: month
                     intervalCount: 1
                     status: active
+                    mandate:
+                      method: card
+                      maskedIdentifier: '4242'
                     startedAt: '2024-01-15T10:30:00Z'
                     endedAt: null
                     cancelledAt: null
@@ -2230,6 +2239,9 @@ paths:
                     interval: year
                     intervalCount: 1
                     status: active
+                    mandate:
+                      method: card
+                      maskedIdentifier: '4242'
                     startedAt: '2024-01-01T00:00:00Z'
                     endedAt: null
                     cancelledAt: null
@@ -2295,6 +2307,9 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                mandate:
+                  method: card
+                  maskedIdentifier: '4242'
                 startedAt: '2024-01-15T10:30:00Z'
                 endedAt: null
                 cancelledAt: null
@@ -2411,6 +2426,9 @@ paths:
                 interval: year
                 intervalCount: 1
                 status: active
+                mandate:
+                  method: card
+                  maskedIdentifier: '4242'
                 startedAt: '2024-01-15T10:30:00Z'
                 endedAt: null
                 cancelledAt: null
@@ -2624,6 +2642,9 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                mandate:
+                  method: card
+                  maskedIdentifier: '4242'
                 startedAt: '2024-01-15T10:30:00Z'
                 endedAt: null
                 cancelledAt: null
@@ -2707,6 +2728,9 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                mandate:
+                  method: card
+                  maskedIdentifier: '4242'
                 startedAt: '2024-01-15T10:30:00Z'
                 endedAt: null
                 cancelledAt: null
@@ -4371,6 +4395,7 @@ components:
         - interval
         - intervalCount
         - status
+        - mandate
         - startedAt
         - endedAt
         - cancelledAt
@@ -4453,6 +4478,15 @@ components:
             - paused
             - canceled
           example: active
+        mandate:
+          oneOf:
+            - $ref: '#/components/schemas/Mandate'
+            - type: 'null'
+          description: |
+            Payment method on file for this subscription, as an inline summary
+            intended for billing-portal rendering ("Visa ending in 4242"). May
+            be `null` when the subscription has no mandate yet (e.g. ended /
+            canceled-before-payment states).
         startedAt:
           type:
             - string
@@ -4618,6 +4652,53 @@ components:
           description: |
             Pre-fill billing address fields.
             Customer can modify these values in the hosted form.
+    Mandate:
+      type: object
+      description: |
+        A mandate represents an authorization to charge a customer's payment method
+        on a recurring basis (cards, SEPA Direct Debit, PayPal, Bacs).
+
+        This shape is the inline summary exposed on subscriptions — enough to
+        render "Visa ending in 4242" in a billing portal without an extra round
+        trip. A dedicated `/v1/mandates/{id}` endpoint with richer detail (status,
+        validity timestamps, billing snapshot) is on the roadmap; fields here are
+        forward-compatible additions to that future schema.
+      required:
+        - method
+        - maskedIdentifier
+      additionalProperties: false
+      properties:
+        method:
+          type: string
+          description: |
+            Normalized payment method category, provider-agnostic:
+            - `card` — credit/debit card (incl. Apple Pay, Google Pay wallets)
+            - `sepa_debit` — SEPA Direct Debit (incl. iDEAL, Bancontact, KBC and
+              other rail aliases that settle into a directdebit mandate)
+            - `paypal` — PayPal billing agreement
+            - `bacs_debit` — UK Bacs Direct Debit
+          enum:
+            - card
+            - sepa_debit
+            - paypal
+            - bacs_debit
+          example: card
+        maskedIdentifier:
+          type:
+            - string
+            - 'null'
+          description: |
+            Customer-facing masked identifier for the payment method on file:
+            the last 4 of a card (`"4242"`), a masked IBAN (`"NL91****4300"`),
+            a masked PayPal email (`"j***@example.com"`), or last 4 of a Bacs
+            account (`"****5678"`).
+
+            May briefly be `null` for freshly-subscribed customers when the
+            underlying authorization event doesn't carry the masked identifier
+            inline — in that case it lands on a follow-up sync (runs at most
+            every 5 minutes) and the field updates from `null` to the resolved
+            value once the sync completes.
+          example: '4242'
     TaxSummaryRate:
       type: object
       description: Simplified tax rate information

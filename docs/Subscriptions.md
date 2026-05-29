@@ -22,6 +22,7 @@ Below you'll find all properties for the Vatly Subscription resource.
 | `trialStart` | `string \| null` | Trial period start (ISO 8601). |
 | `trialEnd` | `string \| null` | Trial period end (ISO 8601). |
 | `metadata` | `array`          | Your custom metadata. |
+| `mandate` | `object \| null` | Payment method on file (`method`, `maskedIdentifier`). Null when the subscription has no mandate yet. |
 | `createdAt` | `string`         | Creation timestamp (ISO 8601). |
 
 ---

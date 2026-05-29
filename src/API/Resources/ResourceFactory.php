@@ -9,6 +9,7 @@ use ReflectionProperty;
 use Vatly\API\Resources\Links\BaseLinksResource;
 use Vatly\API\Resources\Links\LinksResourceFactory;
 use Vatly\API\Types\Address;
+use Vatly\API\Types\Mandate;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\VatlyApiClient;
@@ -66,6 +67,13 @@ class ResourceFactory
                 case 'taxSummary':
                 case 'taxes':
                     $resource->{$property} = TaxSummaryCollection::createResourceFromApiResult($value);
+
+                    break;
+
+                case 'mandate':
+                    $resource->{$property} = null === $value
+                        ? null
+                        : Mandate::createResourceFromApiResult($value);
 
                     break;
 
