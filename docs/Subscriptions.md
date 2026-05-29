@@ -8,22 +8,30 @@ Below you'll find all properties for the Vatly Subscription resource.
 
 ### Properties
 
-| Name | Type             | Description |
-| --- |------------------| --- |
-| `id` | `string`         | Unique identifier for the subscription (`subscription_...`). |
-| `status` | `string`         | The status: `active`, `created`, `trial`, `on_grace_period`, or `paused`. |
-| `customerId` | `string`         | The customer ID. |
-| `planId` | `string`         | The subscription plan ID. |
-| `testmode` | `bool`           | Whether this is a test subscription. |
-| `currentPeriodStart` | `string`         | Current billing period start (ISO 8601). |
-| `currentPeriodEnd` | `string`         | Current billing period end (ISO 8601). |
-| `canceledAt` | `string \| null` | When the subscription was canceled (ISO 8601). |
-| `endedAt` | `string \| null` | When the subscription ended (ISO 8601). |
-| `trialStart` | `string \| null` | Trial period start (ISO 8601). |
-| `trialEnd` | `string \| null` | Trial period end (ISO 8601). |
-| `metadata` | `array`          | Your custom metadata. |
-| `mandate` | `object \| null` | Payment method on file (`method`, `maskedIdentifier`). Null when the subscription has no mandate yet. |
-| `createdAt` | `string`         | Creation timestamp (ISO 8601). |
+| Name | Type                | Description |
+| --- |---------------------| --- |
+| `id` | `string`            | Unique identifier for the subscription (`subscription_...`). |
+| `resource` | `string`            | Resource type, always `subscription`. |
+| `customerId` | `string`            | ID of the customer who owns this subscription. |
+| `subscriptionPlanId` | `string`            | ID of the subscription plan this subscription is based on. |
+| `testmode` | `bool`              | Whether this subscription is in test mode. |
+| `name` | `string`            | Name of the subscription (from the plan). |
+| `description` | `string`            | Description of the subscription. |
+| `billingAddress` | `Address`           | Customer's billing address for this subscription. |
+| `basePrice` | `Money`             | Price per billing cycle before taxes. |
+| `quantity` | `int`               | Number of subscription units (e.g. seats). |
+| `interval` | `string`            | Billing interval unit: `day`, `week`, `month`, or `year`. |
+| `intervalCount` | `int`               | Number of interval units between billing cycles. |
+| `status` | `string`            | The subscription status (see [Subscription statuses](#subscription-statuses)). |
+| `startedAt` | `string`            | When the subscription started (ISO 8601). |
+| `endedAt` | `string \| null`    | When the subscription ended (ISO 8601). |
+| `canceledAt` | `string \| null`    | When the subscription was canceled (ISO 8601). |
+| `renewedAt` | `string \| null`    | When the subscription was last renewed (ISO 8601). |
+| `renewedUntil` | `string \| null`    | Current billing period end date (ISO 8601). |
+| `nextRenewalAt` | `string \| null`    | When the next renewal will be attempted (ISO 8601). Null if canceled or ended. |
+| `trialUntil` | `string \| null`    | When the trial period ends (ISO 8601). Null if not in trial or trial has ended. |
+| `mandate` | `Mandate \| null`   | Payment method on file (`method`, `maskedIdentifier`). Null when the subscription has no mandate yet. |
+| `links` | `SubscriptionLinks` | HATEOAS links to related resources (`self`, `customer`). |
 
 ---
 
@@ -42,7 +50,7 @@ Retrieve a subscription by its ID.
 $subscription = $vatly->subscriptions->get('subscription_abc123');
 
 echo $subscription->status;
-echo $subscription->planId;
+echo $subscription->subscriptionPlanId;
 
 if ($subscription->isActive()) {
     echo 'Subscription is active';
@@ -137,7 +145,7 @@ $subscription = $vatly->subscriptions->cancel('subscription_abc123');
 
 // Subscription is now on grace period until current period ends
 echo $subscription->status;        // 'on_grace_period'
-echo $subscription->currentPeriodEnd;  // When it ends
+echo $subscription->renewedUntil;  // Current billing period end
 ```
 
 
@@ -175,11 +183,12 @@ $subscription->resume();
 
 | Status | Description |
 |--------|-------------|
-| `active` | Subscription is active and billing |
-| `created` | Subscription created, not yet active |
-| `trial` | In trial period |
-| `on_grace_period` | Canceled but still active until current period ends |
-| `paused` | Subscription is paused |
+| `active` | Subscription is active and will renew |
+| `created` | Subscription has been created but not yet started |
+| `trial` | Subscription is in trial period |
+| `on_grace_period` | Subscription is canceled but still active until the period ends |
+| `paused` | Subscription is temporarily paused |
+| `canceled` | Subscription has been canceled |
 
 ---
 
@@ -193,9 +202,8 @@ The Subscription object provides convenient helper methods.
 
 
 ```php
-$subscription->isActive();       // true if status is 'active'
-$subscription->isCreated();      // true if status is 'created'
-$subscription->onTrial();        // true if status is 'trial'
-$subscription->onGracePeriod();  // true if status is 'on_grace_period'
-$subscription->isPaused();       // true if status is 'paused'
+$subscription->isActive();         // true if status is 'active'
+$subscription->isTrial();          // true if status is 'trial'
+$subscription->isOnGracePeriod();  // true if status is 'on_grace_period'
+$subscription->isCanceled();       // true if status is 'canceled'
 ```
