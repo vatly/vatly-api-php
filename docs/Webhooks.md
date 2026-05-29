@@ -4,7 +4,7 @@ Vatly sends webhooks to notify your application when events happen — for examp
 
 ## Webhook events
 
-The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Types\WebhookEvent`](../src/API/Types/WebhookEvent.php) for the constants.
+The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Types\WebhookEventName`](../src/API/Types/WebhookEventName.php) for the constants.
 
 | Event | Description |
 |-------|-------------|
@@ -12,6 +12,7 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `order.canceled` | Order was canceled. |
 | `order.chargeback_received` | Chargeback was received for an order. |
 | `order.chargeback_reversed` | Chargeback was reversed. |
+| `payment.failed` | A payment failed and a dunning process was initiated for the order. |
 | `refund.completed` | Refund was processed successfully. |
 | `refund.failed` | Refund processing failed. |
 | `refund.canceled` | Refund was canceled. |
@@ -19,6 +20,10 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `subscription.canceled_immediately` | Subscription was canceled immediately. |
 | `subscription.canceled_with_grace_period` | Subscription was canceled, customer keeps access until the period ends. |
 | `subscription.cancellation_grace_period_completed` | Grace period after cancellation ended. |
+| `subscription.resumed` | A canceled subscription was resumed during its grace period. |
+| `checkout.paid` | Checkout was paid successfully. |
+| `checkout.failed` | Checkout payment failed. |
+| `checkout.canceled` | Checkout was canceled. |
 | `checkout.expired` | Checkout session expired. |
 
 ---

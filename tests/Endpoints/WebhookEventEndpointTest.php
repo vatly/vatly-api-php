@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Vatly\Tests\Endpoints;
 
 use Vatly\API\Resources\WebhookEvent;
-use Vatly\API\Types\WebhookEvent as WebhookEventType;
+use Vatly\API\Types\WebhookEventName;
 use Vatly\API\VatlyApiClient;
 
 class WebhookEventEndpointTest extends BaseEndpointTest
@@ -19,7 +19,7 @@ class WebhookEventEndpointTest extends BaseEndpointTest
         $responseBodyArray = [
             'id' => $webhookEventId,
             'resource' => 'webhook_event',
-            'eventName' => WebhookEventType::ORDER_PAID,
+            'eventName' => WebhookEventName::ORDER_PAID,
             'entityType' => 'order',
             'entityId' => $orderId,
             'object' => [
@@ -53,7 +53,7 @@ class WebhookEventEndpointTest extends BaseEndpointTest
         $this->assertInstanceOf(WebhookEvent::class, $event);
         $this->assertEquals($webhookEventId, $event->id);
         $this->assertEquals('webhook_event', $event->resource);
-        $this->assertEquals(WebhookEventType::ORDER_PAID, $event->eventName);
+        $this->assertEquals(WebhookEventName::ORDER_PAID, $event->eventName);
         $this->assertEquals('order', $event->entityType);
         $this->assertEquals($orderId, $event->entityId);
         $this->assertIsObject($event->object);

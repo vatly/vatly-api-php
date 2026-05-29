@@ -6,6 +6,7 @@ use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\Links\SubscriptionLinks;
 use Vatly\API\Types\Address;
 use Vatly\API\Types\Link;
+use Vatly\API\Types\Mandate;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\SubscriptionStatus;
 
@@ -58,7 +59,7 @@ class Subscription extends BaseResource
 
     public ?string $endedAt;
 
-    public ?string $cancelledAt;
+    public ?string $canceledAt;
 
     public ?string $renewedAt;
 
@@ -67,6 +68,12 @@ class Subscription extends BaseResource
     public ?string $nextRenewalAt;
 
     public ?string $trialUntil = null;
+
+    /**
+     * Payment method on file for this subscription, as an inline summary.
+     * Null when the subscription has no mandate yet (e.g. ended / canceled-before-payment).
+     */
+    public ?Mandate $mandate = null;
 
     public SubscriptionLinks $links;
 

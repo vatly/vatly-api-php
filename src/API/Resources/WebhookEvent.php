@@ -21,7 +21,7 @@ class WebhookEvent extends BaseResource
     /**
      * Name of the event that triggered this webhook.
      *
-     * @see \Vatly\API\Types\WebhookEvent
+     * @see \Vatly\API\Types\WebhookEventName
      * @example order.paid
      */
     public string $eventName;
