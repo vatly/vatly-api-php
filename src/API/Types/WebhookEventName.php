@@ -21,4 +21,11 @@ class WebhookEventName
     public const CHECKOUT_FAILED = 'checkout.failed';
     public const CHECKOUT_CANCELED = 'checkout.canceled';
     public const CHECKOUT_EXPIRED = 'checkout.expired';
+
+    /**
+     * Verification call sent when a webhook endpoint is registered or its URL is
+     * updated. Delivered as a normal webhook event with `entityType` `webhook`;
+     * receivers can acknowledge it (2xx) without running event-specific handling.
+     */
+    public const WEBHOOK_SETUP = 'webhook.setup';
 }

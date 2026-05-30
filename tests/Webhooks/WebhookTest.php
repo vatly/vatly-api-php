@@ -7,6 +7,7 @@ namespace Vatly\Tests\Webhooks;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Types\WebhookEventName;
 use Vatly\API\Webhooks\Webhook;
 use Vatly\API\Webhooks\WebhookPayload;
 
@@ -76,6 +77,36 @@ class WebhookTest extends TestCase
         $event = Webhook::parse($payload, $signature, $this->secret);
 
         $this->assertNull($event->object);
+    }
+
+    public function test_it_parses_a_webhook_setup_event(): void
+    {
+        $payload = $this->makePayload([
+            'id' => 'webhook_event_St9uVwXyZa1BcDeFgHiJ',
+            'eventName' => WebhookEventName::WEBHOOK_SETUP,
+            'entityType' => 'webhook',
+            'entityId' => 'webhook_QdEpFhdSrG4Y3DnfsdqsH',
+            'object' => [
+                'resource' => 'webhook',
+                'id' => 'webhook_QdEpFhdSrG4Y3DnfsdqsH',
+                'url' => 'https://merchant.example/webhooks/vatly',
+                'testmode' => true,
+            ],
+        ]);
+        $signature = $this->sign($payload);
+
+        $event = Webhook::parse($payload, $signature, $this->secret);
+
+        // The setup call is a normal WebhookPayload — no special-casing on parse.
+        $this->assertInstanceOf(WebhookPayload::class, $event);
+        $this->assertSame('webhook.setup', WebhookEventName::WEBHOOK_SETUP);
+        $this->assertSame(WebhookEventName::WEBHOOK_SETUP, $event->eventName);
+        $this->assertSame('webhook', $event->entityType);
+        $this->assertSame('webhook_QdEpFhdSrG4Y3DnfsdqsH', $event->entityId);
+        $this->assertSame('webhook_event', $event->resource);
+        $this->assertSame('webhook_event_St9uVwXyZa1BcDeFgHiJ', $event->id);
+        $this->assertIsObject($event->object);
+        $this->assertSame('webhook', $event->object->resource);
     }
 
     public function test_it_throws_for_invalid_signature(): void
