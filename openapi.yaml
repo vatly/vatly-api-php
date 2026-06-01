@@ -275,10 +275,10 @@ paths:
               $ref: '#/components/schemas/CreateCheckoutRequest'
             examples:
               oneOffProduct:
-                summary: Checkout with one-off product
+                summary: Checkout with one-off product (with {CHECKOUT_ID} placeholder)
                 value:
-                  redirectUrlSuccess: https://example.com/success
-                  redirectUrlCanceled: https://example.com/canceled
+                  redirectUrlSuccess: https://example.com/return?checkout_id={CHECKOUT_ID}
+                  redirectUrlCanceled: https://example.com/canceled?checkout_id={CHECKOUT_ID}
                   products:
                     - id: one_off_product_Vr8kQdFhSrG4Y3DnfsdqH
                       quantity: 1
@@ -363,9 +363,10 @@ paths:
               example:
                 id: checkout_QdEpFhdSrG4Y3DnfsdqsH
                 resource: checkout
+                customerId: customer_7kBmRtPvXw2NjLhYcZaE
                 orderId: order_Jk4pQrSvWm8NjLhYbUcP
                 testmode: false
-                redirectUrlSuccess: https://example.com/success
+                redirectUrlSuccess: https://example.com/return?checkout_id=checkout_QdEpFhdSrG4Y3DnfsdqsH
                 redirectUrlCanceled: https://example.com/canceled
                 metadata:
                   campaign: summer-sale
@@ -3914,6 +3915,13 @@ components:
           description: Resource type identifier
           const: checkout
           example: checkout
+        customerId:
+          type: string
+          description: |
+            ID of the customer associated with this checkout.
+            Only present once a customer has been associated (for an anonymous
+            checkout this happens when the buyer completes payment).
+          example: customer_7kBmRtPvXw2NjLhYcZaE
         orderId:
           type:
             - string
@@ -4037,14 +4045,22 @@ components:
       properties:
         redirectUrlSuccess:
           type: string
-          format: uri
-          description: URL to redirect customers after successful payment
-          example: https://example.com/success?session_id=checkout_QdEpFhdSrG4Y3DnfsdqsH
+          description: |
+            URL to redirect customers after successful payment.
+
+            You may include the literal `{CHECKOUT_ID}` placeholder anywhere in the
+            URL (e.g. `https://example.com/return?checkout_id={CHECKOUT_ID}`). Vatly
+            substitutes it with this checkout's id at creation time, so the host can
+            learn the checkout id on the redirect back without any server-side token
+            store. Only `{CHECKOUT_ID}` is supported.
+          example: https://example.com/return?checkout_id={CHECKOUT_ID}
         redirectUrlCanceled:
           type: string
-          format: uri
-          description: URL to redirect customers if they cancel the checkout
-          example: https://example.com/canceled
+          description: |
+            URL to redirect customers if they cancel the checkout.
+
+            Supports the same `{CHECKOUT_ID}` placeholder as `redirectUrlSuccess`.
+          example: https://example.com/canceled?checkout_id={CHECKOUT_ID}
         customerId:
           type:
             - string

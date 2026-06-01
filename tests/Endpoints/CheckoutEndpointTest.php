@@ -148,6 +148,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $responseBodyArray = [
             'id' => "checkout_dummy_id",
             'resource' => 'checkout',
+            'customerId' => 'customer_123',
             'orderId' => 'order_123',
             'testmode' => true,
             'redirectUrlSuccess' => 'https://www.sandorian.com/success',
@@ -178,6 +179,7 @@ class CheckoutEndpointTest extends BaseEndpointTest
 
         $this->assertInstanceOf(Checkout::class, $checkout);
         $this->assertEquals("checkout_dummy_id", $checkout->id);
+        $this->assertEquals("customer_123", $checkout->customerId);
         $this->assertEquals("order_123", $checkout->orderId);
         $this->assertEquals("checkout", $checkout->resource);
         $this->assertEquals(CheckoutStatus::STATUS_PAID, $checkout->status);
