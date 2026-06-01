@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\API\Webhooks;
 
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Types\WebhookEventName;
 
 class Webhook
 {
@@ -35,10 +36,6 @@ class Webhook
             );
         }
 
-        if (self::isSetupCall($decoded)) {
-            return new WebhookSetupCallPayload($decoded->message, $decoded->testmode);
-        }
-
         foreach (['id', 'resource', 'eventName', 'entityType', 'entityId', 'createdAt', 'testmode'] as $field) {
             if (! isset($decoded->{$field})) {
                 throw new \InvalidArgumentException(
@@ -54,7 +51,15 @@ class Webhook
             );
         }
 
-        return new WebhookPayload(
+        // The webhook endpoint verification ("setup") call is delivered as a
+        // standard envelope (eventName `webhook.setup`, entityType `webhook`).
+        // Return the typed subclass so receivers can `instanceof`-detect and
+        // simply 2xx-acknowledge it without running event-specific handling.
+        $payloadClass = $decoded->eventName === WebhookEventName::WEBHOOK_SETUP
+            ? WebhookSetupCallPayload::class
+            : WebhookPayload::class;
+
+        return new $payloadClass(
             $decoded->id,
             $decoded->resource,
             $decoded->eventName,
@@ -64,16 +69,5 @@ class Webhook
             $decoded->createdAt,
             $object,
         );
-    }
-
-    private static function isSetupCall($decoded): bool
-    {
-        if (! is_object($decoded)) {
-            return false;
-        }
-
-        return isset($decoded->message, $decoded->testmode)
-            && is_bool($decoded->testmode)
-            && ! isset($decoded->id);
     }
 }

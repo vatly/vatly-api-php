@@ -25,6 +25,16 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `checkout.failed` | Checkout payment failed. |
 | `checkout.canceled` | Checkout was canceled. |
 | `checkout.expired` | Checkout session expired. |
+| `webhook.setup` | Verification call sent when an endpoint is registered or its URL is updated. `entityType` is `webhook`; `object` is the (secret-free) endpoint config. |
+
+### The `webhook.setup` event
+
+When you register a webhook endpoint (or change its URL), Vatly sends a signed
+`webhook.setup` event to confirm the endpoint is reachable. It is delivered as a normal
+webhook — same envelope, same signature, same `Vatly-Event-Id` header. `Webhook::parse()`
+returns a `WebhookSetupCallPayload` (a `WebhookPayload` subclass) for it, so you can
+either ignore it — just `2xx`-acknowledge and take no action, which the `default` arm of
+an event `match` already does — or `instanceof`-detect it to handle verification explicitly.
 
 ---
 
@@ -133,7 +143,7 @@ markProcessed($eventId);
 http_response_code(200);
 ```
 
-When a webhook endpoint is registered, Vatly sends a signed setup call with `{"message":"Setup call","testmode":true}`. `Webhook::parse()` returns a `WebhookSetupCallPayload` for this body so receivers can acknowledge it without running normal event handling.
+The `webhook.setup` verification call arrives as a standard envelope, so `Webhook::parse()` returns a `WebhookSetupCallPayload` (a `WebhookPayload` subclass). Receivers can `instanceof`-detect it (as above) to acknowledge the setup without running normal event handling.
 
 `Webhook::parse()` throws `Vatly\API\Exceptions\InvalidSignatureException` when the signature header is malformed, the timestamp is outside the tolerance window, or the HMAC does not match. It throws `InvalidArgumentException` when the body is not valid JSON or is missing required fields.
 

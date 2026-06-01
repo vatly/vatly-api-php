@@ -7,6 +7,7 @@ namespace Vatly\Tests\Webhooks;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Types\WebhookEventName;
 use Vatly\API\Webhooks\Webhook;
 use Vatly\API\Webhooks\WebhookPayload;
 use Vatly\API\Webhooks\WebhookSetupCallPayload;
@@ -81,20 +82,34 @@ class WebhookTest extends TestCase
 
     public function test_it_parses_the_webhook_setup_call(): void
     {
-        $payload = json_encode([
-            'message' => 'Setup call',
-            'testmode' => true,
+        $payload = $this->makePayload([
+            'id' => 'webhook_event_St9uVwXyZa1BcDeFgHiJ',
+            'eventName' => WebhookEventName::WEBHOOK_SETUP,
+            'entityType' => 'webhook',
+            'entityId' => 'webhook_QdEpFhdSrG4Y3DnfsdqsH',
+            'object' => [
+                'resource' => 'webhook',
+                'id' => 'webhook_QdEpFhdSrG4Y3DnfsdqsH',
+                'url' => 'https://merchant.example/webhooks/vatly',
+                'testmode' => true,
+            ],
         ]);
         $signature = $this->sign($payload);
 
         $event = Webhook::parse($payload, $signature, $this->secret);
 
+        // The setup call is delivered as a standard envelope; parse() returns a
+        // WebhookSetupCallPayload (a WebhookPayload subclass) so receivers can
+        // instanceof-detect and 2xx-acknowledge it.
         $this->assertInstanceOf(WebhookSetupCallPayload::class, $event);
-        $this->assertSame('Setup call', $event->message);
-        $this->assertSame(WebhookSetupCallPayload::RESOURCE, $event->resource);
-        $this->assertSame(WebhookSetupCallPayload::EVENT_NAME, $event->eventName);
-        $this->assertTrue($event->testmode);
-        $this->assertNull($event->object);
+        $this->assertInstanceOf(WebhookPayload::class, $event);
+        $this->assertSame(WebhookEventName::WEBHOOK_SETUP, $event->eventName);
+        $this->assertSame('webhook', $event->entityType);
+        $this->assertSame('webhook_QdEpFhdSrG4Y3DnfsdqsH', $event->entityId);
+        $this->assertSame('webhook_event', $event->resource);
+        $this->assertSame('webhook_event_St9uVwXyZa1BcDeFgHiJ', $event->id);
+        $this->assertIsObject($event->object);
+        $this->assertSame('webhook', $event->object->resource);
     }
 
     public function test_it_throws_for_invalid_signature(): void

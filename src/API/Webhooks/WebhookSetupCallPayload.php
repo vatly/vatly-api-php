@@ -4,29 +4,21 @@ declare(strict_types=1);
 
 namespace Vatly\API\Webhooks;
 
+use Vatly\API\Types\WebhookEventName;
+
 /**
- * Represents the setup verification call sent when a webhook endpoint is registered.
+ * The webhook endpoint verification ("setup") call.
+ *
+ * When a webhook endpoint is registered (or its URL changes), Vatly sends a
+ * signed verification call. It is delivered as a **standard** webhook envelope
+ * — `eventName` `webhook.setup`, `entityType` `webhook` — so it verifies and
+ * parses exactly like any other event.
+ *
+ * {@see Webhook::parse()} returns this subclass for that event so receivers can
+ * `instanceof`-detect it and acknowledge it (2xx) without running normal
+ * event-specific handling. It is a {@see WebhookPayload} in every other respect.
  */
 class WebhookSetupCallPayload extends WebhookPayload
 {
-    public const RESOURCE = 'webhook_setup_call';
-    public const EVENT_NAME = 'webhook.setup';
-
-    public string $message;
-
-    public function __construct(string $message, bool $testmode)
-    {
-        parent::__construct(
-            '',
-            self::RESOURCE,
-            self::EVENT_NAME,
-            'webhook',
-            '',
-            $testmode,
-            '',
-            null,
-        );
-
-        $this->message = $message;
-    }
+    public const EVENT_NAME = WebhookEventName::WEBHOOK_SETUP;
 }
