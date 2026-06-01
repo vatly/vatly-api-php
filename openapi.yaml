@@ -2904,6 +2904,9 @@ webhooks:
       description: An order's payment was successful. `object` is the Order.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2916,6 +2919,9 @@ webhooks:
       description: An order was canceled. `object` is the Order.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2930,6 +2936,9 @@ webhooks:
         `object` is the Chargeback.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2944,6 +2953,9 @@ webhooks:
         `object` is the Chargeback.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2958,6 +2970,9 @@ webhooks:
         `entityType` is `order` and `object` is the Order.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2970,6 +2985,9 @@ webhooks:
       description: A refund was processed successfully. `object` is the Refund.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2982,6 +3000,9 @@ webhooks:
       description: A refund failed to process. `object` is the Refund.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -2994,6 +3015,9 @@ webhooks:
       description: A refund was canceled before completing. `object` is the Refund.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3006,6 +3030,9 @@ webhooks:
       description: A subscription was started. `object` is the Subscription.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3018,6 +3045,9 @@ webhooks:
       description: A subscription was canceled with immediate effect. `object` is the Subscription.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3032,6 +3062,9 @@ webhooks:
         grace period. `object` is the Subscription.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3046,6 +3079,9 @@ webhooks:
         fully canceled. `object` is the Subscription.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3060,6 +3096,9 @@ webhooks:
         the Subscription.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3079,6 +3118,9 @@ webhooks:
         customer without polling or a follow-up `GET /v1/subscriptions/{id}`.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3091,6 +3133,9 @@ webhooks:
       description: A checkout was paid successfully. `object` is the Checkout.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3103,6 +3148,9 @@ webhooks:
       description: A checkout payment failed. `object` is the Checkout.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3115,6 +3163,9 @@ webhooks:
       description: A checkout was canceled. `object` is the Checkout.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3127,6 +3178,9 @@ webhooks:
       description: A checkout session expired before being paid. `object` is the Checkout.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3144,6 +3198,9 @@ webhooks:
         therefore omits the `links` field carried by regular event deliveries.
       tags:
         - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
       requestBody:
         $ref: '#/components/requestBodies/WebhookDelivery'
       responses:
@@ -3298,6 +3355,27 @@ components:
       in: path
       description: Unique identifier of the webhook event
       required: true
+      schema:
+        type: string
+      example: webhook_event_Qk8pRtSvWm2NjLhYcZaE
+    VatlySignature:
+      name: Vatly-Signature
+      in: header
+      required: true
+      description: |
+        HMAC-SHA256 signature of the raw request body, formatted `t=<unix-timestamp>,v1=<hex>`.
+        Recompute it over the exact bytes received and compare before trusting the payload.
+        A fresh signature is sent on every delivery attempt (initial and retries).
+      schema:
+        type: string
+      example: t=1716301928,v1=5f3cbe2a9d1e4c7b8a0f6d2e1c3b4a5968778695a4b3c2d1e0f9a8b7c6d5e4f3a
+    VatlyEventId:
+      name: Vatly-Event-Id
+      in: header
+      required: true
+      description: |
+        Stable identifier for this event, constant across delivery retries. Use it as an
+        idempotency / dedup key so a retried delivery is not processed twice.
       schema:
         type: string
       example: webhook_event_Qk8pRtSvWm2NjLhYcZaE
@@ -4678,8 +4756,13 @@ components:
     WebhookEvent:
       type: object
       description: |
-        A webhook event represents a domain event that was sent to a webhook endpoint.
-        Each event contains the full resource payload at the time the event occurred.
+        A persisted webhook event — the record returned by `GET /webhook-events/{eventId}`.
+        It captures a domain event that was delivered to your endpoint, including the full
+        resource payload at the time the event occurred.
+
+        This is the *stored* resource. For the shape Vatly POSTs to your endpoint on each
+        live delivery (which additionally includes the `webhook.setup` verification call),
+        see `WebhookDelivery`.
       required:
         - id
         - resource
@@ -4689,6 +4772,7 @@ components:
         - object
         - createdAt
         - testmode
+        - links
       additionalProperties: false
       properties:
         id:
@@ -4722,10 +4806,12 @@ components:
             - `checkout.failed` - Checkout payment failed
             - `checkout.canceled` - Checkout was canceled
             - `checkout.expired` - Checkout session expired
-            - `webhook.setup` - Verification call sent when an endpoint is registered or its URL changes (`entityType` is `webhook`)
 
-            This list is the single source of truth for SDK generators and is kept in
-            sync with the webhook transformer registry by `php artisan openapi:audit-webhook-drift`.
+            `webhook.setup` is intentionally absent: the verification handshake is not
+            persisted and so never appears on this resource (see `WebhookDelivery`).
+
+            This list is kept in sync with the webhook transformer registry by
+            `php artisan openapi:audit-webhook-drift`.
           enum:
             - order.paid
             - order.canceled
@@ -4745,7 +4831,6 @@ components:
             - checkout.failed
             - checkout.canceled
             - checkout.expired
-            - webhook.setup
           example: order.paid
         entityType:
           type: string
@@ -4765,7 +4850,6 @@ components:
               - `refund.*` → Refund
               - `subscription.*` → Subscription
               - `checkout.*` → Checkout
-              - `webhook.setup` → Webhook (the endpoint config; verification handshake)
 
             Note `object.resource` may differ from `entityType`: chargeback events carry
             `entityType: order` (the order the chargeback belongs to) but a Chargeback object.
@@ -4775,7 +4859,6 @@ components:
             - $ref: '#/components/schemas/Refund'
             - $ref: '#/components/schemas/Subscription'
             - $ref: '#/components/schemas/Checkout'
-            - $ref: '#/components/schemas/Webhook'
           discriminator:
             propertyName: resource
             mapping:
@@ -4784,7 +4867,6 @@ components:
               refund: '#/components/schemas/Refund'
               subscription: '#/components/schemas/Subscription'
               checkout: '#/components/schemas/Checkout'
-              webhook: '#/components/schemas/Webhook'
         createdAt:
           type: string
           format: date-time
@@ -4798,9 +4880,7 @@ components:
           example: false
         links:
           type: object
-          description: |
-            HATEOAS links to related resources. Present on event deliveries; omitted on
-            the `webhook.setup` verification call, which is not a persisted resource.
+          description: HATEOAS links to related resources. Always present on the persisted event.
           required:
             - self
           additionalProperties: false
@@ -5221,10 +5301,154 @@ components:
         testmode:
           type: boolean
           example: true
+    WebhookDelivery:
+      type: object
+      description: |
+        The envelope Vatly POSTs to your configured webhook endpoint for each delivery.
+
+        Identical to the persisted `WebhookEvent`, with two differences that exist only on
+        the wire:
+          - it additionally covers the `webhook.setup` verification call (`entityType`
+            `webhook`, `object` is the secret-free endpoint config), and
+          - that setup call is not persisted and omits `links`, so `links` is not required
+            on a delivery.
+
+        Every delivery is signed: the `Vatly-Signature` header carries an HMAC-SHA256 of
+        the raw body and `Vatly-Event-Id` carries a retry-stable dedup key (see the
+        operation parameters).
+      required:
+        - id
+        - resource
+        - eventName
+        - entityType
+        - entityId
+        - object
+        - createdAt
+        - testmode
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the webhook event
+          example: webhook_event_Qk8pRtSvWm2NjLhYcZaE
+        resource:
+          type: string
+          description: Resource type identifier
+          const: webhook_event
+          example: webhook_event
+        eventName:
+          type: string
+          description: |
+            Name of the event that triggered this webhook:
+            - `order.paid` - Order payment was successful
+            - `order.canceled` - Order was canceled
+            - `order.chargeback_received` - Chargeback was received for an order
+            - `order.chargeback_reversed` - Chargeback was reversed
+            - `payment.failed` - A payment failed and a dunning process was initiated for the order
+            - `refund.completed` - Refund was processed successfully
+            - `refund.failed` - Refund processing failed
+            - `refund.canceled` - Refund was canceled
+            - `subscription.started` - Subscription was started
+            - `subscription.canceled_immediately` - Subscription was canceled immediately
+            - `subscription.canceled_with_grace_period` - Subscription was canceled with a grace period
+            - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
+            - `subscription.resumed` - A canceled subscription was resumed during its grace period
+            - `subscription.billing_updated` - A subscription's billing details changed; in practice today the mandate (payment method on file), e.g. to refresh the masked payment method identifier shown to the customer
+            - `checkout.paid` - Checkout was paid successfully
+            - `checkout.failed` - Checkout payment failed
+            - `checkout.canceled` - Checkout was canceled
+            - `checkout.expired` - Checkout session expired
+            - `webhook.setup` - Verification call sent when an endpoint is registered or its URL changes (`entityType` is `webhook`)
+
+            This list is the single source of truth for SDK generators and is kept in
+            sync with the webhook transformer registry by `php artisan openapi:audit-webhook-drift`.
+          enum:
+            - order.paid
+            - order.canceled
+            - order.chargeback_received
+            - order.chargeback_reversed
+            - payment.failed
+            - refund.completed
+            - refund.failed
+            - refund.canceled
+            - subscription.started
+            - subscription.canceled_immediately
+            - subscription.canceled_with_grace_period
+            - subscription.cancellation_grace_period_completed
+            - subscription.resumed
+            - subscription.billing_updated
+            - checkout.paid
+            - checkout.failed
+            - checkout.canceled
+            - checkout.expired
+            - webhook.setup
+          example: order.paid
+        entityType:
+          type: string
+          description: Type of the resource this event relates to
+          example: order
+        entityId:
+          type: string
+          description: ID of the resource this event relates to
+          example: order_Hn5xWqVfKm8RjTgYbUcP
+        object:
+          description: |
+            The full resource payload at the time of the event, serialized identically
+            to the corresponding REST resource. The concrete shape is selected by the
+            payload's own `resource` field (the discriminator):
+              - `order.paid`, `order.canceled`, `payment.failed` → Order
+              - `order.chargeback_received`, `order.chargeback_reversed` → Chargeback
+              - `refund.*` → Refund
+              - `subscription.*` → Subscription
+              - `checkout.*` → Checkout
+              - `webhook.setup` → Webhook (the endpoint config; verification handshake)
+
+            Note `object.resource` may differ from `entityType`: chargeback events carry
+            `entityType: order` (the order the chargeback belongs to) but a Chargeback object.
+          oneOf:
+            - $ref: '#/components/schemas/Order'
+            - $ref: '#/components/schemas/Chargeback'
+            - $ref: '#/components/schemas/Refund'
+            - $ref: '#/components/schemas/Subscription'
+            - $ref: '#/components/schemas/Checkout'
+            - $ref: '#/components/schemas/Webhook'
+          discriminator:
+            propertyName: resource
+            mapping:
+              order: '#/components/schemas/Order'
+              chargeback: '#/components/schemas/Chargeback'
+              refund: '#/components/schemas/Refund'
+              subscription: '#/components/schemas/Subscription'
+              checkout: '#/components/schemas/Checkout'
+              webhook: '#/components/schemas/Webhook'
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when the webhook event was created.
+          example: '2026-05-21T14:32:08+00:00'
+        testmode:
+          type: boolean
+          description: |
+            Whether the event originated from a test-mode resource.
+            `true` for events created with a `test_` prefixed token, `false` for live events.
+          example: false
+        links:
+          type: object
+          description: |
+            HATEOAS links to related resources. Present on event deliveries; omitted on
+            the `webhook.setup` verification call, which is not a persisted resource.
+          required:
+            - self
+          additionalProperties: false
+          properties:
+            self:
+              allOf:
+                - $ref: '#/components/schemas/Link'
+              description: Link to this webhook event resource
   requestBodies:
     WebhookDelivery:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/WebhookEvent'
+            $ref: '#/components/schemas/WebhookDelivery'
