@@ -20,6 +20,14 @@ class Checkout extends BaseResource
     public string $resource;
 
     /**
+     * Only present once a customer is associated with the checkout (for an
+     * anonymous checkout this happens when the buyer completes payment).
+     *
+     * @example customer_78b146a7de7d417e9d68d7e6ef193d18
+     */
+    public ?string $customerId = null;
+
+    /**
      * @example order_66fc8a40718b46bea50f1a25f456d243
      */
     public ?string $orderId = null;
