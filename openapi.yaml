@@ -2120,14 +2120,67 @@ paths:
                 object:
                   id: order_Hn5xWqVfKm8RjTgYbUcP
                   resource: order
+                  customerId: customer_Xk9pQrSvWm4NjLhYbUcP
                   testmode: false
+                  metadata: {}
+                  paymentMethod: ideal
+                  createdAt: '2026-05-21T14:32:08+00:00'
                   status: paid
+                  invoiceNumber: INV-2026-0001
                   total:
                     value: '29.99'
                     currency: EUR
                   subtotal:
                     value: '24.79'
                     currency: EUR
+                  taxSummary:
+                    - taxRate:
+                        name: VAT
+                        percentage: 21
+                        taxablePercentage: 100
+                      amount:
+                        value: '5.20'
+                        currency: EUR
+                  lines:
+                    - id: order_item_Mn6xBtPvKw2RjTgYcZaE
+                      resource: orderline
+                      description: Pro Monthly Subscription
+                      quantity: 1
+                      basePrice:
+                        value: '24.79'
+                        currency: EUR
+                      total:
+                        value: '29.99'
+                        currency: EUR
+                      subtotal:
+                        value: '24.79'
+                        currency: EUR
+                      taxes:
+                        - taxRate:
+                            name: VAT
+                            percentage: 21
+                            taxablePercentage: 100
+                          amount:
+                            value: '5.20'
+                            currency: EUR
+                  customerDetails:
+                    fullName: John Doe
+                    companyName: Acme Corp
+                    streetAndNumber: 123 Main Street
+                    city: Berlin
+                    postalCode: '10115'
+                    country: DE
+                    email: john@acme.com
+                  links:
+                    self:
+                      href: https://api.vatly.com/v1/orders/order_Hn5xWqVfKm8RjTgYbUcP
+                      type: application/json
+                    customer:
+                      href: https://api.vatly.com/v1/customers/customer_Xk9pQrSvWm4NjLhYbUcP
+                      type: application/json
+                    customerInvoice:
+                      href: https://vatly.com/invoices/order_Hn5xWqVfKm8RjTgYbUcP
+                      type: application/json
                 createdAt: '2026-05-21T14:32:08+00:00'
                 testmode: false
                 links:
@@ -2843,6 +2896,259 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+webhooks:
+  order.paid:
+    post:
+      operationId: onOrderPaid
+      summary: Order paid
+      description: An order's payment was successful. `object` is the Order.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  order.canceled:
+    post:
+      operationId: onOrderCanceled
+      summary: Order canceled
+      description: An order was canceled. `object` is the Order.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  order.chargeback_received:
+    post:
+      operationId: onOrderChargebackReceived
+      summary: Chargeback received
+      description: |
+        A chargeback was received for an order. `entityType` is `order`, but
+        `object` is the Chargeback.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  order.chargeback_reversed:
+    post:
+      operationId: onOrderChargebackReversed
+      summary: Chargeback reversed
+      description: |
+        A previously received chargeback was reversed. `entityType` is `order`, but
+        `object` is the Chargeback.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  payment.failed:
+    post:
+      operationId: onPaymentFailed
+      summary: Payment failed
+      description: |
+        A payment failed and a dunning process was initiated for the order.
+        `entityType` is `order` and `object` is the Order.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  refund.completed:
+    post:
+      operationId: onRefundCompleted
+      summary: Refund completed
+      description: A refund was processed successfully. `object` is the Refund.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  refund.failed:
+    post:
+      operationId: onRefundFailed
+      summary: Refund failed
+      description: A refund failed to process. `object` is the Refund.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  refund.canceled:
+    post:
+      operationId: onRefundCanceled
+      summary: Refund canceled
+      description: A refund was canceled before completing. `object` is the Refund.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.started:
+    post:
+      operationId: onSubscriptionStarted
+      summary: Subscription started
+      description: A subscription was started. `object` is the Subscription.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.canceled_immediately:
+    post:
+      operationId: onSubscriptionCanceledImmediately
+      summary: Subscription canceled immediately
+      description: A subscription was canceled with immediate effect. `object` is the Subscription.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.canceled_with_grace_period:
+    post:
+      operationId: onSubscriptionCanceledWithGracePeriod
+      summary: Subscription canceled with grace period
+      description: |
+        A subscription was canceled and will remain active until the end of its
+        grace period. `object` is the Subscription.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.cancellation_grace_period_completed:
+    post:
+      operationId: onSubscriptionCancellationGracePeriodCompleted
+      summary: Subscription grace period completed
+      description: |
+        A canceled subscription's grace period ended and the subscription is now
+        fully canceled. `object` is the Subscription.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.resumed:
+    post:
+      operationId: onSubscriptionResumed
+      summary: Subscription resumed
+      description: |
+        A canceled subscription was resumed during its grace period. `object` is
+        the Subscription.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.billing_updated:
+    post:
+      operationId: onSubscriptionBillingUpdated
+      summary: Subscription billing updated
+      description: |
+        A subscription's billing details changed server-side. In practice today
+        this is the mandate (payment method on file) — e.g. the customer completed
+        the hosted billing-update flow or the mandate was replaced
+        customer-service-side. `object` is the Subscription, enriched with the
+        current mandate (`object.mandate.method` and `object.mandate.maskedIdentifier`).
+        Use this to refresh the masked payment method identifier you display to the
+        customer without polling or a follow-up `GET /v1/subscriptions/{id}`.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  checkout.paid:
+    post:
+      operationId: onCheckoutPaid
+      summary: Checkout paid
+      description: A checkout was paid successfully. `object` is the Checkout.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  checkout.failed:
+    post:
+      operationId: onCheckoutFailed
+      summary: Checkout payment failed
+      description: A checkout payment failed. `object` is the Checkout.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  checkout.canceled:
+    post:
+      operationId: onCheckoutCanceled
+      summary: Checkout canceled
+      description: A checkout was canceled. `object` is the Checkout.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  checkout.expired:
+    post:
+      operationId: onCheckoutExpired
+      summary: Checkout expired
+      description: A checkout session expired before being paid. `object` is the Checkout.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  webhook.setup:
+    post:
+      operationId: onWebhookSetup
+      summary: Webhook setup
+      description: |
+        Verification call sent when a webhook endpoint is registered or its URL is
+        changed, to confirm the endpoint is reachable. `entityType` is `webhook` and
+        `object` is the (secret-free) endpoint config. Acknowledge with any 2xx; no
+        other action is required. This call is not persisted and is not retried, and
+        therefore omits the `links` field carried by regular event deliveries.
+      tags:
+        - Webhook Events
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/SetupAcknowledged'
 components:
   securitySchemes:
     BearerAuth:
@@ -3080,6 +3386,16 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             message: Checkout not found.
+    Acknowledged:
+      description: |
+        Acknowledged. Return any 2xx status to confirm receipt. A non-2xx response
+        or a timeout causes Vatly to retry the delivery with backoff.
+    SetupAcknowledged:
+      description: |
+        Endpoint reachable. Return any 2xx status to confirm. Unlike event
+        deliveries, the setup call is a synchronous verification check: a non-2xx
+        response or timeout fails endpoint registration/verification and is NOT
+        retried.
     BadRequest:
       description: Bad Request - The request was malformed or invalid
       content:
@@ -4373,7 +4689,6 @@ components:
         - object
         - createdAt
         - testmode
-        - links
       additionalProperties: false
       properties:
         id:
@@ -4388,7 +4703,7 @@ components:
         eventName:
           type: string
           description: |
-            Name of the event that triggered this webhook. Possible values:
+            Name of the event that triggered this webhook:
             - `order.paid` - Order payment was successful
             - `order.canceled` - Order was canceled
             - `order.chargeback_received` - Chargeback was received for an order
@@ -4402,10 +4717,35 @@ components:
             - `subscription.canceled_with_grace_period` - Subscription was canceled with a grace period
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
+            - `subscription.billing_updated` - A subscription's billing details changed; in practice today the mandate (payment method on file), e.g. to refresh the masked payment method identifier shown to the customer
             - `checkout.paid` - Checkout was paid successfully
             - `checkout.failed` - Checkout payment failed
             - `checkout.canceled` - Checkout was canceled
             - `checkout.expired` - Checkout session expired
+            - `webhook.setup` - Verification call sent when an endpoint is registered or its URL changes (`entityType` is `webhook`)
+
+            This list is the single source of truth for SDK generators and is kept in
+            sync with the webhook transformer registry by `php artisan openapi:audit-webhook-drift`.
+          enum:
+            - order.paid
+            - order.canceled
+            - order.chargeback_received
+            - order.chargeback_reversed
+            - payment.failed
+            - refund.completed
+            - refund.failed
+            - refund.canceled
+            - subscription.started
+            - subscription.canceled_immediately
+            - subscription.canceled_with_grace_period
+            - subscription.cancellation_grace_period_completed
+            - subscription.resumed
+            - subscription.billing_updated
+            - checkout.paid
+            - checkout.failed
+            - checkout.canceled
+            - checkout.expired
+            - webhook.setup
           example: order.paid
         entityType:
           type: string
@@ -4416,10 +4756,35 @@ components:
           description: ID of the resource this event relates to
           example: order_Hn5xWqVfKm8RjTgYbUcP
         object:
-          type: object
           description: |
-            The full resource payload at the time of the event.
-            The shape depends on the `entityType` (e.g., Order, Refund, Chargeback, Subscription, Checkout).
+            The full resource payload at the time of the event, serialized identically
+            to the corresponding REST resource. The concrete shape is selected by the
+            payload's own `resource` field (the discriminator):
+              - `order.paid`, `order.canceled`, `payment.failed` → Order
+              - `order.chargeback_received`, `order.chargeback_reversed` → Chargeback
+              - `refund.*` → Refund
+              - `subscription.*` → Subscription
+              - `checkout.*` → Checkout
+              - `webhook.setup` → Webhook (the endpoint config; verification handshake)
+
+            Note `object.resource` may differ from `entityType`: chargeback events carry
+            `entityType: order` (the order the chargeback belongs to) but a Chargeback object.
+          oneOf:
+            - $ref: '#/components/schemas/Order'
+            - $ref: '#/components/schemas/Chargeback'
+            - $ref: '#/components/schemas/Refund'
+            - $ref: '#/components/schemas/Subscription'
+            - $ref: '#/components/schemas/Checkout'
+            - $ref: '#/components/schemas/Webhook'
+          discriminator:
+            propertyName: resource
+            mapping:
+              order: '#/components/schemas/Order'
+              chargeback: '#/components/schemas/Chargeback'
+              refund: '#/components/schemas/Refund'
+              subscription: '#/components/schemas/Subscription'
+              checkout: '#/components/schemas/Checkout'
+              webhook: '#/components/schemas/Webhook'
         createdAt:
           type: string
           format: date-time
@@ -4433,7 +4798,9 @@ components:
           example: false
         links:
           type: object
-          description: HATEOAS links to related resources
+          description: |
+            HATEOAS links to related resources. Present on event deliveries; omitted on
+            the `webhook.setup` verification call, which is not a persisted resource.
           required:
             - self
           additionalProperties: false
@@ -4826,3 +5193,38 @@ components:
             - 'null'
           description: Additional description line for the refund
           example: 'Ticket #12345'
+    Webhook:
+      type: object
+      description: |
+        A registered webhook endpoint configuration — the subject of a `webhook.setup`
+        verification call. Never includes the signing secret.
+      required:
+        - resource
+        - id
+        - url
+        - testmode
+      additionalProperties: false
+      properties:
+        resource:
+          type: string
+          const: webhook
+          example: webhook
+        id:
+          type: string
+          description: The webhook endpoint identifier.
+          example: webhook_QdEpFhdSrG4Y3DnfsdqsH
+        url:
+          type: string
+          format: uri
+          description: The endpoint the verification call was sent to.
+          example: https://merchant.example/webhooks/vatly
+        testmode:
+          type: boolean
+          example: true
+  requestBodies:
+    WebhookDelivery:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/WebhookEvent'
