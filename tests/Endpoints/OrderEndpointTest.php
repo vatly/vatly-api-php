@@ -353,6 +353,18 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertFalse($order->isPartiallyReversed());
     }
 
+    /** @test */
+    public function reversal_predicates_reject_mismatched_currencies(): void
+    {
+        $order = new Order($this->client);
+        $order->subtotal = new Money('EUR', '100.00');
+        $order->reversedSubtotal = new Money('USD', '50.00');
+
+        $this->expectException(\InvalidArgumentException::class);
+
+        $order->isFullyReversed();
+    }
+
     private function orderWith(string $subtotal, string $reversedSubtotal): Order
     {
         $order = new Order($this->client);

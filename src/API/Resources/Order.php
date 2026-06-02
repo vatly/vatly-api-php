@@ -166,16 +166,24 @@ class Order extends BaseResource
     }
 
     /**
-     * Compare two same-currency money values: -1, 0, or 1. Uses bcmath when
-     * available (exact decimal), falling back to float otherwise.
+     * Compare two money values of the same currency: -1, 0, or 1.
+     *
+     * Uses bcmath for exact decimal comparison (no float rounding). Comparing
+     * across currencies is a programming error and throws.
+     *
+     * @throws \InvalidArgumentException When the currencies differ.
      */
     private static function compareMoney(Money $a, Money $b): int
     {
-        if (function_exists('bccomp')) {
-            return bccomp($a->value, $b->value, 8);
+        if ($a->currency !== $b->currency) {
+            throw new \InvalidArgumentException(sprintf(
+                'Cannot compare money values in different currencies: %s and %s.',
+                $a->currency,
+                $b->currency
+            ));
         }
 
-        return (float) $a->value <=> (float) $b->value;
+        return bccomp($a->value, $b->value, 12);
     }
 
     /**
