@@ -1722,6 +1722,22 @@ paths:
                     settlementAmount:
                       value: '35.09'
                       currency: EUR
+                    customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                    status: lost
+                    total:
+                      value: '35.09'
+                      currency: EUR
+                    subtotal:
+                      value: '29.00'
+                      currency: EUR
+                    taxSummary:
+                      - taxRate:
+                          name: VAT
+                          percentage: 21
+                          taxablePercentage: 100
+                        amount:
+                          value: '6.09'
+                          currency: EUR
                     reason: product_not_received
                     originalOrderId: order_Fp2kQrSvWm8NjLhYbUcP
                     orderId: order_Rk5pQrSvWm8NjLhYbUcP
@@ -1781,6 +1797,22 @@ paths:
                 settlementAmount:
                   value: '35.09'
                   currency: EUR
+                customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                status: lost
+                total:
+                  value: '35.09'
+                  currency: EUR
+                subtotal:
+                  value: '29.00'
+                  currency: EUR
+                taxSummary:
+                  - taxRate:
+                      name: VAT
+                      percentage: 21
+                      taxablePercentage: 100
+                    amount:
+                      value: '6.09'
+                      currency: EUR
                 reason: fraud
                 originalOrderId: order_Fp2kQrSvWm8NjLhYbUcP
                 orderId: order_Rk5pQrSvWm8NjLhYbUcP
@@ -2034,6 +2066,22 @@ paths:
                     settlementAmount:
                       value: '35.09'
                       currency: EUR
+                    customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                    status: lost
+                    total:
+                      value: '35.09'
+                      currency: EUR
+                    subtotal:
+                      value: '29.00'
+                      currency: EUR
+                    taxSummary:
+                      - taxRate:
+                          name: VAT
+                          percentage: 21
+                          taxablePercentage: 100
+                        amount:
+                          value: '6.09'
+                          currency: EUR
                     reason: fraud
                     originalOrderId: order_Fp2kQrSvWm8NjLhYbUcP
                     orderId: order_Rk5pQrSvWm8NjLhYbUcP
@@ -2087,6 +2135,22 @@ paths:
                 settlementAmount:
                   value: '35.09'
                   currency: EUR
+                customerId: customer_Lp3mNvBxKw7RjTgYcZaE
+                status: lost
+                total:
+                  value: '35.09'
+                  currency: EUR
+                subtotal:
+                  value: '29.00'
+                  currency: EUR
+                taxSummary:
+                  - taxRate:
+                      name: VAT
+                      percentage: 21
+                      taxablePercentage: 100
+                    amount:
+                      value: '6.09'
+                      currency: EUR
                 reason: fraud
                 originalOrderId: order_Fp2kQrSvWm8NjLhYbUcP
                 orderId: order_Rk5pQrSvWm8NjLhYbUcP
@@ -4716,10 +4780,15 @@ components:
       required:
         - id
         - resource
+        - customerId
         - testmode
         - createdAt
+        - status
         - amount
         - settlementAmount
+        - total
+        - subtotal
+        - taxSummary
         - reason
         - originalOrderId
         - links
@@ -4734,6 +4803,10 @@ components:
           description: Resource type identifier
           const: chargeback
           example: chargeback
+        customerId:
+          type: string
+          description: ID of the customer the chargeback was raised against
+          example: customer_Lp3mNvBxKw7RjTgYcZaE
         testmode:
           type: boolean
           description: Whether this chargeback is in test mode
@@ -4743,6 +4816,24 @@ components:
           format: date-time
           description: When this chargeback was created (ISO 8601 format)
           example: '2024-01-15T10:30:00Z'
+        status:
+          type: string
+          description: |
+            Current status of the chargeback dispute:
+            - `pending` - Dispute received, awaiting action
+            - `accepted` - Merchant accepted the dispute
+            - `rejected` - Dispute rejected
+            - `evidence_submitted` - Evidence submitted, awaiting decision
+            - `won` - Dispute resolved in the merchant's favor
+            - `lost` - Dispute resolved in the customer's favor
+          enum:
+            - pending
+            - accepted
+            - rejected
+            - evidence_submitted
+            - won
+            - lost
+          example: pending
         amount:
           $ref: '#/components/schemas/Money'
           description: Amount of the chargeback
@@ -4751,6 +4842,17 @@ components:
           description: |
             Amount that was deducted from the merchant's settlement.
             May differ from `amount` due to currency conversion or fees.
+        total:
+          $ref: '#/components/schemas/Money'
+          description: Total chargeback amount including taxes
+        subtotal:
+          $ref: '#/components/schemas/Money'
+          description: Chargeback subtotal before taxes
+        taxSummary:
+          type: array
+          description: Tax breakdown by rate for the chargeback
+          items:
+            $ref: '#/components/schemas/TaxSummaryItem'
         reason:
           type: string
           description: |
