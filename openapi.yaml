@@ -990,6 +990,12 @@ paths:
                     subtotal:
                       value: '29.00'
                       currency: EUR
+                    reversedSubtotal:
+                      value: '0.00'
+                      currency: EUR
+                    refundableSubtotal:
+                      value: '29.00'
+                      currency: EUR
                     taxSummary:
                       - taxRate:
                           name: VAT
@@ -1083,6 +1089,12 @@ paths:
                   value: '35.09'
                   currency: EUR
                 subtotal:
+                  value: '29.00'
+                  currency: EUR
+                reversedSubtotal:
+                  value: '0.00'
+                  currency: EUR
+                refundableSubtotal:
                   value: '29.00'
                   currency: EUR
                 taxSummary:
@@ -2132,6 +2144,12 @@ paths:
                     value: '29.99'
                     currency: EUR
                   subtotal:
+                    value: '24.79'
+                    currency: EUR
+                  reversedSubtotal:
+                    value: '0.00'
+                    currency: EUR
+                  refundableSubtotal:
                     value: '24.79'
                     currency: EUR
                   taxSummary:
@@ -4332,6 +4350,8 @@ components:
         - status
         - total
         - subtotal
+        - reversedSubtotal
+        - refundableSubtotal
         - taxSummary
         - lines
         - customerDetails
@@ -4400,6 +4420,12 @@ components:
         subtotal:
           $ref: '#/components/schemas/Money'
           description: Subtotal amount before taxes
+        reversedSubtotal:
+          $ref: '#/components/schemas/Money'
+          description: Amount of the captured payment returned to the customer, before taxes, via refund or chargeback (settled)
+        refundableSubtotal:
+          $ref: '#/components/schemas/Money'
+          description: Remaining amount that can still be refunded, before taxes.
         taxSummary:
           type: array
           description: Tax breakdown by rate
