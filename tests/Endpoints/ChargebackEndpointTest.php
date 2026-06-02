@@ -17,7 +17,9 @@ class ChargebackEndpointTest extends BaseEndpointTest
         $responseBodyArray = [
             'id' => $chargebackId,
             'resource' => 'chargeback',
+            'customerId' => 'customer_dummy_id',
             'testmode' => false,
+            'status' => 'pending',
             'amount' => [
                 "value" => "100.00",
                 "currency" => "EUR",
@@ -25,6 +27,20 @@ class ChargebackEndpointTest extends BaseEndpointTest
             'settlementAmount' => [
                 "value" => "-80.00",
                 "currency" => "EUR",
+            ],
+            'total' => [
+                "value" => "100.00",
+                "currency" => "EUR",
+            ],
+            'subtotal' => [
+                "value" => "80.00",
+                "currency" => "EUR",
+            ],
+            'taxSummary' => [
+                [
+                    'taxRate' => ['name' => 'VAT', 'percentage' => 21, 'taxablePercentage' => 100],
+                    'amount' => ['value' => '20.00', 'currency' => 'EUR'],
+                ],
             ],
             'reason' => 'reason',
             'createdAt' => '2020-01-01',
@@ -56,10 +72,18 @@ class ChargebackEndpointTest extends BaseEndpointTest
         $this->assertEquals('chargeback_dummy_id', $chargeback->id);
         $this->assertEquals('2020-01-01', $chargeback->createdAt);
         $this->assertFalse($chargeback->testmode);
+        $this->assertEquals('customer_dummy_id', $chargeback->customerId);
+        $this->assertEquals('pending', $chargeback->status);
         $this->assertEquals('100.00', $chargeback->amount->value);
         $this->assertEquals('EUR', $chargeback->amount->currency);
         $this->assertEquals('-80.00', $chargeback->settlementAmount->value);
         $this->assertEquals('EUR', $chargeback->settlementAmount->currency);
+        $this->assertEquals('100.00', $chargeback->total->value);
+        $this->assertEquals('80.00', $chargeback->subtotal->value);
+        $this->assertEquals('EUR', $chargeback->subtotal->currency);
+        $this->assertCount(1, $chargeback->taxSummary->items);
+        $this->assertEquals('VAT', $chargeback->taxSummary->items[0]->taxRate->name);
+        $this->assertEquals('20.00', $chargeback->taxSummary->items[0]->amount->value);
         $this->assertEquals('reason', $chargeback->reason);
         $this->assertEquals('order_dummy_id', $chargeback->orderId);
         $this->assertEquals('original_order_dummy_id', $chargeback->originalOrderId);
