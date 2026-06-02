@@ -60,6 +60,8 @@ class ResourceFactory
                 case 'settlementAmount':
                 case 'total':
                 case 'subtotal':
+                case 'reversedSubtotal':
+                case 'refundableSubtotal':
                     $resource->{$property} = Money::createResourceFromApiResult($value);
 
                     break;

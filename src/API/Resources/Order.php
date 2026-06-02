@@ -43,6 +43,19 @@ class Order extends BaseResource
     public TaxSummaryCollection $taxSummary;
 
     /**
+     * Amount of the captured payment returned to the customer so far, before
+     * taxes — via refund or chargeback (settled). The order `status` stays
+     * `paid` regardless; this is the reversal lens.
+     */
+    public Money $reversedSubtotal;
+
+    /**
+     * Remaining amount that can still be refunded, before taxes
+     * (`subtotal − reversed − pending reversals`).
+     */
+    public Money $refundableSubtotal;
+
+    /**
      * @example creditcard
      */
     public ?string $paymentMethod = null;
@@ -118,6 +131,51 @@ class Order extends BaseResource
     public function isPending(): bool
     {
         return $this->status === OrderStatus::STATUS_PENDING;
+    }
+
+    /**
+     * Has any of the captured payment been returned to the customer (via refund
+     * or chargeback)? The order `status` stays `paid` either way.
+     */
+    public function isReversed(): bool
+    {
+        return self::compareMoney($this->reversedSubtotal, new Money($this->reversedSubtotal->currency, '0')) > 0;
+    }
+
+    /**
+     * Has some — but not all — of the payment been returned?
+     */
+    public function isPartiallyReversed(): bool
+    {
+        return $this->isReversed()
+            && self::compareMoney($this->reversedSubtotal, $this->subtotal) < 0;
+    }
+
+    /**
+     * Has the full payment been returned? Uses `>=` so rounding/overshoot is
+     * treated as fully reversed.
+     *
+     * Note: this is the *settled* truth and is distinct from "nothing left to
+     * refund" — during an in-flight reversal `refundableSubtotal` can be zero
+     * while `isFullyReversed()` is still false. Read `refundableSubtotal` for
+     * remaining capacity.
+     */
+    public function isFullyReversed(): bool
+    {
+        return self::compareMoney($this->reversedSubtotal, $this->subtotal) >= 0;
+    }
+
+    /**
+     * Compare two same-currency money values: -1, 0, or 1. Uses bcmath when
+     * available (exact decimal), falling back to float otherwise.
+     */
+    private static function compareMoney(Money $a, Money $b): int
+    {
+        if (function_exists('bccomp')) {
+            return bccomp($a->value, $b->value, 8);
+        }
+
+        return (float) $a->value <=> (float) $b->value;
     }
 
     /**

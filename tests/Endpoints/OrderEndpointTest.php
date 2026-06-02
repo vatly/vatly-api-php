@@ -6,6 +6,7 @@ use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\Order;
 use Vatly\API\Resources\OrderCollection;
 use Vatly\API\Resources\OrderLine;
+use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
 use Vatly\API\VatlyApiClient;
 
@@ -35,6 +36,14 @@ class OrderEndpointTest extends BaseEndpointTest
             ],
             'subtotal' => [
                 "value" => "80.00",
+                "currency" => "EUR",
+            ],
+            'reversedSubtotal' => [
+                "value" => "20.00",
+                "currency" => "EUR",
+            ],
+            'refundableSubtotal' => [
+                "value" => "60.00",
                 "currency" => "EUR",
             ],
             'taxSummary' => [
@@ -110,6 +119,12 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals(OrderStatus::STATUS_PAID, $order->status);
         $this->assertEquals('96.00', $order->total->value);
         $this->assertEquals('80.00', $order->subtotal->value);
+        $this->assertEquals('20.00', $order->reversedSubtotal->value);
+        $this->assertEquals('EUR', $order->reversedSubtotal->currency);
+        $this->assertEquals('60.00', $order->refundableSubtotal->value);
+        $this->assertTrue($order->isReversed());
+        $this->assertTrue($order->isPartiallyReversed());
+        $this->assertFalse($order->isFullyReversed());
         $this->assertCount(1, $order->taxSummary->items);
         $this->assertEquals('VAT', $order->taxSummary->items[0]->taxRate->name);
         $this->assertEquals(21, $order->taxSummary->items[0]->taxRate->percentage);
@@ -309,5 +324,41 @@ class OrderEndpointTest extends BaseEndpointTest
             [],
             '{"billingAddress":{"email":"billing@xn--mller-kva.de"}}'
         );
+    }
+
+    /** @test */
+    public function reversal_predicates_reflect_the_reversed_subtotal(): void
+    {
+        // Not reversed.
+        $order = $this->orderWith('100.00', '0.00');
+        $this->assertFalse($order->isReversed());
+        $this->assertFalse($order->isPartiallyReversed());
+        $this->assertFalse($order->isFullyReversed());
+
+        // Partially reversed.
+        $order = $this->orderWith('100.00', '40.00');
+        $this->assertTrue($order->isReversed());
+        $this->assertTrue($order->isPartiallyReversed());
+        $this->assertFalse($order->isFullyReversed());
+
+        // Fully reversed.
+        $order = $this->orderWith('100.00', '100.00');
+        $this->assertTrue($order->isReversed());
+        $this->assertFalse($order->isPartiallyReversed());
+        $this->assertTrue($order->isFullyReversed());
+
+        // Overshoot still counts as fully reversed (>=).
+        $order = $this->orderWith('100.00', '100.01');
+        $this->assertTrue($order->isFullyReversed());
+        $this->assertFalse($order->isPartiallyReversed());
+    }
+
+    private function orderWith(string $subtotal, string $reversedSubtotal): Order
+    {
+        $order = new Order($this->client);
+        $order->subtotal = new Money('EUR', $subtotal);
+        $order->reversedSubtotal = new Money('EUR', $reversedSubtotal);
+
+        return $order;
     }
 }
