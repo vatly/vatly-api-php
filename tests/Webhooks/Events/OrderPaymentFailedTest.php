@@ -7,10 +7,10 @@ namespace Vatly\Tests\Webhooks\Events;
 use Vatly\API\Resources\Order;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
-use Vatly\API\Webhooks\Events\PaymentFailed;
+use Vatly\API\Webhooks\Events\OrderPaymentFailed;
 use Vatly\Tests\BaseTestCase;
 
-class PaymentFailedTest extends BaseTestCase
+class OrderPaymentFailedTest extends BaseTestCase
 {
     private function makeApiOrder(): Order
     {
@@ -35,12 +35,12 @@ class PaymentFailedTest extends BaseTestCase
 
     public function test_it_has_correct_vatly_event_name_constant(): void
     {
-        $this->assertSame('payment.failed', PaymentFailed::VATLY_EVENT_NAME);
+        $this->assertSame('order.payment_failed', OrderPaymentFailed::VATLY_EVENT_NAME);
     }
 
     public function test_it_builds_from_api_order_resource(): void
     {
-        $event = PaymentFailed::fromApiOrder($this->makeApiOrder());
+        $event = OrderPaymentFailed::fromApiOrder($this->makeApiOrder());
 
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_failed', $event->orderId);
@@ -58,7 +58,7 @@ class PaymentFailedTest extends BaseTestCase
     {
         $order = $this->makeApiOrder();
 
-        $event = PaymentFailed::fromApiOrder($order);
+        $event = OrderPaymentFailed::fromApiOrder($order);
 
         $this->assertSame($order->taxSummary, $event->taxSummary);
     }
@@ -68,7 +68,7 @@ class PaymentFailedTest extends BaseTestCase
         $order = $this->makeApiOrder();
         $order->metadata = (object) ['dunning_attempt' => 1];
 
-        $event = PaymentFailed::fromApiOrder($order);
+        $event = OrderPaymentFailed::fromApiOrder($order);
 
         $this->assertSame(['dunning_attempt' => 1], $event->metadata);
     }

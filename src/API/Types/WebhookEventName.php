@@ -8,7 +8,7 @@ class WebhookEventName
     public const ORDER_CANCELED = 'order.canceled';
     public const ORDER_CHARGEBACK_RECEIVED = 'order.chargeback_received';
     public const ORDER_CHARGEBACK_REVERSED = 'order.chargeback_reversed';
-    public const PAYMENT_FAILED = 'payment.failed';
+    public const ORDER_PAYMENT_FAILED = 'order.payment_failed';
     public const REFUND_COMPLETED = 'refund.completed';
     public const REFUND_FAILED = 'refund.failed';
     public const REFUND_CANCELED = 'refund.canceled';
