@@ -150,7 +150,7 @@ http_response_code(200);
 
 - exposes a `VATLY_EVENT_NAME` constant (a [`WebhookEventName`](../src/API/Types/WebhookEventName.php) value) for matching;
 - carries `from*()` factory methods — `fromApiOrder()`, `fromApiRefund()`, `fromApiChargeback()`, `fromApiSubscription()` to build from an enriched API resource, and/or `fromWebhook(WebhookReceived $webhook)` to build from the raw payload;
-- normalizes money to integer **cents** (via [`Money::toCents()`](../src/API/Types/Money.php)) and carries the per-rate VAT breakdown as a [`TaxSummaryCollection`](../src/API/Types/TaxSummaryCollection.php).
+- carries money as [`Money`](../src/API/Types/Money.php) values (decimal-string + currency) and the per-rate VAT breakdown as a [`TaxSummaryCollection`](../src/API/Types/TaxSummaryCollection.php). Flatten to integer cents at your persistence edge via [`Money::toCents()`](../src/API/Types/Money.php).
 
 ```php
 use Vatly\API\Resources\Order;
@@ -159,12 +159,15 @@ use Vatly\API\Webhooks\Events\OrderPaid;
 // $order is a fully-hydrated API Order resource (e.g. from $vatly->orders->get(...))
 $event = OrderPaid::fromApiOrder($order);
 
-$event->total;       // int cents, e.g. 4999
-$event->taxSummary;  // Vatly\API\Types\TaxSummaryCollection
-$event->lines;       // Vatly\API\Data\OrderLineData[]
+$event->total;             // Vatly\API\Types\Money
+$event->total->value;      // decimal string, e.g. "49.99"
+$event->total->currency;   // e.g. "USD"
+$event->total->toCents();  // int cents, e.g. 4999
+$event->taxSummary;        // Vatly\API\Types\TaxSummaryCollection
+$event->lines;             // Vatly\API\Types\OrderLineData[]
 ```
 
-These DTOs are the canonical, framework-agnostic event shapes that higher-level integrations (e.g. `vatly-fluent-php`) build on. The line-item DTO lives at [`Vatly\API\Data\OrderLineData`](../src/API/Data/OrderLineData.php).
+These DTOs are the canonical, framework-agnostic event shapes that higher-level integrations (e.g. `vatly-fluent-php`) build on. The line-item DTO lives at [`Vatly\API\Types\OrderLineData`](../src/API/Types/OrderLineData.php); its `basePrice`/`total`/`subtotal` are `Money` too.
 
 The full set of incoming webhook payloads is also described in the [webhooks OpenAPI spec](../openapi.yaml) under the top-level `webhooks:` section — one entry per `WebhookEventName`, each referencing the `WebhookDelivery` envelope.
 

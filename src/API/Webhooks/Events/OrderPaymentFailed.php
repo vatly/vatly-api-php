@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\API\Webhooks\Events;
 
 use Vatly\API\Resources\Order as ApiOrder;
+use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
 use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
@@ -33,10 +34,9 @@ class OrderPaymentFailed
         public string $customerId,
         public string $orderId,
         public string $status,
-        public int $total,
-        public int $subtotal,
+        public Money $total,
+        public Money $subtotal,
         public TaxSummaryCollection $taxSummary,
-        public string $currency,
         public ?string $invoiceNumber,
         public ?string $paymentMethod,
         /** @var array<string, mixed>|null */
@@ -51,10 +51,9 @@ class OrderPaymentFailed
             customerId: $order->customerId ?? '',
             orderId: $order->id,
             status: $order->status,
-            total: $order->total->toCents(),
-            subtotal: $order->subtotal->toCents(),
+            total: $order->total,
+            subtotal: $order->subtotal,
             taxSummary: $order->taxSummary,
-            currency: $order->total->currency,
             invoiceNumber: $order->invoiceNumber,
             paymentMethod: $order->paymentMethod,
             metadata: self::normalizeMetadata($order->metadata),

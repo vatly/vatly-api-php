@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Vatly\Tests\API\Data;
+namespace Vatly\Tests\API\Types;
 
-use Vatly\API\Data\OrderLineData;
 use Vatly\API\Resources\OrderLine;
 use Vatly\API\Types\Money;
+use Vatly\API\Types\OrderLineData;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\Tests\BaseTestCase;
 
@@ -42,7 +42,7 @@ class OrderLineDataTest extends BaseTestCase
         return $line;
     }
 
-    public function test_it_maps_an_api_order_line_to_cents_and_carries_product_fields(): void
+    public function test_it_maps_an_api_order_line_to_money_and_carries_product_fields(): void
     {
         $line = $this->makeApiLine(
             id: 'order_item_sub',
@@ -60,9 +60,16 @@ class OrderLineDataTest extends BaseTestCase
         $this->assertSame('order_item_sub', $data->vatlyId);
         $this->assertSame('Pro plan — monthly', $data->description);
         $this->assertSame(2, $data->quantity);
-        $this->assertSame(2000, $data->basePrice);
-        $this->assertSame(2420, $data->total);
-        $this->assertSame(2000, $data->subtotal);
+        $this->assertInstanceOf(Money::class, $data->basePrice);
+        $this->assertSame('EUR', $data->basePrice->currency);
+        $this->assertSame('20.00', $data->basePrice->value);
+        $this->assertSame(2000, $data->basePrice->toCents());
+        $this->assertInstanceOf(Money::class, $data->total);
+        $this->assertSame('24.20', $data->total->value);
+        $this->assertSame(2420, $data->total->toCents());
+        $this->assertInstanceOf(Money::class, $data->subtotal);
+        $this->assertSame('20.00', $data->subtotal->value);
+        $this->assertSame(2000, $data->subtotal->toCents());
         $this->assertSame('subscription', $data->productType);
         $this->assertSame('subscription_abc', $data->productId);
         $this->assertInstanceOf(TaxSummaryCollection::class, $data->taxSummary);

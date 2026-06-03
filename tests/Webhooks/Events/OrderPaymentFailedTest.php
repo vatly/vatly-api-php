@@ -45,9 +45,13 @@ class OrderPaymentFailedTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_failed', $event->orderId);
         $this->assertSame('pending', $event->status);
-        $this->assertSame(9900, $event->total);
-        $this->assertSame(8182, $event->subtotal);
-        $this->assertSame('EUR', $event->currency);
+        $this->assertInstanceOf(Money::class, $event->total);
+        $this->assertSame('99.00', $event->total->value);
+        $this->assertSame(9900, $event->total->toCents());
+        $this->assertSame('EUR', $event->total->currency);
+        $this->assertInstanceOf(Money::class, $event->subtotal);
+        $this->assertSame('81.82', $event->subtotal->value);
+        $this->assertSame(8182, $event->subtotal->toCents());
         $this->assertSame('INV-2024-009', $event->invoiceNumber);
         $this->assertSame('creditcard', $event->paymentMethod);
         $this->assertInstanceOf(TaxSummaryCollection::class, $event->taxSummary);

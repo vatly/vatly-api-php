@@ -49,9 +49,13 @@ class RefundEventsTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('refund_123', $event->refundId);
         $this->assertSame('refunded', $event->status);
-        $this->assertSame(2420, $event->total);
-        $this->assertSame(2000, $event->subtotal);
-        $this->assertSame('EUR', $event->currency);
+        $this->assertInstanceOf(Money::class, $event->total);
+        $this->assertSame('24.20', $event->total->value);
+        $this->assertSame(2420, $event->total->toCents());
+        $this->assertSame('EUR', $event->total->currency);
+        $this->assertInstanceOf(Money::class, $event->subtotal);
+        $this->assertSame('20.00', $event->subtotal->value);
+        $this->assertSame(2000, $event->subtotal->toCents());
         $this->assertSame('ord_789', $event->originalOrderId);
         $this->assertSame($refund->taxSummary, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
@@ -63,7 +67,7 @@ class RefundEventsTest extends BaseTestCase
         $event = RefundFailed::fromApiRefund($this->makeApiRefund('failed'));
 
         $this->assertSame('failed', $event->status);
-        $this->assertSame(2420, $event->total);
+        $this->assertSame(2420, $event->total->toCents());
         $this->assertInstanceOf(TaxSummaryCollection::class, $event->taxSummary);
     }
 
@@ -72,7 +76,7 @@ class RefundEventsTest extends BaseTestCase
         $event = RefundCanceled::fromApiRefund($this->makeApiRefund('canceled'));
 
         $this->assertSame('canceled', $event->status);
-        $this->assertSame(2000, $event->subtotal);
+        $this->assertSame(2000, $event->subtotal->toCents());
         $this->assertInstanceOf(TaxSummaryCollection::class, $event->taxSummary);
     }
 }

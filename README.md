@@ -92,7 +92,7 @@ use Vatly\API\Webhooks\Webhook;
 $event = Webhook::parse($rawBody, $signatureHeader, $webhookSecret);
 ```
 
-For strongly-typed, per-event objects, this package also owns immutable event DTOs under `Vatly\API\Webhooks\Events\*` (e.g. `OrderPaid`, `RefundCompleted`, `SubscriptionStarted`). They normalize money to integer cents (`Money::toCents()`) and carry the VAT breakdown as `Vatly\API\Types\TaxSummaryCollection`; order lines are `Vatly\API\Data\OrderLineData`. These are the canonical event shapes that higher-level integrations build on.
+For strongly-typed, per-event objects, this package also owns immutable event DTOs under `Vatly\API\Webhooks\Events\*` (e.g. `OrderPaid`, `RefundCompleted`, `SubscriptionStarted`). Money fields are `Vatly\API\Types\Money` (decimal-string + currency; call `$event->total->toCents()` / read `$event->total->currency` to flatten at your persistence edge) and the VAT breakdown is `Vatly\API\Types\TaxSummaryCollection`; order lines are `Vatly\API\Types\OrderLineData`. These are the canonical event shapes that higher-level integrations build on.
 
 The incoming webhook payloads are described in the `webhooks:` section of [`openapi.yaml`](openapi.yaml). See [docs/Webhooks.md](docs/Webhooks.md) for the full guide.
 

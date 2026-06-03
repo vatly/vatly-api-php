@@ -70,8 +70,11 @@ class ChargebackEventsTest extends BaseTestCase
         $this->assertSame('fraudulent', $event->reason);
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('charged_back', $event->status);
-        $this->assertSame(2420, $event->total);
-        $this->assertSame(2000, $event->subtotal);
+        $this->assertInstanceOf(Money::class, $event->total);
+        $this->assertSame('24.20', $event->total->value);
+        $this->assertSame(2420, $event->total->toCents());
+        $this->assertInstanceOf(Money::class, $event->subtotal);
+        $this->assertSame(2000, $event->subtotal->toCents());
         $this->assertSame('EUR', $event->currency);
         $this->assertSame($chargeback->taxSummary, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
@@ -87,7 +90,7 @@ class ChargebackEventsTest extends BaseTestCase
         $this->assertSame('fraudulent', $event->reason);
         $this->assertSame('', $event->customerId);
         $this->assertSame('', $event->status);
-        $this->assertSame(0, $event->total);
+        $this->assertNull($event->total);
         $this->assertNull($event->subtotal);
         $this->assertNull($event->taxSummary);
     }
@@ -99,7 +102,7 @@ class ChargebackEventsTest extends BaseTestCase
         $event = OrderChargebackReversed::fromApiChargeback($chargeback);
 
         $this->assertSame('charged_back_reversed', $event->status);
-        $this->assertSame(2420, $event->total);
+        $this->assertSame(2420, $event->total->toCents());
         $this->assertSame($chargeback->taxSummary, $event->taxSummary);
     }
 

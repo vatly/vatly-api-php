@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Vatly\API\Data;
+namespace Vatly\API\Types;
 
 use Vatly\API\Resources\OrderLine as ApiOrderLine;
-use Vatly\API\Types\TaxSummaryCollection;
 
 /**
  * Data for a single order line from Vatly.
@@ -18,9 +17,9 @@ use Vatly\API\Types\TaxSummaryCollection;
  * `productType` is carried as the raw API string (no enum) so new backend
  * product types flow through without an api-php release.
  *
- * Money fields (`basePrice`, `total`, `subtotal`) are integer cents, derived
- * from the API line's decimal-string {@see \Vatly\API\Types\Money} via
- * {@see \Vatly\API\Types\Money::toCents()}.
+ * Money fields (`basePrice`, `total`, `subtotal`) are {@see Money} values
+ * (decimal-string + currency). Consumers that need integer cents flatten at
+ * their own persistence edge via {@see Money::toCents()}.
  *
  * @immutable
  */
@@ -30,9 +29,9 @@ class OrderLineData
         public string $vatlyId,
         public string $description,
         public int $quantity,
-        public int $basePrice,
-        public int $total,
-        public int $subtotal,
+        public Money $basePrice,
+        public Money $total,
+        public Money $subtotal,
         public ?TaxSummaryCollection $taxSummary = null,
         public ?string $productType = null,
         public ?string $productId = null,
@@ -45,9 +44,9 @@ class OrderLineData
             vatlyId: $line->id,
             description: $line->description,
             quantity: $line->quantity,
-            basePrice: $line->basePrice->toCents(),
-            total: $line->total->toCents(),
-            subtotal: $line->subtotal->toCents(),
+            basePrice: $line->basePrice,
+            total: $line->total,
+            subtotal: $line->subtotal,
             taxSummary: $line->taxes,
             productType: $line->productType,
             productId: $line->productId,
