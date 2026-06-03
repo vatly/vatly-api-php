@@ -58,6 +58,8 @@ class OrderEndpointTest extends BaseEndpointTest
                     "resource" => "orderline",
                     "description" => "PDF Book",
                     "quantity" => 1,
+                    "productType" => "subscription",
+                    "productId" => "subscription_2a46f4c01d3b47979f4d7b3f58c98be7",
                     "basePrice" => [
                         "value" => "80.00",
                         "currency" => "EUR",
@@ -160,6 +162,8 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('order_item_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->id);
         $this->assertEquals('orderline', $orderLine->resource);
         $this->assertEquals('PDF Book', $orderLine->description);
+        $this->assertEquals('subscription', $orderLine->productType);
+        $this->assertEquals('subscription_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->productId);
         $this->assertEquals("96.00", $orderLine->total->value);
         $this->assertEquals("80.00", $orderLine->subtotal->value);
         $this->assertEquals("80.00", $orderLine->basePrice->value);
@@ -169,6 +173,56 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals(100, $orderLine->taxes->items[0]->taxRate->taxablePercentage);
         $this->assertEquals("16.00", $orderLine->taxes->items[0]->amount->value);
         $this->assertEquals("EUR", $orderLine->taxes->items[0]->amount->currency);
+    }
+
+    /** @test
+     * @throws ApiException
+     */
+    public function order_line_product_link_defaults_to_null_when_absent(): void
+    {
+        $orderId = 'order_dummy_id';
+        $responseBodyArray = [
+            'id' => $orderId,
+            'resource' => 'order',
+            'testmode' => false,
+            'createdAt' => '2023-01-11T10:50:50+02:00',
+            'status' => OrderStatus::STATUS_PAID,
+            'total' => ['value' => '96.00', 'currency' => 'EUR'],
+            'subtotal' => ['value' => '80.00', 'currency' => 'EUR'],
+            'reversedSubtotal' => ['value' => '0.00', 'currency' => 'EUR'],
+            'refundableSubtotal' => ['value' => '80.00', 'currency' => 'EUR'],
+            'taxSummary' => [],
+            'lines' => [
+                [
+                    'id' => 'order_item_2a46f4c01d3b47979f4d7b3f58c98be7',
+                    'resource' => 'orderline',
+                    'description' => 'PDF Book',
+                    'quantity' => 1,
+                    'basePrice' => ['value' => '80.00', 'currency' => 'EUR'],
+                    'total' => ['value' => '96.00', 'currency' => 'EUR'],
+                    'subtotal' => ['value' => '80.00', 'currency' => 'EUR'],
+                    'taxes' => [],
+                ],
+            ],
+            'customerDetails' => [],
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/orders/'.$orderId,
+                    'type' => 'application/hal+json',
+                ],
+            ],
+        ];
+
+        $this->httpClient->setSendReturnObjectFromArray($responseBodyArray);
+
+        /** @var Order $order */
+        $order = $this->client->orders->get($orderId, []);
+
+        /** @var OrderLine $orderLine */
+        $orderLine = $order->lines()[0];
+        $this->assertEquals('order_item_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->id);
+        $this->assertNull($orderLine->productType);
+        $this->assertNull($orderLine->productId);
     }
 
     /** @test */
