@@ -1026,6 +1026,8 @@ paths:
                             amount:
                               value: '6.09'
                               currency: EUR
+                        productType: subscription
+                        productId: subscription_Lp3mNvBxKw7RjTgYcZaE
                     customerDetails:
                       fullName: John Doe
                       companyName: Acme Corp
@@ -1127,6 +1129,8 @@ paths:
                         amount:
                           value: '6.09'
                           currency: EUR
+                    productType: subscription
+                    productId: subscription_Lp3mNvBxKw7RjTgYcZaE
                 customerDetails:
                   fullName: John Doe
                   companyName: Acme Corp
@@ -2246,6 +2250,8 @@ paths:
                           amount:
                             value: '5.20'
                             currency: EUR
+                      productType: subscription
+                      productId: subscription_Lp3mNvBxKw7RjTgYcZaE
                   customerDetails:
                     fullName: John Doe
                     companyName: Acme Corp
@@ -4569,6 +4575,25 @@ components:
           description: Tax breakdown by rate for this line
           items:
             $ref: '#/components/schemas/TaxSummaryItem'
+        productType:
+          type:
+            - string
+            - 'null'
+          description: The product type this line links to; null when the line has no product link.
+          enum:
+            - one_off_product
+            - subscription_plan
+            - subscription
+            - billing_details_verification
+            - auth_request_product
+            - null
+          example: subscription
+        productId:
+          type:
+            - string
+            - 'null'
+          description: The linked product's id; for a `subscription` line this is the public `subscription_…` id.
+          example: subscription_Lp3mNvBxKw7RjTgYcZaE
     AddressUpdateLink:
       type: object
       description: A signed URL to update order billing address
