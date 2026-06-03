@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\API\Webhooks\Events;
 
 use Vatly\API\Resources\Refund as ApiRefund;
+use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
 
@@ -26,10 +27,9 @@ class RefundCompleted
         public string $customerId,
         public string $refundId,
         public string $status,
-        public int $total,
-        public int $subtotal,
+        public Money $total,
+        public Money $subtotal,
         public TaxSummaryCollection $taxSummary,
-        public string $currency,
         public string $originalOrderId,
     ) {
         //
@@ -41,10 +41,9 @@ class RefundCompleted
             customerId: $refund->customerId,
             refundId: $refund->id,
             status: $refund->status,
-            total: $refund->total->toCents(),
-            subtotal: $refund->subtotal->toCents(),
+            total: $refund->total,
+            subtotal: $refund->subtotal,
             taxSummary: $refund->taxSummary,
-            currency: $refund->total->currency,
             originalOrderId: $refund->originalOrderId,
         );
     }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\API\Webhooks\Events;
 
 use Vatly\API\Resources\Chargeback as ApiChargeback;
+use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
 
@@ -33,8 +34,8 @@ class OrderChargebackReversed
         public ?string $reason = null,
         public string $customerId = '',
         public string $status = '',
-        public int $total = 0,
-        public ?int $subtotal = null,
+        public ?Money $total = null,
+        public ?Money $subtotal = null,
         public ?TaxSummaryCollection $taxSummary = null,
         public string $currency = '',
     ) {
@@ -60,8 +61,8 @@ class OrderChargebackReversed
             reason: $chargeback->reason !== '' ? $chargeback->reason : null,
             customerId: $chargeback->customerId,
             status: $chargeback->status,
-            total: $chargeback->total->toCents(),
-            subtotal: $chargeback->subtotal->toCents(),
+            total: $chargeback->total,
+            subtotal: $chargeback->subtotal,
             taxSummary: $chargeback->taxSummary,
             currency: $chargeback->total->currency,
         );

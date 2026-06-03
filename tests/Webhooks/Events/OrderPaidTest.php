@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Vatly\Tests\Webhooks\Events;
 
-use Vatly\API\Data\OrderLineData;
 use Vatly\API\Resources\Order;
 use Vatly\API\Types\Money;
+use Vatly\API\Types\OrderLineData;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
 use Vatly\API\Webhooks\Events\OrderPaid;
@@ -84,9 +84,13 @@ class OrderPaidTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_123', $event->orderId);
         $this->assertSame('paid', $event->status);
-        $this->assertSame(4999, $event->total);
-        $this->assertSame(4131, $event->subtotal);
-        $this->assertSame('USD', $event->currency);
+        $this->assertInstanceOf(Money::class, $event->total);
+        $this->assertSame('49.99', $event->total->value);
+        $this->assertSame(4999, $event->total->toCents());
+        $this->assertSame('USD', $event->total->currency);
+        $this->assertInstanceOf(Money::class, $event->subtotal);
+        $this->assertSame('41.31', $event->subtotal->value);
+        $this->assertSame(4131, $event->subtotal->toCents());
         $this->assertSame('INV-2024-002', $event->invoiceNumber);
         $this->assertSame('ideal', $event->paymentMethod);
         $this->assertInstanceOf(TaxSummaryCollection::class, $event->taxSummary);
@@ -119,9 +123,11 @@ class OrderPaidTest extends BaseTestCase
         $this->assertSame('', $event->customerId);
         $this->assertNull($event->invoiceNumber);
         $this->assertNull($event->paymentMethod);
-        $this->assertSame(1500, $event->total);
-        $this->assertSame(1240, $event->subtotal);
-        $this->assertSame('GBP', $event->currency);
+        $this->assertSame('15.00', $event->total->value);
+        $this->assertSame(1500, $event->total->toCents());
+        $this->assertSame('GBP', $event->total->currency);
+        $this->assertSame('12.40', $event->subtotal->value);
+        $this->assertSame(1240, $event->subtotal->toCents());
         $this->assertCount(0, $event->taxSummary->items);
         $this->assertNull($event->metadata);
     }
@@ -149,7 +155,7 @@ class OrderPaidTest extends BaseTestCase
         $this->assertSame(['vatly_transaction_id' => 'tx_42'], $event->metadata);
     }
 
-    public function test_it_maps_api_order_lines_with_product_fields_and_money_to_cents(): void
+    public function test_it_maps_api_order_lines_with_product_fields_and_money(): void
     {
         $order = $this->makeApiOrder();
         $order->lines = [
@@ -166,9 +172,11 @@ class OrderPaidTest extends BaseTestCase
         $this->assertSame('order_item_sub', $sub->vatlyId);
         $this->assertSame('Pro plan — monthly', $sub->description);
         $this->assertSame(1, $sub->quantity);
-        $this->assertSame(2000, $sub->basePrice);
-        $this->assertSame(2420, $sub->total);
-        $this->assertSame(2000, $sub->subtotal);
+        $this->assertInstanceOf(Money::class, $sub->basePrice);
+        $this->assertSame(2000, $sub->basePrice->toCents());
+        $this->assertSame('EUR', $sub->total->currency);
+        $this->assertSame(2420, $sub->total->toCents());
+        $this->assertSame(2000, $sub->subtotal->toCents());
         $this->assertSame('subscription', $sub->productType);
         $this->assertSame('subscription_abc', $sub->productId);
         $this->assertInstanceOf(TaxSummaryCollection::class, $sub->taxSummary);
@@ -178,9 +186,9 @@ class OrderPaidTest extends BaseTestCase
         $addon = $event->lines[1];
         $this->assertSame('order_item_addon', $addon->vatlyId);
         $this->assertSame(3, $addon->quantity);
-        $this->assertSame(500, $addon->basePrice);
-        $this->assertSame(1815, $addon->total);
-        $this->assertSame(1500, $addon->subtotal);
+        $this->assertSame(500, $addon->basePrice->toCents());
+        $this->assertSame(1815, $addon->total->toCents());
+        $this->assertSame(1500, $addon->subtotal->toCents());
         $this->assertSame('one_off_product', $addon->productType);
         $this->assertSame('product_seat', $addon->productId);
     }
