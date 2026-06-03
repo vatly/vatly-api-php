@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use Vatly\API\Webhooks\Events\OrderCanceled;
 use Vatly\API\Webhooks\Events\UnsupportedWebhookReceived;
 use Vatly\API\Webhooks\Events\WebhookReceived;
+use Vatly\API\Webhooks\Events\WebhookSetupReceived;
 
 class WebhookPayloadEventsTest extends TestCase
 {
@@ -69,6 +70,34 @@ class WebhookPayloadEventsTest extends TestCase
         $webhook = $this->makeWebhook('order.paid', 'order', 'ord_123', []);
 
         $this->assertNull($webhook->getCustomerId());
+    }
+
+    public function test_webhook_setup_received_constant(): void
+    {
+        $this->assertSame('webhook.setup', WebhookSetupReceived::VATLY_EVENT_NAME);
+    }
+
+    public function test_webhook_setup_received_maps_all_fields_from_webhook(): void
+    {
+        $webhook = $this->makeWebhook('webhook.setup', 'webhook', 'whk_123', ['url' => 'https://example.test/webhooks']);
+
+        $event = WebhookSetupReceived::fromWebhook($webhook);
+
+        $this->assertSame('webhook_event_1', $event->id);
+        $this->assertSame('webhook_event', $event->resource);
+        $this->assertSame('webhook.setup', $event->eventName);
+        $this->assertSame('webhook', $event->entityType);
+        $this->assertSame('whk_123', $event->entityId);
+        $this->assertTrue($event->testmode);
+        $this->assertSame('2024-01-01T10:00:00+00:00', $event->createdAt);
+        $this->assertSame(['url' => 'https://example.test/webhooks'], $event->object);
+    }
+
+    public function test_webhook_setup_received_allows_empty_object(): void
+    {
+        $event = WebhookSetupReceived::fromWebhook($this->makeWebhook('webhook.setup', 'webhook', 'whk_123', []));
+
+        $this->assertSame([], $event->object);
     }
 
     public function test_unsupported_webhook_received_maps_all_fields_from_webhook(): void

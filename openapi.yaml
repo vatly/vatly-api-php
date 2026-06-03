@@ -3050,10 +3050,10 @@ webhooks:
       responses:
         2XX:
           $ref: '#/components/responses/Acknowledged'
-  payment.failed:
+  order.payment_failed:
     post:
-      operationId: onPaymentFailed
-      summary: Payment failed
+      operationId: onOrderPaymentFailed
+      summary: Order payment failed
       description: |
         A payment failed and a dunning process was initiated for the order.
         `entityType` is `order` and `object` is the Order.
@@ -4961,7 +4961,7 @@ components:
             - `order.canceled` - Order was canceled
             - `order.chargeback_received` - Chargeback was received for an order
             - `order.chargeback_reversed` - Chargeback was reversed
-            - `payment.failed` - A payment failed and a dunning process was initiated for the order
+            - `order.payment_failed` - A payment failed and a dunning process was initiated for the order
             - `refund.completed` - Refund was processed successfully
             - `refund.failed` - Refund processing failed
             - `refund.canceled` - Refund was canceled
@@ -4986,7 +4986,7 @@ components:
             - order.canceled
             - order.chargeback_received
             - order.chargeback_reversed
-            - payment.failed
+            - order.payment_failed
             - refund.completed
             - refund.failed
             - refund.canceled
@@ -5014,7 +5014,7 @@ components:
             The full resource payload at the time of the event, serialized identically
             to the corresponding REST resource. The concrete shape is selected by the
             payload's own `resource` field (the discriminator):
-              - `order.paid`, `order.canceled`, `payment.failed` → Order
+              - `order.paid`, `order.canceled`, `order.payment_failed` → Order
               - `order.chargeback_received`, `order.chargeback_reversed` → Chargeback
               - `refund.*` → Refund
               - `subscription.*` → Subscription
@@ -5513,7 +5513,7 @@ components:
             - `order.canceled` - Order was canceled
             - `order.chargeback_received` - Chargeback was received for an order
             - `order.chargeback_reversed` - Chargeback was reversed
-            - `payment.failed` - A payment failed and a dunning process was initiated for the order
+            - `order.payment_failed` - A payment failed and a dunning process was initiated for the order
             - `refund.completed` - Refund was processed successfully
             - `refund.failed` - Refund processing failed
             - `refund.canceled` - Refund was canceled
@@ -5536,7 +5536,7 @@ components:
             - order.canceled
             - order.chargeback_received
             - order.chargeback_reversed
-            - payment.failed
+            - order.payment_failed
             - refund.completed
             - refund.failed
             - refund.canceled
@@ -5565,7 +5565,7 @@ components:
             The full resource payload at the time of the event, serialized identically
             to the corresponding REST resource. The concrete shape is selected by the
             payload's own `resource` field (the discriminator):
-              - `order.paid`, `order.canceled`, `payment.failed` → Order
+              - `order.paid`, `order.canceled`, `order.payment_failed` → Order
               - `order.chargeback_received`, `order.chargeback_reversed` → Chargeback
               - `refund.*` → Refund
               - `subscription.*` → Subscription

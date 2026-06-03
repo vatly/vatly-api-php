@@ -23,11 +23,11 @@ use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
  *
  * @immutable
  */
-class PaymentFailed
+class OrderPaymentFailed
 {
     use NormalizesWebhookMetadata;
 
-    public const VATLY_EVENT_NAME = WebhookEventName::PAYMENT_FAILED;
+    public const VATLY_EVENT_NAME = WebhookEventName::ORDER_PAYMENT_FAILED;
 
     public function __construct(
         public string $customerId,
