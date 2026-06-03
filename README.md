@@ -82,6 +82,20 @@ $vatly->setIdempotencyKeyGenerator(new MyIdempotencyKeyGenerator());
 $vatly->clearIdempotencyKeyGenerator();
 ```
 
+## Webhooks
+
+Verify and parse incoming Vatly webhooks with `Webhook::parse()`, which returns a typed `WebhookPayload`:
+
+```php
+use Vatly\API\Webhooks\Webhook;
+
+$event = Webhook::parse($rawBody, $signatureHeader, $webhookSecret);
+```
+
+For strongly-typed, per-event objects, this package also owns immutable event DTOs under `Vatly\API\Webhooks\Events\*` (e.g. `OrderPaid`, `RefundCompleted`, `SubscriptionStarted`). They normalize money to integer cents (`Money::toCents()`) and carry the VAT breakdown as `Vatly\API\Types\TaxSummaryCollection`; order lines are `Vatly\API\Data\OrderLineData`. These are the canonical event shapes that higher-level integrations build on.
+
+The incoming webhook payloads are described in the `webhooks:` section of [`openapi.yaml`](openapi.yaml). See [docs/Webhooks.md](docs/Webhooks.md) for the full guide.
+
 ## Testing
 
 ```bash
