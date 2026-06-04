@@ -94,6 +94,21 @@ $event = Webhook::parse($rawBody, $signatureHeader, $webhookSecret);
 
 For strongly-typed, per-event objects, this package also owns immutable event DTOs under `Vatly\API\Webhooks\Events\*` (e.g. `OrderPaid`, `RefundCompleted`, `SubscriptionStarted`). Money fields are `Vatly\API\Types\Money` (decimal-string + currency; call `$event->total->toCents()` / read `$event->total->currency` to flatten at your persistence edge) and the VAT breakdown is `Vatly\API\Types\TaxSummaryCollection`; order lines are `Vatly\API\Types\OrderLineData`. These are the canonical event shapes that higher-level integrations build on.
 
+`Vatly\API\Webhooks\WebhookEventFactory` turns a verified payload into one of these typed events — verify, parse, and map all happen in api-php now. Pass it a `VatlyApiClient` and hand it the `WebhookReceived` from `fromPayload()`:
+
+```php
+use Vatly\API\Webhooks\Webhook;
+use Vatly\API\Webhooks\WebhookEventFactory;
+
+$payload = Webhook::parse($rawBody, $signatureHeader, $webhookSecret);
+
+$factory = new WebhookEventFactory($client);
+$event = $factory->createFromWebhook($factory->fromPayload($payload));
+// e.g. $event instanceof Vatly\API\Webhooks\Events\OrderPaid
+```
+
+Because Vatly sends fat, HMAC-signed payloads — the delivery's `object` is byte-identical to the corresponding `GET /…/{id}` body — the factory builds every event straight from the signed payload (hydrating the matching api-php resource in memory for money/tax-bearing events). It makes **no follow-up API call**. Use `getSupportedEvents()` / `isSupported()` to inspect the event surface.
+
 The incoming webhook payloads are described in the `webhooks:` section of [`openapi.yaml`](openapi.yaml). See [docs/Webhooks.md](docs/Webhooks.md) for the full guide.
 
 ## Testing

@@ -15,8 +15,10 @@ use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
  * Event representing an order being paid at Vatly.
  *
  * Carries the full tax breakdown so consumers can materialize a local invoice
- * without a follow-up API call. The webhook payload itself is sparse; the
- * webhook event factory enriches via `GetOrder` before dispatching.
+ * without a follow-up API call. The signed webhook payload is the authoritative
+ * snapshot — its `object` is byte-identical to the `GET /orders/{id}` body — so
+ * {@see \Vatly\API\Webhooks\WebhookEventFactory} hydrates this event straight
+ * from that payload, with no follow-up API GET.
  *
  * @immutable
  */
@@ -65,8 +67,8 @@ class OrderPaid
     }
 
     /**
-     * Map the enriched API order's lines (the `OrderLineCollection` returned
-     * by `GetOrder`) into immutable {@see OrderLineData} DTOs.
+     * Map the API order's lines (the `OrderLineCollection` hydrated from the
+     * signed webhook payload) into immutable {@see OrderLineData} DTOs.
      *
      * `productType`/`productId` are read straight off the API line and carried
      * as raw strings.

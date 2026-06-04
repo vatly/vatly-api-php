@@ -16,12 +16,14 @@ use Vatly\API\Types\WebhookEventName;
  * open the dispute window. The envelope's `entityId` is the order ID, so the
  * driver can locate the affected order directly.
  *
- * When a `GetChargeback` action is wired, the webhook event factory enriches
- * this event via the API before dispatch (mirroring `order.paid` / `refund.*`)
- * so it carries the customer id, dispute status, and the full tax breakdown —
- * enough to persist a local row and reconcile the reversed VAT without a second
- * API call. Without that action it degrades gracefully to the sparse webhook
- * payload (`orderId`, `chargebackId`, `originalOrderId`, `reason`).
+ * The signed webhook payload is the authoritative snapshot — its `object` is
+ * byte-identical to the `GET /chargebacks/{id}` body — so
+ * {@see \Vatly\API\Webhooks\WebhookEventFactory} hydrates this event straight
+ * from that payload (no follow-up API GET). It therefore carries the customer
+ * id, dispute status, and the full tax breakdown — enough to persist a local
+ * row and reconcile the reversed VAT. {@see self::fromWebhook()} remains as a
+ * sparse fallback for builders that only have the envelope (`orderId`,
+ * `chargebackId`, `originalOrderId`, `reason`).
  *
  * @immutable
  */
