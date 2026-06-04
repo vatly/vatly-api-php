@@ -35,6 +35,7 @@ class SubscriptionCancellationGracePeriodCompleted
         public string $customerId,
         public string $subscriptionId,
         public DateTimeInterface $endsAt,
+        public bool $testmode,
     ) {
         //
     }
@@ -45,6 +46,7 @@ class SubscriptionCancellationGracePeriodCompleted
             customerId: $webhook->object['customerId'] ?? '',
             subscriptionId: $webhook->entityId,
             endsAt: new DateTimeImmutable($webhook->object['endedAt'] ?? $webhook->createdAt),
+            testmode: $webhook->testmode,
         );
     }
 }

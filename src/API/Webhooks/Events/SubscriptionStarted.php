@@ -34,6 +34,7 @@ class SubscriptionStarted
         public string $type,
         public string $name,
         public int $quantity,
+        public bool $testmode,
         /**
          * Payment method on file at the time the webhook fires. `null` when
          * no mandate has bound yet — the API briefly returns `mandate: null`
@@ -60,6 +61,7 @@ class SubscriptionStarted
             type: self::DEFAULT_TYPE,
             name: $subscription->name,
             quantity: $subscription->quantity,
+            testmode: $subscription->testmode,
             mandate: $subscription->mandate,
         );
     }
@@ -79,6 +81,7 @@ class SubscriptionStarted
             type: self::DEFAULT_TYPE,
             name: $webhook->object['name'],
             quantity: $webhook->object['quantity'],
+            testmode: $webhook->testmode,
             mandate: self::mandateFromWebhookObject($webhook->object),
         );
     }

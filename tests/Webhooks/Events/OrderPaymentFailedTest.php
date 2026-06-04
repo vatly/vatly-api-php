@@ -22,6 +22,7 @@ class OrderPaymentFailedTest extends BaseTestCase
         $order->subtotal = new Money('EUR', '81.82');
         $order->invoiceNumber = 'INV-2024-009';
         $order->paymentMethod = 'creditcard';
+        $order->testmode = false;
         $order->metadata = null;
         $order->taxSummary = new TaxSummaryCollection([
             [
@@ -54,6 +55,7 @@ class OrderPaymentFailedTest extends BaseTestCase
         $this->assertSame(8182, $event->subtotal->toCents());
         $this->assertSame('INV-2024-009', $event->invoiceNumber);
         $this->assertSame('creditcard', $event->paymentMethod);
+        $this->assertFalse($event->testmode);
         $this->assertInstanceOf(TaxSummaryCollection::class, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
     }

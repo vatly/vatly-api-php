@@ -33,6 +33,7 @@ class CheckoutCanceled
         public ?string $customerId,
         public ?string $orderId,
         public string $status,
+        public bool $testmode,
         public ?array $metadata = null,
     ) {
         //
@@ -45,6 +46,7 @@ class CheckoutCanceled
             customerId: $webhook->object['customerId'] ?? null,
             orderId: $webhook->object['orderId'] ?? null,
             status: $webhook->object['status'] ?? CheckoutStatus::STATUS_CANCELED,
+            testmode: $webhook->testmode,
             metadata: self::normalizeMetadata($webhook->object['metadata'] ?? null),
         );
     }

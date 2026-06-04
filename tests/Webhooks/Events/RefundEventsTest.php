@@ -21,6 +21,7 @@ class RefundEventsTest extends BaseTestCase
         $refund->status = $status;
         $refund->customerId = 'cus_456';
         $refund->originalOrderId = 'ord_789';
+        $refund->testmode = true;
         $refund->total = new Money('EUR', '24.20');
         $refund->subtotal = new Money('EUR', '20.00');
         $refund->taxSummary = new TaxSummaryCollection([
@@ -57,6 +58,7 @@ class RefundEventsTest extends BaseTestCase
         $this->assertSame('20.00', $event->subtotal->value);
         $this->assertSame(2000, $event->subtotal->toCents());
         $this->assertSame('ord_789', $event->originalOrderId);
+        $this->assertTrue($event->testmode);
         $this->assertSame($refund->taxSummary, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
         $this->assertSame('VAT', $event->taxSummary->items[0]->taxRate->name);

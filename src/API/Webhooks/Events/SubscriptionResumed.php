@@ -25,6 +25,7 @@ class SubscriptionResumed
     public function __construct(
         public string $customerId,
         public string $subscriptionId,
+        public bool $testmode,
     ) {
         //
     }
@@ -34,6 +35,7 @@ class SubscriptionResumed
         return new self(
             customerId: $webhook->object['customerId'],
             subscriptionId: $webhook->entityId,
+            testmode: $webhook->testmode,
         );
     }
 }

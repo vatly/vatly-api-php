@@ -25,6 +25,7 @@ class SubscriptionEventsTest extends BaseTestCase
         $subscription->subscriptionPlanId = 'plan_789';
         $subscription->name = 'Pro plan';
         $subscription->quantity = 2;
+        $subscription->testmode = true;
         $subscription->mandate = $mandate;
 
         return $subscription;
@@ -67,6 +68,7 @@ class SubscriptionEventsTest extends BaseTestCase
         $this->assertSame('default', $event->type);
         $this->assertSame('Pro plan', $event->name);
         $this->assertSame(2, $event->quantity);
+        $this->assertTrue($event->testmode);
         $this->assertInstanceOf(Mandate::class, $event->mandate);
         $this->assertSame('card', $event->mandate->method);
         $this->assertSame('4242', $event->mandate->maskedIdentifier);

@@ -39,6 +39,7 @@ class SubscriptionBillingUpdated
         public string $planId,
         public string $name,
         public int $quantity,
+        public bool $testmode,
         /**
          * Payment method on file after the update. `null` when enrichment fell
          * back to the webhook payload and it carried no mandate — consumers
@@ -62,6 +63,7 @@ class SubscriptionBillingUpdated
             planId: $subscription->subscriptionPlanId,
             name: $subscription->name,
             quantity: $subscription->quantity,
+            testmode: $subscription->testmode,
             mandate: $subscription->mandate,
         );
     }
@@ -81,6 +83,7 @@ class SubscriptionBillingUpdated
             planId: $webhook->object['subscriptionPlanId'],
             name: $webhook->object['name'],
             quantity: $webhook->object['quantity'],
+            testmode: $webhook->testmode,
             mandate: self::mandateFromWebhookObject($webhook->object),
         );
     }

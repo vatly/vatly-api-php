@@ -23,6 +23,7 @@ class OrderCanceled
         public string $customerId,
         public string $orderId,
         public string $status,
+        public bool $testmode,
     ) {
         //
     }
@@ -33,6 +34,7 @@ class OrderCanceled
             customerId: $webhook->object['customerId'] ?? '',
             orderId: $webhook->entityId,
             status: $webhook->object['status'] ?? 'canceled',
+            testmode: $webhook->testmode,
         );
     }
 }
