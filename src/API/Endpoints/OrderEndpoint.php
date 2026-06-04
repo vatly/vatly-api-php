@@ -56,7 +56,8 @@ class OrderEndpoint extends BaseEndpoint
     {
         $this->validateOrderId($id);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/request-address-update-link";
+        // path renamed in vatlify #1495
+        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/invoice-update-link";
 
         $result = $this->client->performHttpCall(
             self::REST_CREATE,

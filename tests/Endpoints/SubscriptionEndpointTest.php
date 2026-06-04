@@ -256,8 +256,8 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         $response = $subscription->updateBilling($updatedBilling);
 
         $this->assertWasSentOnly(
-            VatlyApiClient::HTTP_PATCH,
-            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/update-billing',
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/billing-update-link',
             [],
             json_encode($updatedBilling)
         );
@@ -281,8 +281,8 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         ]);
 
         $this->assertWasSentOnly(
-            VatlyApiClient::HTTP_PATCH,
-            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/update-billing',
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123/billing-update-link',
             [],
             '{"billingAddress":{"email":"billing@xn--mller-kva.de","city":"München"}}'
         );

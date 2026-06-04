@@ -89,10 +89,11 @@ class SubscriptionEndpoint extends BaseEndpoint
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/update-billing";
+        // path renamed in vatlify #1495 (POST /subscriptions/{id}/billing-update-link)
+        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/billing-update-link";
 
         $result = $this->client->performHttpCall(
-            self::REST_UPDATE,
+            self::REST_CREATE,
             $resource,
             $this->parseRequestBody($data),
         );
