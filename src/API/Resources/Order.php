@@ -23,7 +23,7 @@ class Order extends BaseResource
     public string $resource;
 
     /**
-     * Only present when a customer is associated with the order.
+     * Null for orders with no associated customer.
      *
      * @example customer_78b146a7de7d417e9d68d7e6ef193d18
      */

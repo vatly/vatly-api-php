@@ -6,6 +6,6 @@ use Vatly\API\Types\Link;
 
 class OrderLinks extends BaseLinksResource
 {
-    public Link $customer;
+    public ?Link $customer = null;
     public ?Link $customerInvoice;
 }
