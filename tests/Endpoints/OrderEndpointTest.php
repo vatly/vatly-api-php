@@ -350,7 +350,7 @@ class OrderEndpointTest extends BaseEndpointTest
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
-            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/request-address-update-link',
+            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/invoice-update-link',
             [],
             null
         );
@@ -374,7 +374,7 @@ class OrderEndpointTest extends BaseEndpointTest
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
-            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/request-address-update-link',
+            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/invoice-update-link',
             [],
             '{"billingAddress":{"email":"billing@xn--mller-kva.de"}}'
         );

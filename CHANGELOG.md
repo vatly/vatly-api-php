@@ -11,6 +11,7 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Fixed
 
+- Corrected renamed endpoint paths (`invoice-update-link`, `billing-update-link`) per vatlify [#1495](https://github.com/). `OrderEndpoint::requestAddressUpdateLink()` now `POST`s to `/orders/{id}/invoice-update-link` (was `/request-address-update-link`), and `SubscriptionEndpoint::updateBilling()` now `POST`s to `/subscriptions/{id}/billing-update-link` (was a `PATCH` to `/update-billing`). The PHP method names are unchanged. Both previously hit dead paths.
 - `Vatly\API\Resources\Links\OrderLinks::$customer` is now nullable (`?Link`). The stabilized v1 response contract now always includes the `customer` link on an order and sets it to `null` for orders with no associated customer (previously the field was omitted). Hydrating such an order into the non-nullable property threw a `TypeError`.
 - Corrected stale docblocks on `Vatly\API\Webhooks\Events\OrderPaid` and `OrderChargebackReceived` that claimed the webhook event factory enriches the event via a follow-up `GetOrder` / `GetChargeback` API call. Events are now built from the signed webhook payload with no follow-up GET; the docblocks describe that flow.
 
