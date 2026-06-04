@@ -51,6 +51,7 @@ class CheckoutEventsTest extends TestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_789', $event->orderId);
         $this->assertSame('paid', $event->status);
+        $this->assertTrue($event->testmode);
         $this->assertSame(['cart_id' => 'cart_1'], $event->metadata);
     }
 

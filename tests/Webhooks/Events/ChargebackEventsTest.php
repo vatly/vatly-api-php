@@ -22,6 +22,7 @@ class ChargebackEventsTest extends BaseTestCase
         $chargeback->originalOrderId = 'ord_789';
         $chargeback->status = $status;
         $chargeback->reason = 'fraudulent';
+        $chargeback->testmode = true;
         $chargeback->total = new Money('EUR', '24.20');
         $chargeback->subtotal = new Money('EUR', '20.00');
         $chargeback->taxSummary = new TaxSummaryCollection([
@@ -76,6 +77,7 @@ class ChargebackEventsTest extends BaseTestCase
         $this->assertInstanceOf(Money::class, $event->subtotal);
         $this->assertSame(2000, $event->subtotal->toCents());
         $this->assertSame('EUR', $event->currency);
+        $this->assertTrue($event->testmode);
         $this->assertSame($chargeback->taxSummary, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
     }
@@ -90,6 +92,7 @@ class ChargebackEventsTest extends BaseTestCase
         $this->assertSame('fraudulent', $event->reason);
         $this->assertSame('', $event->customerId);
         $this->assertSame('', $event->status);
+        $this->assertTrue($event->testmode);
         $this->assertNull($event->total);
         $this->assertNull($event->subtotal);
         $this->assertNull($event->taxSummary);

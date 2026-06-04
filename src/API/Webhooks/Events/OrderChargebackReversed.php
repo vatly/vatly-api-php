@@ -31,6 +31,7 @@ class OrderChargebackReversed
         public string $orderId,
         public string $chargebackId,
         public string $originalOrderId,
+        public bool $testmode,
         public ?string $reason = null,
         public string $customerId = '',
         public string $status = '',
@@ -48,6 +49,7 @@ class OrderChargebackReversed
             orderId: $webhook->entityId,
             chargebackId: $webhook->object['id'] ?? '',
             originalOrderId: $webhook->object['originalOrderId'] ?? $webhook->entityId,
+            testmode: $webhook->testmode,
             reason: $webhook->object['reason'] ?? null,
         );
     }
@@ -58,6 +60,7 @@ class OrderChargebackReversed
             orderId: $chargeback->originalOrderId,
             chargebackId: $chargeback->id,
             originalOrderId: $chargeback->originalOrderId,
+            testmode: $chargeback->testmode,
             reason: $chargeback->reason !== '' ? $chargeback->reason : null,
             customerId: $chargeback->customerId,
             status: $chargeback->status,

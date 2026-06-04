@@ -24,6 +24,7 @@ class OrderPaidTest extends BaseTestCase
         $order->subtotal = new Money('USD', '41.31');
         $order->invoiceNumber = 'INV-2024-002';
         $order->paymentMethod = 'ideal';
+        $order->testmode = true;
         $order->metadata = null;
         $order->taxSummary = new TaxSummaryCollection([
             [
@@ -93,6 +94,7 @@ class OrderPaidTest extends BaseTestCase
         $this->assertSame(4131, $event->subtotal->toCents());
         $this->assertSame('INV-2024-002', $event->invoiceNumber);
         $this->assertSame('ideal', $event->paymentMethod);
+        $this->assertTrue($event->testmode);
         $this->assertInstanceOf(TaxSummaryCollection::class, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
         $this->assertSame('VAT', $event->taxSummary->items[0]->taxRate->name);

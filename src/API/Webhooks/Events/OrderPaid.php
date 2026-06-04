@@ -37,6 +37,7 @@ class OrderPaid
         public TaxSummaryCollection $taxSummary,
         public ?string $invoiceNumber,
         public ?string $paymentMethod,
+        public bool $testmode,
         /** @var array<string, mixed>|null */
         public ?array $metadata = null,
         /**
@@ -61,6 +62,7 @@ class OrderPaid
             taxSummary: $order->taxSummary,
             invoiceNumber: $order->invoiceNumber,
             paymentMethod: $order->paymentMethod,
+            testmode: $order->testmode,
             metadata: self::normalizeMetadata($order->metadata),
             lines: self::mapLines($order),
         );

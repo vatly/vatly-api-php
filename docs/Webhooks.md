@@ -165,7 +165,10 @@ $event->total->currency;   // e.g. "USD"
 $event->total->toCents();  // int cents, e.g. 4999
 $event->taxSummary;        // Vatly\API\Types\TaxSummaryCollection
 $event->lines;             // Vatly\API\Types\OrderLineData[]
+$event->testmode;          // bool — test (true) vs live (false), mirrored from the source record
 ```
+
+Every business event (order/subscription/refund/chargeback/checkout) carries `testmode`, sourced from the enriched resource (`$resource->testmode`) or the webhook envelope (`$webhook->testmode`). Persist it alongside the record so test and live data stay segregated and the matching API key can be selected per record.
 
 These DTOs are the canonical, framework-agnostic event shapes that higher-level integrations (e.g. `vatly-fluent-php`) build on. The line-item DTO lives at [`Vatly\API\Types\OrderLineData`](../src/API/Types/OrderLineData.php); its `basePrice`/`total`/`subtotal` are `Money` too.
 

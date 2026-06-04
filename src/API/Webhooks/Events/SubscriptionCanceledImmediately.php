@@ -21,6 +21,7 @@ class SubscriptionCanceledImmediately
         public string $customerId,
         public string $subscriptionId,
         public DateTimeInterface $endsAt,
+        public bool $testmode,
     ) {
         //
     }
@@ -31,6 +32,7 @@ class SubscriptionCanceledImmediately
             customerId: $webhook->object['customerId'],
             subscriptionId: $webhook->entityId,
             endsAt: new DateTimeImmutable($webhook->createdAt),
+            testmode: $webhook->testmode,
         );
     }
 }

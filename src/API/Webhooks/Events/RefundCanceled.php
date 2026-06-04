@@ -31,6 +31,7 @@ class RefundCanceled
         public Money $subtotal,
         public TaxSummaryCollection $taxSummary,
         public string $originalOrderId,
+        public bool $testmode,
     ) {
         //
     }
@@ -45,6 +46,7 @@ class RefundCanceled
             subtotal: $refund->subtotal,
             taxSummary: $refund->taxSummary,
             originalOrderId: $refund->originalOrderId,
+            testmode: $refund->testmode,
         );
     }
 }
