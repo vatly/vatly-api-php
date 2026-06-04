@@ -6,7 +6,12 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Added
 
+- `Vatly\API\Webhooks\WebhookEventFactory` — turns a verified webhook into a typed `Vatly\API\Webhooks\Events\*` DTO entirely within api-php (verify → parse → map). Constructed with a single `VatlyApiClient` (`__construct(VatlyApiClient $apiClient)`); `createFromWebhook(WebhookReceived $webhook)` maps to the matching event, `fromPayload(WebhookPayload $payload)` adapts a parsed payload into a `WebhookReceived`, and `getSupportedEvents()` / `isSupported()` describe the surface. Because Vatly sends fat, HMAC-signed payloads (the `object` is byte-identical to the `GET /…/{id}` body), the factory builds every event from the signed payload — hydrating the matching api-php resource in memory for money/tax-bearing events via `ResourceFactory` — and makes **no follow-up API call**. This was previously owned by `vatly-fluent-php`; api-php is now the source of truth.
 - `Vatly\API\Webhooks\Events\WebhookSetupReceived` — typed event DTO for the `webhook.setup` verification call. Carries the webhook envelope (`id`, `resource`, `eventName`, `entityType`, `entityId`, `testmode`, `createdAt`, `object`); build it from a `WebhookReceived` via `WebhookSetupReceived::fromWebhook()`. Previously this event had no DTO and fell through to `UnsupportedWebhookReceived`.
+
+### Fixed
+
+- Corrected stale docblocks on `Vatly\API\Webhooks\Events\OrderPaid` and `OrderChargebackReceived` that claimed the webhook event factory enriches the event via a follow-up `GetOrder` / `GetChargeback` API call. Events are now built from the signed webhook payload with no follow-up GET; the docblocks describe that flow.
 
 ### Changed
 
