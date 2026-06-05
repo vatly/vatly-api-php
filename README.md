@@ -33,6 +33,8 @@ $vatly->checkouts->create([...]);
 
 For detailed documentation, see [docs/README.md](docs/README.md).
 
+> **Source of truth.** The complete, canonical schema for every request and response — including fields the guides below don't spell out — lives in [`openapi.yaml`](openapi.yaml). If you (or an AI assistant) are unsure whether a field exists or what it's called, check the spec rather than guessing from an example. For example, checkout items accept only `id`, `quantity`, `price`, `trialDays`, and `metadata` — there is no item-level `unitPrice`, `name`, or `currency`.
+
 ## Idempotency
 
 The SDK automatically sends an `Idempotency-Key` header on every `POST` and `PATCH` request.
@@ -40,7 +42,7 @@ The SDK automatically sends an `Idempotency-Key` header on every `POST` and `PAT
 ```php
 $checkout = $vatly->checkouts->create([
     'products' => [
-        ['id' => 'plan_abc123', 'quantity' => 1],
+        ['id' => 'subscription_plan_abc123', 'quantity' => 1],
     ],
     'redirectUrlSuccess' => 'https://yourapp.com/success',
     'redirectUrlCanceled' => 'https://yourapp.com/canceled',
@@ -54,7 +56,7 @@ $vatly->setIdempotencyKey('checkout-create-123');
 
 $checkout = $vatly->checkouts->create([
     'products' => [
-        ['id' => 'plan_abc123', 'quantity' => 1],
+        ['id' => 'subscription_plan_abc123', 'quantity' => 1],
     ],
     'redirectUrlSuccess' => 'https://yourapp.com/success',
     'redirectUrlCanceled' => 'https://yourapp.com/canceled',

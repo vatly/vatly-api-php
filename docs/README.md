@@ -2,6 +2,8 @@
 
 Official PHP SDK for the Vatly API. Handle subscriptions, one-off payments, tax compliance, and billing for your SaaS.
 
+> **Looking for the exact field list?** These guides cover the common paths. The authoritative, machine-readable schema for every endpoint lives in [`openapi.yaml`](../openapi.yaml) — point your AI assistant or codegen tooling at it when an example leaves a field ambiguous.
+
 ## Installation
 
 

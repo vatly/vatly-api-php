@@ -2,6 +2,8 @@
 
 Checkouts create hosted payment pages for your customers. When a checkout completes successfully, an Order is created.
 
+> **Authoritative field reference.** This page covers the common cases. The complete, canonical request/response schema — every accepted field, its type, and its validation rules — lives in [`openapi.yaml`](../openapi.yaml) (see the `Checkout`, `CheckoutProduct`, and `Money` schemas). When in doubt about what a field is named or whether it exists, trust the spec, not an example.
+
 ## The Checkout Resource
 
 Below you'll find all properties for the Vatly Checkout resource.
@@ -35,7 +37,7 @@ Create a new hosted checkout for your customer.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `products` | `array` | An array of product objects with `id`, optional `quantity`, and optional `trialDays`. |
+| `products` | `array` | An array of product items. See [Product items](#product-items) below for the accepted per-item fields. |
 | `redirectUrlSuccess` | `string` | The URL to redirect after successful payment. |
 | `redirectUrlCanceled` | `string` | The URL to redirect if the customer cancels. |
 
@@ -88,6 +90,38 @@ $checkout = $vatly->checkouts->create([
 ```
 
 If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header automatically.
+
+### Product items
+
+Each entry in `products` references a product you have **already created in the [Vatly dashboard](https://my.vatly.com)** — there is no API endpoint to create products on the fly. The accepted fields are:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | **Required.** The product id, either `one_off_product_…` (one-off product) or `subscription_plan_…` (subscription plan). |
+| `quantity` | `integer` | Number of units. Optional, defaults to `1`. |
+| `price` | `Money \| null` | Optional **custom price override**. A `Money` object (`{ "value": "49.99", "currency": "EUR" }`). When omitted, the product's dashboard-configured price is used. |
+| `trialDays` | `integer \| null` | Trial period in days. Only applies when `id` is a `subscription_plan_…`. |
+| `metadata` | `array` | Optional per-item custom metadata. |
+
+> **There are no item-level `unitPrice`, `name`, `description`, `amount`, or `currency` fields.** To charge a custom amount, override the whole price with the `price` `Money` object below. `value` is a decimal string with currency-correct precision (`"10.00"` for EUR/USD, `"1000"` for JPY, `"1.000"` for BHD/KWD).
+
+```php
+// Override the price of a pre-configured product at checkout time.
+$checkout = $vatly->checkouts->create([
+    'products' => [
+        [
+            'id' => 'one_off_product_Vr8kQdFhSrG4Y3DnfsdqH',
+            'quantity' => 2,
+            'price' => [
+                'value' => '49.99',
+                'currency' => 'EUR',
+            ],
+        ],
+    ],
+    'redirectUrlSuccess' => 'https://yourapp.com/success',
+    'redirectUrlCanceled' => 'https://yourapp.com/canceled',
+]);
+```
 
 ```json
 {
