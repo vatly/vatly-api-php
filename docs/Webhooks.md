@@ -172,7 +172,7 @@ Every business event (order/subscription/refund/chargeback/checkout) carries `te
 
 These DTOs are the canonical, framework-agnostic event shapes that higher-level integrations (e.g. `vatly-fluent-php`) build on. The line-item DTO lives at [`Vatly\API\Types\OrderLineData`](../src/API/Types/OrderLineData.php); its `basePrice`/`total`/`subtotal` are `Money` too.
 
-The full set of incoming webhook payloads is also described in the [webhooks OpenAPI spec](../openapi.yaml) under the top-level `webhooks:` section — one entry per `WebhookEventName`, each referencing the `WebhookDelivery` envelope.
+The full set of incoming webhook payloads is also described in the [webhooks OpenAPI spec](https://docs.vatly.com/openapi.yaml) under the top-level `webhooks:` section — one entry per `WebhookEventName`, each referencing the `WebhookDelivery` envelope.
 
 ### Replay-window tolerance
 
