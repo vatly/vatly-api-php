@@ -1,3 +1,5 @@
+![Vatly API client for PHP](art/banner.png)
+
 # Vatly API client for PHP
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/vatly/vatly-api-php.svg?style=flat-square)](https://packagist.org/packages/vatly/vatly-api-php)
