@@ -33,7 +33,7 @@ $vatly->checkouts->create([...]);
 
 For detailed documentation, see [docs/README.md](docs/README.md).
 
-> **Source of truth.** The complete, canonical schema for every request and response — including fields the guides below don't spell out — lives in [`openapi.yaml`](openapi.yaml). If you (or an AI assistant) are unsure whether a field exists or what it's called, check the spec rather than guessing from an example.
+> **Source of truth.** The complete, canonical schema for every request and response — including fields the guides below don't spell out — lives in the [OpenAPI spec](https://docs.vatly.com/openapi.yaml). If you (or an AI assistant) are unsure whether a field exists or what it's called, check the spec rather than guessing from an example.
 
 ## Idempotency
 
@@ -111,7 +111,7 @@ $event = $factory->createFromWebhook($factory->fromPayload($payload));
 
 Because Vatly sends fat, HMAC-signed payloads — the delivery's `object` is byte-identical to the corresponding `GET /…/{id}` body — the factory builds every event straight from the signed payload (hydrating the matching api-php resource in memory for money/tax-bearing events). It makes **no follow-up API call**. Use `getSupportedEvents()` / `isSupported()` to inspect the event surface.
 
-The incoming webhook payloads are described in the `webhooks:` section of [`openapi.yaml`](openapi.yaml). See [docs/Webhooks.md](docs/Webhooks.md) for the full guide.
+The incoming webhook payloads are described in the `webhooks:` section of the [OpenAPI spec](https://docs.vatly.com/openapi.yaml). See [docs/Webhooks.md](docs/Webhooks.md) for the full guide.
 
 ## Testing
 

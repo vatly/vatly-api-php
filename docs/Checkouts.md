@@ -2,7 +2,7 @@
 
 Checkouts create hosted payment pages for your customers. When a checkout completes successfully, an Order is created.
 
-> **Authoritative field reference.** This page covers the common cases. The complete, canonical request/response schema — every accepted field, its type, and its validation rules — lives in [`openapi.yaml`](../openapi.yaml) (see the `Checkout`, `CheckoutProduct`, and `Money` schemas). When in doubt about what a field is named or whether it exists, trust the spec, not an example.
+> **Authoritative field reference.** This page covers the common cases. The complete, canonical request/response schema — every accepted field, its type, and its validation rules — lives in the [OpenAPI spec](https://docs.vatly.com/openapi.yaml) (see the `Checkout`, `CheckoutProduct`, and `Money` schemas). When in doubt about what a field is named or whether it exists, trust the spec, not an example.
 
 ## The Checkout Resource
 
@@ -95,7 +95,7 @@ If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header auto
 
 Each entry in `products` references a product you have **already created in the [Vatly dashboard](https://my.vatly.com)** — there is no API endpoint to create products on the fly. The `id` is either a `one_off_product_…` or `subscription_plan_…` id.
 
-To charge an amount other than the product's dashboard price, set a `price` override (a `Money` object). For the full list of accepted item fields and their validation rules, see the `CheckoutProduct` schema in [`openapi.yaml`](../openapi.yaml).
+To charge an amount other than the product's dashboard price, set a `price` override (a `Money` object). For the full list of accepted item fields and their validation rules, see the `CheckoutProduct` schema in the [OpenAPI spec](https://docs.vatly.com/openapi.yaml).
 
 ```php
 // Override the price of a pre-configured product at checkout time.
