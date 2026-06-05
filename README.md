@@ -33,7 +33,7 @@ $vatly->checkouts->create([...]);
 
 For detailed documentation, see [docs/README.md](docs/README.md).
 
-> **Source of truth.** The complete, canonical schema for every request and response — including fields the guides below don't spell out — lives in [`openapi.yaml`](openapi.yaml). If you (or an AI assistant) are unsure whether a field exists or what it's called, check the spec rather than guessing from an example. For example, checkout items accept only `id`, `quantity`, `price`, `trialDays`, and `metadata` — there is no item-level `unitPrice`, `name`, or `currency`.
+> **Source of truth.** The complete, canonical schema for every request and response — including fields the guides below don't spell out — lives in [`openapi.yaml`](openapi.yaml). If you (or an AI assistant) are unsure whether a field exists or what it's called, check the spec rather than guessing from an example.
 
 ## Idempotency
 

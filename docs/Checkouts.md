@@ -93,17 +93,9 @@ If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header auto
 
 ### Product items
 
-Each entry in `products` references a product you have **already created in the [Vatly dashboard](https://my.vatly.com)** — there is no API endpoint to create products on the fly. The accepted fields are:
+Each entry in `products` references a product you have **already created in the [Vatly dashboard](https://my.vatly.com)** — there is no API endpoint to create products on the fly. The `id` is either a `one_off_product_…` or `subscription_plan_…` id.
 
-| Name | Type | Description |
-| --- | --- | --- |
-| `id` | `string` | **Required.** The product id, either `one_off_product_…` (one-off product) or `subscription_plan_…` (subscription plan). |
-| `quantity` | `integer` | Number of units. Optional, defaults to `1`. |
-| `price` | `Money \| null` | Optional **custom price override**. A `Money` object (`{ "value": "49.99", "currency": "EUR" }`). When omitted, the product's dashboard-configured price is used. |
-| `trialDays` | `integer \| null` | Trial period in days. Only applies when `id` is a `subscription_plan_…`. |
-| `metadata` | `array` | Optional per-item custom metadata. |
-
-> **There are no item-level `unitPrice`, `name`, `description`, `amount`, or `currency` fields.** To charge a custom amount, override the whole price with the `price` `Money` object below. `value` is a decimal string with currency-correct precision (`"10.00"` for EUR/USD, `"1000"` for JPY, `"1.000"` for BHD/KWD).
+To charge an amount other than the product's dashboard price, set a `price` override (a `Money` object). For the full list of accepted item fields and their validation rules, see the `CheckoutProduct` schema in [`openapi.yaml`](../openapi.yaml).
 
 ```php
 // Override the price of a pre-configured product at checkout time.
