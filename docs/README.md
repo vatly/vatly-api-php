@@ -1,3 +1,5 @@
+![Vatly API client for PHP](https://raw.githubusercontent.com/Vatly/vatly-api-php/main/art/banner.png)
+
 # Getting Started
 
 Official PHP SDK for the Vatly API. Handle subscriptions, one-off payments, tax compliance, and billing for your SaaS.
