@@ -27,20 +27,4 @@ class TestHelpersEndpoint
             "test-helpers/subscriptions/" . urlencode($subscriptionId) . "/fast-forward-renewal",
         );
     }
-
-    /**
-     * Simulate a payment failure for a mandated payment.
-     *
-     * @throws \Vatly\API\Exceptions\ApiException
-     */
-    public function simulatePaymentFailure(string $transactionId, array $data = []): ?object
-    {
-        $body = ! empty($data) ? json_encode($data) : null;
-
-        return $this->client->performHttpCall(
-            VatlyApiClient::HTTP_POST,
-            "test-helpers/mandated-payments/" . urlencode($transactionId) . "/simulate-failure",
-            $body,
-        );
-    }
 }

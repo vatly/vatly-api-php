@@ -23,6 +23,8 @@ use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
 use Vatly\API\Webhooks\Events\SubscriptionResumed;
 use Vatly\API\Webhooks\Events\SubscriptionStarted;
+use Vatly\API\Webhooks\Events\SubscriptionUpdated;
+use Vatly\API\Webhooks\Events\SubscriptionUpdateScheduled;
 use Vatly\API\Webhooks\Events\UnsupportedWebhookReceived;
 use Vatly\API\Webhooks\Events\WebhookReceived;
 use Vatly\API\Webhooks\Events\WebhookSetupReceived;
@@ -230,6 +232,70 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertInstanceOf(SubscriptionResumed::class, $event);
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('sub_123', $event->subscriptionId);
+    }
+
+    public function test_it_creates_subscription_updated_event_from_fat_payload(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'subscription.updated',
+            entityType: 'subscription',
+            entityId: 'sub_123',
+            object: $this->fatSubscription([
+                'id' => 'sub_123',
+                'customerId' => 'cus_456',
+                'subscriptionPlanId' => 'plan_new',
+                'name' => 'Pro Plan',
+                'quantity' => 5,
+                'basePrice' => ['value' => '99.99', 'currency' => 'EUR'],
+                'interval' => 'month',
+                'mandate' => null,
+            ]),
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(SubscriptionUpdated::class, $event);
+        $this->assertSame('cus_456', $event->customerId);
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('plan_new', $event->planId);
+        $this->assertSame('Pro Plan', $event->name);
+        $this->assertSame(9999, $event->basePrice->toCents());
+        $this->assertSame('EUR', $event->basePrice->currency);
+        $this->assertSame(5, $event->quantity);
+        $this->assertSame('month', $event->interval);
+        $this->assertSame(1, $event->intervalCount);
+    }
+
+    public function test_it_creates_subscription_update_scheduled_event_from_webhook(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'subscription.update_scheduled',
+            entityType: 'subscription',
+            entityId: 'sub_123',
+            object: [
+                'customerId' => 'cus_456',
+                'scheduledUpdate' => [
+                    'subscriptionPlanId' => 'plan_next',
+                    'name' => 'Pro Annual',
+                    'description' => 'Billed yearly',
+                    'basePrice' => ['value' => '990.00', 'currency' => 'EUR'],
+                    'quantity' => 2,
+                    'interval' => 'year',
+                    'intervalCount' => 1,
+                ],
+            ],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(SubscriptionUpdateScheduled::class, $event);
+        $this->assertSame('cus_456', $event->customerId);
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('plan_next', $event->scheduledUpdate->subscriptionPlanId);
+        $this->assertSame('Pro Annual', $event->scheduledUpdate->name);
+        $this->assertSame(99000, $event->scheduledUpdate->basePrice->toCents());
+        $this->assertSame(2, $event->scheduledUpdate->quantity);
+        $this->assertSame('year', $event->scheduledUpdate->interval);
     }
 
     public function test_it_creates_order_paid_event_from_fat_payload_with_tax_breakdown(): void
@@ -669,6 +735,8 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertContains('subscription.started', $supported);
         $this->assertContains('subscription.billing_updated', $supported);
         $this->assertContains('subscription.resumed', $supported);
+        $this->assertContains('subscription.updated', $supported);
+        $this->assertContains('subscription.update_scheduled', $supported);
         $this->assertContains('subscription.canceled_immediately', $supported);
         $this->assertContains('subscription.canceled_with_grace_period', $supported);
         $this->assertContains('subscription.cancellation_grace_period_completed', $supported);
@@ -692,6 +760,8 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertTrue($this->factory->isSupported('subscription.started'));
         $this->assertTrue($this->factory->isSupported('subscription.billing_updated'));
         $this->assertTrue($this->factory->isSupported('subscription.resumed'));
+        $this->assertTrue($this->factory->isSupported('subscription.updated'));
+        $this->assertTrue($this->factory->isSupported('subscription.update_scheduled'));
         $this->assertTrue($this->factory->isSupported('order.paid'));
         $this->assertTrue($this->factory->isSupported('order.canceled'));
         $this->assertTrue($this->factory->isSupported('order.chargeback_received'));
@@ -843,8 +913,9 @@ class WebhookEventFactoryTest extends BaseTestCase
             'testmode' => false,
             'name' => $data['name'],
             'description' => 'A subscription',
+            'basePrice' => $data['basePrice'] ?? ['value' => '10.00', 'currency' => 'EUR'],
             'quantity' => $data['quantity'],
-            'interval' => '1 month',
+            'interval' => $data['interval'] ?? 'month',
             'intervalCount' => 1,
             'status' => 'active',
             'startedAt' => '2024-01-15T10:00:00+00:00',

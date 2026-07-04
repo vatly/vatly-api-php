@@ -103,13 +103,36 @@ $subscriptions = $vatly->subscriptions->list([
 
 
 
-Update mutable subscription fields such as quantity.
+Change a subscription's plan, quantity and/or price. **At least one of
+`subscriptionPlanId`, `quantity`, or `price` is required.**
+
+### Optional attributes
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `subscriptionPlanId` | `string` | Switch to a new plan (`subscription_plan_...`). Must match the subscription's testmode. |
+| `quantity` | `int` | The **new total** quantity (e.g. number of seats). This sets the quantity to the given value — it is not added to the current quantity. |
+| `price` | `array` | Override the recurring price: `['value' => '99.99', 'currency' => 'EUR']`. The `currency` must match the subscription's currency. Provide `price` alone to change the price in place, or combine it with `subscriptionPlanId` to switch plans at a custom price (overriding the new plan's default). |
+| `prorate` | `bool` | Prorate charges for the partial billing period (default `true`). |
+| `applyImmediately` | `bool` | Apply the change now (`true`) or at the end of the current period (`false`, default). |
+| `invoiceImmediately` | `bool` | Generate and charge a proration invoice immediately. Only applies when `applyImmediately` and `prorate` are both `true`. |
+| `anchor` | `string \| null` | Set the billing anchor to a specific date (`YYYY-MM-DD`, UTC). Cannot be combined with `resetAnchor`. |
+| `resetAnchor` | `bool` | Reset the billing anchor to now. Cannot be combined with `anchor`. |
+| `trialUntil` | `string \| null` | Extend or set a trial until this date (ISO 8601). Cannot be combined with `anchor`. |
 
 ```php
+// Change the quantity (new total) and pass a custom idempotency key.
 $subscription = $vatly->subscriptions->update('subscription_123', [
     'quantity' => 2,
 ], [
     'idempotencyKey' => 'subscription-update-123',
+]);
+
+// Switch plan at a custom price (currency must match the subscription).
+$subscription = $vatly->subscriptions->update('subscription_123', [
+    'subscriptionPlanId' => 'subscription_plan_Wt5mNvBxKw7YcZaEjLhR',
+    'price' => ['value' => '99.99', 'currency' => 'EUR'],
+    'applyImmediately' => true,
 ]);
 ```
 

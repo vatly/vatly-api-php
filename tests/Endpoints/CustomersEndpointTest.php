@@ -15,6 +15,7 @@ class CustomersEndpointTest extends BaseEndpointTest
             'id' => 'customer_78b146a7de7d417e9d68d7e6ef193d18',
             'resource' => 'customer',
             'email' => 'testcustomer@dummy.com',
+            'name' => 'John Doe',
             'createdAt' => '2020-01-01T00:00:00+00:00',
             'testmode' => true,
             'metadata' => [
@@ -33,6 +34,7 @@ class CustomersEndpointTest extends BaseEndpointTest
         /** @var Customer $customer */
         $customer = $this->client->customers->create([
             'email' => 'testcustomer@dummy.com',
+            'name' => 'John Doe',
             'metadata' => [
                 'customer_id' => '123456',
             ],
@@ -42,12 +44,13 @@ class CustomersEndpointTest extends BaseEndpointTest
             VatlyApiClient::HTTP_POST,
             self::API_ENDPOINT_URL."/customers",
             [],
-            '{"email":"testcustomer@dummy.com","metadata":{"customer_id":"123456"}}'
+            '{"email":"testcustomer@dummy.com","name":"John Doe","metadata":{"customer_id":"123456"}}'
         );
 
         $this->assertEquals('customer_78b146a7de7d417e9d68d7e6ef193d18', $customer->id);
         $this->assertEquals('customer', $customer->resource);
         $this->assertEquals('testcustomer@dummy.com', $customer->email);
+        $this->assertEquals('John Doe', $customer->name);
         $this->assertEquals('2020-01-01T00:00:00+00:00', $customer->createdAt);
         $this->assertTrue($customer->testmode);
         $this->assertEquals(['customer_id' => '123456'], (array) $customer->metadata);
@@ -154,6 +157,78 @@ class CustomersEndpointTest extends BaseEndpointTest
         $this->assertEquals('customer_78b146a7de7d417e9d68d7e6ef193d18', $customer->id);
         $this->assertEquals('customer', $customer->resource);
         $this->assertEquals('testcustomer@dummy.com', $customer->email);
+    }
+
+    /** @test */
+    public function it_can_update_a_customer(): void
+    {
+        $customerId = 'customer_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $customerId,
+            'resource' => 'customer',
+            'email' => 'new.email@example.com',
+            'name' => 'Jane Doe',
+            'createdAt' => '2020-01-01T00:00:00+00:00',
+            'testmode' => true,
+            'metadata' => null,
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/customers/'.$customerId,
+                    'type' => 'application/hal+json',
+                ],
+            ],
+        ]);
+
+        /** @var Customer $customer */
+        $customer = $this->client->customers->update($customerId, [
+            'name' => 'Jane Doe',
+            'email' => 'new.email@example.com',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_PATCH,
+            self::API_ENDPOINT_URL.'/customers/'.$customerId,
+            [],
+            '{"name":"Jane Doe","email":"new.email@example.com"}'
+        );
+
+        $this->assertEquals('Jane Doe', $customer->name);
+        $this->assertEquals('new.email@example.com', $customer->email);
+    }
+
+    /** @test */
+    public function it_can_update_a_customer_from_a_resource_instance(): void
+    {
+        $customerId = 'customer_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $customer = new Customer($this->client);
+        $customer->id = $customerId;
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $customerId,
+            'resource' => 'customer',
+            'name' => null,
+            'testmode' => true,
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/customers/'.$customerId,
+                    'type' => 'application/hal+json',
+                ],
+            ],
+        ]);
+
+        /** @var Customer $updated */
+        $updated = $customer->update(['name' => null]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_PATCH,
+            self::API_ENDPOINT_URL.'/customers/'.$customerId,
+            [],
+            '{"name":null}'
+        );
+
+        $this->assertNull($updated->name);
     }
 
     /** @test */

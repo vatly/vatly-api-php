@@ -6,12 +6,15 @@ namespace Vatly\Tests\Webhooks\Events;
 
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Types\Mandate;
+use Vatly\API\Types\Money;
 use Vatly\API\Webhooks\Events\SubscriptionBillingUpdated;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledImmediately;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
 use Vatly\API\Webhooks\Events\SubscriptionResumed;
 use Vatly\API\Webhooks\Events\SubscriptionStarted;
+use Vatly\API\Webhooks\Events\SubscriptionUpdated;
+use Vatly\API\Webhooks\Events\SubscriptionUpdateScheduled;
 use Vatly\API\Webhooks\Events\WebhookReceived;
 use Vatly\Tests\BaseTestCase;
 
@@ -53,9 +56,81 @@ class SubscriptionEventsTest extends BaseTestCase
         $this->assertSame('subscription.started', SubscriptionStarted::VATLY_EVENT_NAME);
         $this->assertSame('subscription.billing_updated', SubscriptionBillingUpdated::VATLY_EVENT_NAME);
         $this->assertSame('subscription.resumed', SubscriptionResumed::VATLY_EVENT_NAME);
+        $this->assertSame('subscription.updated', SubscriptionUpdated::VATLY_EVENT_NAME);
+        $this->assertSame('subscription.update_scheduled', SubscriptionUpdateScheduled::VATLY_EVENT_NAME);
         $this->assertSame('subscription.canceled_immediately', SubscriptionCanceledImmediately::VATLY_EVENT_NAME);
         $this->assertSame('subscription.canceled_with_grace_period', SubscriptionCanceledWithGracePeriod::VATLY_EVENT_NAME);
         $this->assertSame('subscription.cancellation_grace_period_completed', SubscriptionCancellationGracePeriodCompleted::VATLY_EVENT_NAME);
+    }
+
+    public function test_updated_builds_from_api_subscription_with_new_values(): void
+    {
+        $subscription = $this->makeApiSubscription();
+        $subscription->description = 'Pro plan, billed monthly';
+        $subscription->basePrice = new Money('EUR', '99.99');
+        $subscription->interval = 'month';
+        $subscription->intervalCount = 1;
+
+        $event = SubscriptionUpdated::fromApiSubscription($subscription);
+
+        $this->assertSame('cus_456', $event->customerId);
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('plan_789', $event->planId);
+        $this->assertSame('Pro plan', $event->name);
+        $this->assertSame('Pro plan, billed monthly', $event->description);
+        $this->assertSame('99.99', $event->basePrice->value);
+        $this->assertSame('EUR', $event->basePrice->currency);
+        $this->assertSame(2, $event->quantity);
+        $this->assertSame('month', $event->interval);
+        $this->assertSame(1, $event->intervalCount);
+        $this->assertTrue($event->testmode);
+    }
+
+    public function test_updated_builds_from_webhook(): void
+    {
+        $event = SubscriptionUpdated::fromWebhook($this->makeWebhook('subscription.updated', [
+            'customerId' => 'cus_456',
+            'subscriptionPlanId' => 'plan_789',
+            'name' => 'Pro plan',
+            'description' => 'Pro plan, billed monthly',
+            'basePrice' => ['value' => '99.99', 'currency' => 'EUR'],
+            'quantity' => 3,
+            'interval' => 'month',
+            'intervalCount' => 1,
+        ]));
+
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('99.99', $event->basePrice->value);
+        $this->assertSame(3, $event->quantity);
+        $this->assertTrue($event->testmode);
+    }
+
+    public function test_update_scheduled_builds_from_webhook_with_scheduled_update(): void
+    {
+        $event = SubscriptionUpdateScheduled::fromWebhook($this->makeWebhook('subscription.update_scheduled', [
+            'customerId' => 'cus_456',
+            'scheduledUpdate' => [
+                'subscriptionPlanId' => 'plan_next',
+                'name' => 'Pro Annual',
+                'description' => 'Billed yearly',
+                'basePrice' => ['value' => '990.00', 'currency' => 'EUR'],
+                'quantity' => 4,
+                'interval' => 'year',
+                'intervalCount' => 1,
+            ],
+        ]));
+
+        $this->assertSame('cus_456', $event->customerId);
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertTrue($event->testmode);
+        $this->assertSame('plan_next', $event->scheduledUpdate->subscriptionPlanId);
+        $this->assertSame('Pro Annual', $event->scheduledUpdate->name);
+        $this->assertSame('Billed yearly', $event->scheduledUpdate->description);
+        $this->assertSame('990.00', $event->scheduledUpdate->basePrice->value);
+        $this->assertSame('EUR', $event->scheduledUpdate->basePrice->currency);
+        $this->assertSame(4, $event->scheduledUpdate->quantity);
+        $this->assertSame('year', $event->scheduledUpdate->interval);
+        $this->assertSame(1, $event->scheduledUpdate->intervalCount);
     }
 
     public function test_started_builds_from_api_subscription_with_mandate(): void

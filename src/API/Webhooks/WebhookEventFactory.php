@@ -29,6 +29,8 @@ use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
 use Vatly\API\Webhooks\Events\SubscriptionResumed;
 use Vatly\API\Webhooks\Events\SubscriptionStarted;
+use Vatly\API\Webhooks\Events\SubscriptionUpdated;
+use Vatly\API\Webhooks\Events\SubscriptionUpdateScheduled;
 use Vatly\API\Webhooks\Events\UnsupportedWebhookReceived;
 use Vatly\API\Webhooks\Events\WebhookReceived;
 use Vatly\API\Webhooks\Events\WebhookSetupReceived;
@@ -69,7 +71,7 @@ class WebhookEventFactory
      * bearing ones by hydrating the api-php Resource from `$webhook->object`,
      * the rest straight from the envelope. No follow-up API call is made.
      *
-     * @return SubscriptionStarted|SubscriptionBillingUpdated|SubscriptionResumed|SubscriptionCanceledImmediately|SubscriptionCanceledWithGracePeriod|SubscriptionCancellationGracePeriodCompleted|OrderPaid|OrderCanceled|OrderChargebackReceived|OrderChargebackReversed|OrderPaymentFailed|CheckoutPaid|CheckoutFailed|CheckoutCanceled|CheckoutExpired|RefundCompleted|RefundFailed|RefundCanceled|WebhookSetupReceived|UnsupportedWebhookReceived
+     * @return SubscriptionStarted|SubscriptionBillingUpdated|SubscriptionResumed|SubscriptionUpdated|SubscriptionUpdateScheduled|SubscriptionCanceledImmediately|SubscriptionCanceledWithGracePeriod|SubscriptionCancellationGracePeriodCompleted|OrderPaid|OrderCanceled|OrderChargebackReceived|OrderChargebackReversed|OrderPaymentFailed|CheckoutPaid|CheckoutFailed|CheckoutCanceled|CheckoutExpired|RefundCompleted|RefundFailed|RefundCanceled|WebhookSetupReceived|UnsupportedWebhookReceived
      */
     public function createFromWebhook(WebhookReceived $webhook): object
     {
@@ -77,6 +79,8 @@ class WebhookEventFactory
             SubscriptionStarted::VATLY_EVENT_NAME => SubscriptionStarted::fromApiSubscription($this->hydrateSubscription($webhook)),
             SubscriptionBillingUpdated::VATLY_EVENT_NAME => SubscriptionBillingUpdated::fromApiSubscription($this->hydrateSubscription($webhook)),
             SubscriptionResumed::VATLY_EVENT_NAME => SubscriptionResumed::fromWebhook($webhook),
+            SubscriptionUpdated::VATLY_EVENT_NAME => SubscriptionUpdated::fromApiSubscription($this->hydrateSubscription($webhook)),
+            SubscriptionUpdateScheduled::VATLY_EVENT_NAME => SubscriptionUpdateScheduled::fromWebhook($webhook),
             SubscriptionCanceledImmediately::VATLY_EVENT_NAME => SubscriptionCanceledImmediately::fromWebhook($webhook),
             SubscriptionCanceledWithGracePeriod::VATLY_EVENT_NAME => SubscriptionCanceledWithGracePeriod::fromWebhook($webhook),
             SubscriptionCancellationGracePeriodCompleted::VATLY_EVENT_NAME => SubscriptionCancellationGracePeriodCompleted::fromWebhook($webhook),
@@ -182,6 +186,8 @@ class WebhookEventFactory
             SubscriptionStarted::VATLY_EVENT_NAME,
             SubscriptionBillingUpdated::VATLY_EVENT_NAME,
             SubscriptionResumed::VATLY_EVENT_NAME,
+            SubscriptionUpdated::VATLY_EVENT_NAME,
+            SubscriptionUpdateScheduled::VATLY_EVENT_NAME,
             SubscriptionCanceledImmediately::VATLY_EVENT_NAME,
             SubscriptionCanceledWithGracePeriod::VATLY_EVENT_NAME,
             SubscriptionCancellationGracePeriodCompleted::VATLY_EVENT_NAME,

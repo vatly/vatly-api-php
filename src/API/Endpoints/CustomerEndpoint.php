@@ -44,6 +44,18 @@ class CustomerEndpoint extends BaseEndpoint
     }
 
     /**
+     * Update a customer's identity fields. Only `name` and `email` are editable;
+     * both are optional. Billing-address fields are not accepted here.
+     *
+     * @return Customer|BaseResource|null
+     * @throws ApiException
+     */
+    public function update(string $id, array $data = [], array $filters = []): ?BaseResource
+    {
+        return $this->rest_update($id, $data, $filters);
+    }
+
+    /**
      * @return CustomerCollection|BaseResourcePage
      * @throws ApiException
      */
