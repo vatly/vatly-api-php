@@ -18,6 +18,8 @@ class WebhookEventName
     public const SUBSCRIPTION_CANCELED_WITH_GRACE_PERIOD = 'subscription.canceled_with_grace_period';
     public const SUBSCRIPTION_CANCELLATION_GRACE_PERIOD_COMPLETED = 'subscription.cancellation_grace_period_completed';
     public const SUBSCRIPTION_RESUMED = 'subscription.resumed';
+    public const SUBSCRIPTION_UPDATED = 'subscription.updated';
+    public const SUBSCRIPTION_UPDATE_SCHEDULED = 'subscription.update_scheduled';
     public const CHECKOUT_PAID = 'checkout.paid';
     public const CHECKOUT_FAILED = 'checkout.failed';
     public const CHECKOUT_CANCELED = 'checkout.canceled';

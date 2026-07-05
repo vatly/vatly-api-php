@@ -143,7 +143,7 @@ abstract class BaseEndpoint
     }
 
     /**
-     * Sends a DELETE request to a single Molle API object.
+     * Sends a DELETE request to a single Vatly API object.
      *
      * @param string $id
      * @param array $body

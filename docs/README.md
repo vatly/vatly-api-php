@@ -162,6 +162,7 @@ The SDK provides access to all Vatly API resources.
 | [Refunds](/docs/Refunds.md)                      | Process refunds               |
 | [Chargebacks](/docs/Chargebacks.md)              | Handle disputes               |
 | [Webhooks](/docs/Webhooks.md)                    | Real-time event notifications |
+| [Webhook Endpoints](/docs/WebhookEndpoints.md)   | Register delivery endpoints    |
 
 
 

@@ -19,6 +19,13 @@ class Customer extends BaseResource
 
     public ?string $email = null;
 
+    /**
+     * Customer's display / account-holder name. This is an identity field for
+     * communication (dunning emails, dashboard) — distinct from, and with no
+     * effect on, the billing name on invoices.
+     */
+    public ?string $name = null;
+
     public ?string $createdAt = null;
 
     public bool $testmode;
@@ -30,6 +37,18 @@ class Customer extends BaseResource
     public $metadata;
 
     public CustomerLinks $links;
+
+    /**
+     * Update this customer's identity fields (`name`, `email`). Billing-address
+     * details are not editable here.
+     *
+     * @return Customer|BaseResource
+     * @throws ApiException
+     */
+    public function update(array $data = []): ?BaseResource
+    {
+        return $this->apiClient->customers->update($this->id, $data);
+    }
 
     /**
      * @throws ApiException

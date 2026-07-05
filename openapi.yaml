@@ -74,8 +74,7 @@ info:
 
     Responses always return the canonical ASCII form — what the caller sent in
     is what the caller gets back. This keeps email values stable for
-    programmatic use (equality checks, deduplication, hashing) and matches
-    Mollie's own API contract.
+    programmatic use (equality checks, deduplication, hashing).
 
     For human-friendly display in your own UI, decode the domain back to
     Unicode. Most languages provide this in the standard library — for
@@ -161,7 +160,7 @@ tags:
       Supports both partial (per-item) and full refunds.
   - name: Chargebacks
     description: |
-      View chargebacks initiated by payment providers.
+      View chargebacks initiated by the payment provider.
       Chargebacks are created automatically when a customer disputes a payment.
   - name: Subscriptions
     description: |
@@ -171,6 +170,12 @@ tags:
     description: |
       View webhook events that were sent to your webhook endpoints.
       Each event contains the full resource payload at the time the event occurred.
+  - name: Webhook Endpoints
+    description: |
+      Register and manage the endpoints Vatly delivers webhook events to.
+      Create, list, update, and delete endpoints programmatically — useful for
+      CI, infrastructure-as-code, and ephemeral preview environments. The
+      signing secret is write-only: you supply it and it is never returned.
   - name: Test Helpers
     description: |
       Sandbox-only endpoints for simulating billing events.
@@ -461,6 +466,7 @@ paths:
                     resource: customer
                     testmode: false
                     email: john.doe@example.com
+                    name: John Doe
                     createdAt: '2024-01-15T10:30:00Z'
                     metadata:
                       userId: user_Qp8kNvBxKw7RjTgYcZaE
@@ -472,6 +478,7 @@ paths:
                     resource: customer
                     testmode: false
                     email: jane.smith@acme.com
+                    name: Jane Smith
                     createdAt: '2024-01-10T08:15:00Z'
                     metadata: {}
                     links:
@@ -534,6 +541,7 @@ paths:
                 resource: customer
                 testmode: false
                 email: customer@example.com
+                name: John Doe
                 createdAt: '2024-01-15T10:30:00Z'
                 metadata:
                   userId: user_Qp8kNvBxKw7RjTgYcZaE
@@ -572,6 +580,7 @@ paths:
                 resource: customer
                 testmode: false
                 email: john.doe@example.com
+                name: John Doe
                 createdAt: '2024-01-15T10:30:00Z'
                 metadata:
                   userId: user_Qp8kNvBxKw7RjTgYcZaE
@@ -585,6 +594,62 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    patch:
+      operationId: updateCustomer
+      summary: Update a customer
+      description: |
+        Updates a customer's identity fields. Only `name` and `email` may be
+        changed here, and both are optional — send whichever you want to update.
+
+        Billing-address details (company name, tax ID, street, city, country,
+        etc.) are not supported by this endpoint and are ignored; amend those
+        through the hosted billing-update flow, which validates tax-relevant
+        data centrally so invoices stay accurate.
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/customerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+            example:
+              name: John Doe
+              email: new.email@example.com
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+              example:
+                id: customer_7kBmRtPvXw2NjLhYcZaE
+                resource: customer
+                testmode: false
+                email: new.email@example.com
+                name: John Doe
+                createdAt: '2024-01-15T10:30:00Z'
+                metadata:
+                  userId: user_Qp8kNvBxKw7RjTgYcZaE
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/customers/customer_7kBmRtPvXw2NjLhYcZaE
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         default:
           $ref: '#/components/responses/UnexpectedError'
   /customers/{customerId}/subscriptions:
@@ -1367,7 +1432,7 @@ paths:
 
         **Requirements:**
         - Order must have `paid` status
-        - Order must have a payment processor attached (Mollie)
+        - Order's payment provider must support refunds
         - Refund amount per item cannot exceed remaining refundable amount
 
         **Notes:**
@@ -1485,8 +1550,8 @@ paths:
           description: |
             Validation failed. Common errors:
             - Order is not in `paid` status
+            - Order's payment provider does not support refunds
             - Refund amount exceeds remaining refundable amount
-            - No payment processor attached to order
           content:
             application/json:
               schema:
@@ -1517,7 +1582,7 @@ paths:
 
         **Requirements:**
         - Order must have `paid` status
-        - Order must have a payment processor attached (Mollie)
+        - Order's payment provider must support refunds
         - Order must not be already fully refunded
 
         **Notes:**
@@ -2360,6 +2425,250 @@ paths:
           $ref: '#/components/responses/NotFound'
         default:
           $ref: '#/components/responses/UnexpectedError'
+  /webhook-endpoints:
+    get:
+      operationId: listWebhookEndpoints
+      summary: List webhook endpoints
+      description: |
+        Returns the webhook endpoints for the authenticated merchant, filtered by
+        the testmode determined from the API token. Because there is at most one
+        endpoint per mode, this returns at most one endpoint. The signing secret
+        is never included.
+      tags:
+        - Webhook Endpoints
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/startingAfter'
+        - $ref: '#/components/parameters/endingBefore'
+      responses:
+        '200':
+          description: List of webhook endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - count
+                  - links
+                additionalProperties: false
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookEndpoint'
+                  count:
+                    type: integer
+                    description: Number of items in the current page
+                    example: 1
+                  links:
+                    $ref: '#/components/schemas/PaginationLinks'
+              example:
+                data:
+                  - id: webhook_QdEpFhdSrG4Y3DnfsdqsH
+                    resource: webhook_endpoint
+                    testmode: false
+                    url: https://merchant.example/webhooks/vatly
+                    createdAt: '2024-01-15T10:30:00Z'
+                    links:
+                      self:
+                        href: https://api.vatly.com/v1/webhook-endpoints/webhook_QdEpFhdSrG4Y3DnfsdqsH
+                        type: application/json
+                count: 1
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/webhook-endpoints
+                    type: application/json
+                  next: null
+                  prev: null
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      operationId: createWebhookEndpoint
+      summary: Register a webhook endpoint
+      description: |
+        Registers a webhook endpoint for the mode determined by the API token.
+
+        You supply the signing `secret`; it is write-only and never returned, so
+        keep the value you send — you use it to verify the `Vatly-Signature` HMAC
+        on deliveries.
+
+        Vatly sends a `webhook.setup` verification ping to the URL and validates
+        its SSL certificate; if either fails the request is rejected with `422`.
+        There is at most one endpoint per mode — registering a second one when the
+        token's mode already has an endpoint returns `422`; update or delete the
+        existing one instead.
+
+        **Use cases:**
+        - Provision an endpoint from CI / infrastructure-as-code
+        - Point an ephemeral preview environment at its own public URL
+      tags:
+        - Webhook Endpoints
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookEndpointRequest'
+            example:
+              url: https://merchant.example/webhooks/vatly
+              secret: whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d
+      responses:
+        '201':
+          description: Webhook endpoint registered successfully
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEndpoint'
+              example:
+                id: webhook_QdEpFhdSrG4Y3DnfsdqsH
+                resource: webhook_endpoint
+                testmode: false
+                url: https://merchant.example/webhooks/vatly
+                createdAt: '2024-01-15T10:30:00Z'
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/webhook-endpoints/webhook_QdEpFhdSrG4Y3DnfsdqsH
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /webhook-endpoints/{webhookEndpointId}:
+    get:
+      operationId: getWebhookEndpoint
+      summary: Get a webhook endpoint
+      description: Retrieves a webhook endpoint by ID. The signing secret is never included.
+      tags:
+        - Webhook Endpoints
+      parameters:
+        - $ref: '#/components/parameters/webhookEndpointId'
+      responses:
+        '200':
+          description: Webhook endpoint details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEndpoint'
+              example:
+                id: webhook_QdEpFhdSrG4Y3DnfsdqsH
+                resource: webhook_endpoint
+                testmode: false
+                url: https://merchant.example/webhooks/vatly
+                createdAt: '2024-01-15T10:30:00Z'
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/webhook-endpoints/webhook_QdEpFhdSrG4Y3DnfsdqsH
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    patch:
+      operationId: updateWebhookEndpoint
+      summary: Update a webhook endpoint
+      description: |
+        Updates a webhook endpoint's `url`, its signing `secret`, or both. A new
+        URL is revalidated for reachability and a valid SSL certificate just like
+        on creation. The secret is write-only and is never returned. Sending an
+        empty body is a no-op that returns the current endpoint.
+
+        Repointing the URL is the supported way to follow an ephemeral
+        environment whose public URL changes between runs, without rotating the
+        signing secret.
+      tags:
+        - Webhook Endpoints
+      parameters:
+        - $ref: '#/components/parameters/webhookEndpointId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWebhookEndpointRequest'
+            example:
+              url: https://merchant.example/webhooks/vatly-v2
+      responses:
+        '200':
+          description: Webhook endpoint updated successfully
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEndpoint'
+              example:
+                id: webhook_QdEpFhdSrG4Y3DnfsdqsH
+                resource: webhook_endpoint
+                testmode: false
+                url: https://merchant.example/webhooks/vatly-v2
+                createdAt: '2024-01-15T10:30:00Z'
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/webhook-endpoints/webhook_QdEpFhdSrG4Y3DnfsdqsH
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    delete:
+      operationId: deleteWebhookEndpoint
+      summary: Delete a webhook endpoint
+      description: |
+        Deletes a webhook endpoint. Vatly stops sending deliveries to it
+        immediately. To receive events again, register a new endpoint.
+      tags:
+        - Webhook Endpoints
+      parameters:
+        - $ref: '#/components/parameters/webhookEndpointId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      responses:
+        '204':
+          description: Webhook endpoint deleted successfully
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
   /subscriptions:
     get:
       operationId: listSubscriptions
@@ -2558,29 +2867,37 @@ paths:
       operationId: updateSubscription
       summary: Update a subscription
       description: |
-        Updates a subscription's plan, quantity, or billing schedule.
+        Updates a subscription's plan, quantity, price, or billing schedule.
 
-        **Plan changes:**
+        **Plan updates:**
         - Specify `subscriptionPlanId` to switch to a different plan
         - New plan must match the subscription's testmode
 
-        **Quantity changes:**
-        - Specify `quantity` to update the number of units (e.g., seats)
+        **Quantity updates:**
+        - Specify `quantity` to set the number of units (e.g., seats). It is
+          the new total, not an amount to add.
+
+        **Price updates:**
+        - Specify `price` to set a new recurring price while keeping the
+          current plan. Its currency must match the subscription's currency.
+        - A `price` sent alongside a `subscriptionPlanId` overrides the new
+          plan's default price.
 
         **Proration:**
-        - By default, changes are prorated
+        - By default, updates are prorated
         - Set `prorate: false` to disable proration
-        - Proration credits unused time and charges for new plan
+        - Proration credits unused time and charges for the new plan
 
         **Timing:**
-        - By default, changes apply at the end of the current billing period
-        - Set `applyImmediately: true` for immediate changes
+        - By default, updates apply at the end of the current billing period
+        - Set `applyImmediately: true` to apply immediately
         - Set `invoiceImmediately: true` to charge proration immediately
 
         **Trial/Anchor:**
         - Use `trialUntil` to extend or set a trial period
-        - Use `anchor` to reset the billing anchor date
-        - These options are mutually exclusive
+        - Use `anchor` to set the billing anchor to a specific date, or
+          `resetAnchor: true` to reset it to the current date
+        - `anchor` and `resetAnchor` are mutually exclusive
       tags:
         - Subscriptions
       parameters:
@@ -2593,20 +2910,27 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateSubscriptionRequest'
             examples:
-              changePlan:
-                summary: Upgrade to yearly plan
+              plan:
+                summary: Switch to the yearly plan
                 value:
                   subscriptionPlanId: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
                   prorate: true
                   applyImmediately: true
-              changeQuantity:
-                summary: Add more seats
+              quantity:
+                summary: Set the number of seats to 10
                 value:
                   quantity: 10
                   applyImmediately: true
                   invoiceImmediately: true
-              scheduledChange:
-                summary: Schedule plan change for next cycle
+              price:
+                summary: Set a new price, keeping the current plan
+                value:
+                  price:
+                    value: '29.00'
+                    currency: EUR
+                  applyImmediately: true
+              scheduleForNextCycle:
+                summary: Apply a new plan or price at the next cycle
                 value:
                   subscriptionPlanId: subscription_plan_Fp2kQrSvWm8NjLhYbUcP
                   applyImmediately: false
@@ -2614,7 +2938,7 @@ paths:
                 summary: Extend trial period
                 description: |
                   `trialUntil` cannot be sent on its own — at least one of
-                  `subscriptionPlanId` or `quantity` is required.
+                  `subscriptionPlanId`, `quantity`, or `price` is required.
                 value:
                   quantity: 1
                   trialUntil: '2024-02-28T00:00:00Z'
@@ -2678,9 +3002,10 @@ paths:
         '422':
           description: |
             Validation failed. Common errors:
-            - Neither subscriptionPlanId nor quantity provided
+            - None of subscriptionPlanId, quantity or price provided
             - Plan does not exist or is in wrong testmode
-            - Both anchor and trialUntil specified
+            - Price currency does not match the subscription currency
+            - Both anchor and resetAnchor specified
           content:
             application/json:
               schema:
@@ -2692,7 +3017,7 @@ paths:
                     message: The given data was invalid.
                     errors:
                       subscriptionPlanId:
-                        - At least one of subscriptionPlanId or quantity is required.
+                        - At least one of subscriptionPlanId, quantity, or price is required.
                 testmodeMismatch:
                   summary: Plan exists but in the wrong mode
                   value:
@@ -3004,96 +3329,6 @@ paths:
           $ref: '#/components/responses/Conflict'
         default:
           $ref: '#/components/responses/UnexpectedError'
-  /test-helpers/mandated-payments/{transactionId}/simulate-failure:
-    post:
-      operationId: simulatePaymentFailure
-      summary: Simulate a payment failure
-      description: |
-        Simulates a failed mandated payment for testing purposes.
-
-        **Requirements:**
-        - Only available in test mode (requires `test_` prefixed API token)
-        - Transaction must belong to the authenticated merchant
-
-        **Use cases:**
-        - Test payment failure handling and retry logic
-        - Verify dunning flow behavior
-        - Test webhook notifications for failed payments
-      tags:
-        - Test Helpers
-      parameters:
-        - name: transactionId
-          in: path
-          required: true
-          description: ID of the mandated payment transaction to fail
-          schema:
-            type: string
-          example: mollie_mandated_payment_Xk9pQrSvWm4NjLhYbUcP
-        - $ref: '#/components/parameters/idempotencyKey'
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                reason:
-                  type: string
-                  description: |
-                    Reason for the simulated failure. Defaults to `general_failure` if not provided.
-                  enum:
-                    - insufficient_funds
-                    - invalid_mandate
-                    - mandate_canceled
-                    - account_closed
-                    - card_expired
-                    - authentication_failed
-                    - general_failure
-                  example: insufficient_funds
-            example:
-              reason: insufficient_funds
-      responses:
-        '200':
-          description: Payment failure simulated
-          headers:
-            Idempotent-Replayed:
-              $ref: '#/components/headers/IdempotentReplayed'
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - id
-                  - status
-                  - failureReason
-                additionalProperties: false
-                properties:
-                  id:
-                    type: string
-                    description: ID of the failed transaction
-                    example: mollie_mandated_payment_Xk9pQrSvWm4NjLhYbUcP
-                  status:
-                    type: string
-                    const: failed
-                    example: failed
-                  failureReason:
-                    type: string
-                    description: The failure reason applied
-                    example: insufficient_funds
-              example:
-                id: mollie_mandated_payment_Xk9pQrSvWm4NjLhYbUcP
-                status: failed
-                failureReason: insufficient_funds
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        default:
-          $ref: '#/components/responses/UnexpectedError'
 webhooks:
   order.paid:
     post:
@@ -3314,6 +3549,44 @@ webhooks:
         current mandate (`object.mandate.method` and `object.mandate.maskedIdentifier`).
         Use this to refresh the masked payment method identifier you display to the
         customer without polling or a follow-up `GET /v1/subscriptions/{id}`.
+      tags:
+        - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.updated:
+    post:
+      operationId: onSubscriptionUpdated
+      summary: Subscription updated
+      description: |
+        A subscription changed immediately (effective now, not at the next billing
+        cycle) — a plan/price/interval change or a quantity change. `object` is the
+        Subscription reflecting the new values.
+      tags:
+        - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.update_scheduled:
+    post:
+      operationId: onSubscriptionUpdateScheduled
+      summary: Subscription update scheduled
+      description: |
+        A plan/price/quantity change was scheduled to take effect at the
+        subscription's next billing cycle. `object` is the Subscription as it is
+        *today* (the change has not applied yet); the scheduled target values are
+        carried in `object.scheduledUpdate` (`subscriptionPlanId`, `name`,
+        `description`, `basePrice`, `quantity`, `interval`, `intervalCount`).
       tags:
         - Webhook Events
       parameters:
@@ -3556,6 +3829,15 @@ components:
       schema:
         type: string
       example: webhook_event_Qk8pRtSvWm2NjLhYcZaE
+    webhookEndpointId:
+      name: webhookEndpointId
+      in: path
+      description: Unique identifier of the webhook endpoint
+      required: true
+      schema:
+        type: string
+        pattern: ^webhook_
+      example: webhook_QdEpFhdSrG4Y3DnfsdqsH
     VatlySignature:
       name: Vatly-Signature
       in: header
@@ -3729,7 +4011,7 @@ components:
           type: string
           description: |
             ISO 4217 currency code. Vatly aligns its supported currency set
-            with Mollie's; currencies are enabled as PSP support and
+            with its payment provider's; currencies are enabled as PSP support and
             downstream tax/FX coverage are in place. Expansion beyond this
             list is tracked in issue #1404.
           enum:
@@ -4249,6 +4531,7 @@ components:
         - resource
         - testmode
         - email
+        - name
         - createdAt
         - metadata
         - links
@@ -4276,6 +4559,15 @@ components:
             Punycode (ASCII) form per RFC 3492 — e.g. `user@xn--mller-kva.de`.
             Convert back to Unicode for display in your own UI.
           example: customer@example.com
+        name:
+          type:
+            - string
+            - 'null'
+          description: |
+            Customer's display / account-holder name. This is an identity field
+            for communication (dunning emails, dashboard) — it is distinct from,
+            and does not affect, the billing name on invoices.
+          example: John Doe
         createdAt:
           type: string
           format: date-time
@@ -4311,6 +4603,13 @@ components:
             `user@müller.de`. Submitting a Unicode domain returns a validation
             error.
           example: customer@example.com
+        name:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Customer's display / account-holder name.
+          example: John Doe
         metadata:
           $ref: '#/components/schemas/Metadata'
     OneOffProduct:
@@ -4875,7 +5174,7 @@ components:
       type: object
       description: |
         A chargeback represents a payment dispute initiated by a customer through their bank or card issuer.
-        Chargebacks are created automatically when payment providers notify Vatly of a dispute.
+        Chargebacks are created automatically when the payment provider notifies Vatly of a dispute.
       required:
         - id
         - resource
@@ -5048,6 +5347,8 @@ components:
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
             - `subscription.billing_updated` - A subscription's billing details changed; in practice today the mandate (payment method on file), e.g. to refresh the masked payment method identifier shown to the customer
+            - `subscription.updated` - A subscription changed immediately (plan/price/interval or quantity)
+            - `subscription.update_scheduled` - A plan/price/quantity change was scheduled for the next billing cycle; the target values are in `object.scheduledUpdate`
             - `checkout.paid` - Checkout was paid successfully
             - `checkout.failed` - Checkout payment failed
             - `checkout.canceled` - Checkout was canceled
@@ -5073,6 +5374,8 @@ components:
             - subscription.cancellation_grace_period_completed
             - subscription.resumed
             - subscription.billing_updated
+            - subscription.updated
+            - subscription.update_scheduled
             - checkout.paid
             - checkout.failed
             - checkout.canceled
@@ -5135,6 +5438,109 @@ components:
               allOf:
                 - $ref: '#/components/schemas/Link'
               description: Link to this webhook event resource
+    WebhookEndpoint:
+      type: object
+      description: |
+        A registered webhook endpoint. Vatly POSTs event deliveries to its `url`
+        and signs each one with the secret you set (see the `Vatly-Signature`
+        header).
+
+        There is at most one endpoint per mode: one for test and one for live (the
+        mode is determined by the API token).
+
+        The signing secret is write-only: you provide it on creation (and may rotate
+        it via update) but it is never returned in any response. Store the value you
+        send; the API will not give it back.
+      required:
+        - id
+        - resource
+        - testmode
+        - url
+        - createdAt
+        - links
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the webhook endpoint
+          example: webhook_QdEpFhdSrG4Y3DnfsdqsH
+        resource:
+          type: string
+          description: Resource type identifier
+          const: webhook_endpoint
+          example: webhook_endpoint
+        testmode:
+          type: boolean
+          description: Whether this endpoint receives test-mode events
+          example: false
+        url:
+          type: string
+          format: uri
+          description: The HTTPS URL deliveries are POSTed to
+          example: https://merchant.example/webhooks/vatly
+        createdAt:
+          type: string
+          format: date-time
+          description: When this endpoint was created (ISO 8601 format)
+          example: '2024-01-15T10:30:00Z'
+        links:
+          type: object
+          description: HATEOAS links to related resources
+          required:
+            - self
+          additionalProperties: false
+          properties:
+            self:
+              $ref: '#/components/schemas/Link'
+              description: Link to this webhook endpoint resource
+    CreateWebhookEndpointRequest:
+      type: object
+      description: Request body for registering a new webhook endpoint
+      required:
+        - url
+        - secret
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+          description: |
+            The HTTPS URL deliveries are POSTed to. Must be publicly reachable and
+            present a valid SSL certificate — Vatly sends a `webhook.setup`
+            verification ping on registration and rejects the request if it fails.
+            `localhost` and loopback addresses are not allowed.
+          example: https://merchant.example/webhooks/vatly
+        secret:
+          type: string
+          minLength: 10
+          description: |
+            Signing secret for this endpoint, used to compute the `Vatly-Signature`
+            HMAC on every delivery. You choose it (e.g. pinned from an environment
+            variable) and use it to verify inbound webhooks. It is write-only — keep
+            this value, as the API never returns it.
+          example: whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d
+    UpdateWebhookEndpointRequest:
+      type: object
+      description: |
+        Request body for updating a webhook endpoint. Send `url` to repoint the
+        endpoint, `secret` to rotate the signing secret, or both. Omitting both is a
+        no-op that returns the current endpoint.
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+          description: |
+            New HTTPS delivery URL. Revalidated for reachability and SSL the same
+            way as on creation.
+          example: https://merchant.example/webhooks/vatly-v2
+        secret:
+          type: string
+          minLength: 10
+          description: |
+            New signing secret for this endpoint. Write-only — keep the value, as
+            the API never returns it.
+          example: whsec_a1b2c3d4e5f60718293a4b5c6d7e8f90
     Subscription:
       type: object
       description: |
@@ -5312,11 +5718,62 @@ components:
               allOf:
                 - $ref: '#/components/schemas/Link'
               description: Link to the customer who owns this subscription
+        scheduledUpdate:
+          type: object
+          description: |
+            The target values for a change scheduled to take effect at the
+            subscription's next billing cycle. Present ONLY on the
+            `subscription.update_scheduled` webhook delivery — there the rest of the
+            object is the subscription's *current* state and `scheduledUpdate` carries
+            what it will become. It is optional and never returned by the REST API.
+          required:
+            - subscriptionPlanId
+            - name
+            - description
+            - basePrice
+            - quantity
+            - interval
+            - intervalCount
+          additionalProperties: false
+          properties:
+            subscriptionPlanId:
+              type: string
+              description: ID of the plan the subscription will switch to
+              example: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
+            name:
+              type: string
+              description: Name of the scheduled plan
+              example: Pro Annual
+            description:
+              type: string
+              description: Description of the scheduled plan
+            basePrice:
+              $ref: '#/components/schemas/Money'
+              description: Scheduled price per billing cycle before taxes
+            quantity:
+              type: integer
+              minimum: 1
+              description: Scheduled quantity
+              example: 1
+            interval:
+              type: string
+              description: Scheduled billing interval unit
+              enum:
+                - day
+                - week
+                - month
+                - year
+              example: month
+            intervalCount:
+              type: integer
+              minimum: 1
+              description: Scheduled number of interval units between billing cycles
+              example: 1
     UpdateSubscriptionRequest:
       type: object
       description: |
         Request body for updating a subscription.
-        At least one of `subscriptionPlanId` or `quantity` must be provided.
+        At least one of `subscriptionPlanId`, `quantity`, or `price` must be provided.
       additionalProperties: false
       properties:
         subscriptionPlanId:
@@ -5328,9 +5785,39 @@ components:
           example: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
         quantity:
           type: integer
-          description: New quantity (e.g., number of seats)
+          description: |
+            The new total quantity (e.g. number of seats). This sets the
+            quantity to the given value — it is not added to the current
+            quantity. Omit it to leave the quantity unchanged.
           minimum: 1
           example: 5
+        price:
+          type: object
+          description: |
+            Change the recurring price, keeping the current plan. Provide
+            `price` without a `subscriptionPlanId` to change the price in place;
+            combine it with `subscriptionPlanId` to switch plans at a custom
+            price. The currency must match the subscription's currency. The
+            `prorate`, `applyImmediately`, `invoiceImmediately` and anchor
+            options apply exactly as they do for a plan or quantity change.
+          additionalProperties: false
+          required:
+            - value
+            - currency
+          properties:
+            value:
+              type: string
+              description: Price amount as a decimal string, with the exact number of decimals for the currency.
+              example: '99.99'
+            currency:
+              type: string
+              description: |
+                Must match the subscription's own currency (a subscription's
+                currency is fixed at checkout and cannot be changed via an update).
+              enum:
+                - EUR
+                - USD
+              example: EUR
         prorate:
           type: boolean
           description: |
@@ -5458,6 +5945,32 @@ components:
             every 5 minutes) and the field updates from `null` to the resolved
             value once the sync completes.
           example: '4242'
+    UpdateCustomerRequest:
+      type: object
+      description: |
+        Request body for updating a customer's identity fields. Only `name` and
+        `email` may be changed here — both are optional (send either or both).
+
+        Billing-address fields (company name, tax ID, street, city, country, etc.)
+        are not supported by this endpoint and are ignored; amend those through the
+        hosted billing-update flow, which validates tax-relevant data centrally.
+      additionalProperties: false
+      properties:
+        name:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Customer's display / account-holder name.
+          example: John Doe
+        email:
+          type: string
+          format: email
+          description: |
+            Customer's email address. Must be unique within the merchant's account
+            for the given testmode. Internationalized domains must be submitted in
+            their Punycode (ASCII) form per RFC 3492.
+          example: new.email@example.com
     TaxSummaryRate:
       type: object
       description: Simplified tax rate information
@@ -5600,6 +6113,8 @@ components:
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
             - `subscription.billing_updated` - A subscription's billing details changed; in practice today the mandate (payment method on file), e.g. to refresh the masked payment method identifier shown to the customer
+            - `subscription.updated` - A subscription changed immediately (plan/price/interval or quantity)
+            - `subscription.update_scheduled` - A plan/price/quantity change was scheduled for the next billing cycle; the target values are in `object.scheduledUpdate`
             - `checkout.paid` - Checkout was paid successfully
             - `checkout.failed` - Checkout payment failed
             - `checkout.canceled` - Checkout was canceled
@@ -5623,6 +6138,8 @@ components:
             - subscription.cancellation_grace_period_completed
             - subscription.resumed
             - subscription.billing_updated
+            - subscription.updated
+            - subscription.update_scheduled
             - checkout.paid
             - checkout.failed
             - checkout.canceled

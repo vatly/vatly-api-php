@@ -306,6 +306,25 @@ class SubscriptionEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function can_update_subscription_price_with_a_plan_switch()
+    {
+        $this->httpClient->setSendReturnObjectFromArray($this->subscriptionDemoData('subscription_123'));
+
+        $this->client->subscriptions->update('subscription_123', [
+            'subscriptionPlanId' => 'subscription_plan_Wt5mNvBxKw7YcZaEjLhR',
+            'price' => ['value' => '99.99', 'currency' => 'EUR'],
+            'quantity' => 5,
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_PATCH,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123',
+            [],
+            '{"subscriptionPlanId":"subscription_plan_Wt5mNvBxKw7YcZaEjLhR","price":{"value":"99.99","currency":"EUR"},"quantity":5}'
+        );
+    }
+
+    /** @test */
     public function can_update_subscription_with_idempotency_key()
     {
         /** @var Subscription $subscription */

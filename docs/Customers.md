@@ -81,6 +81,51 @@ echo $customer->name;
 
 ---
 
+## Update a customer
+
+`PATCH /v1/customers/:id`
+
+
+
+Update a customer's identity fields. Only `name` and `email` may be changed, and
+both are optional — send whichever you want to update. Billing-address details
+(company name, tax ID, street, city, country, etc.) are **not** editable here;
+amend those through the hosted billing-update flow.
+
+### Optional attributes
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `name` | `string \| null` | The customer's name. Pass `null` to clear it. |
+| `email` | `string` | The customer's email address. |
+
+
+
+
+```php
+$customer = $vatly->customers->update('customer_abc123', [
+    'name' => 'Jane Doe',
+    'email' => 'jane@example.com',
+]);
+
+echo $customer->name; // Jane Doe
+```
+
+If you already have a `Customer` resource instance:
+
+```php
+$customer->update([
+    'name' => 'Jane Doe',
+]);
+```
+
+The SDK generates an idempotency key automatically for the `PATCH` request, or
+you can set your own via `$vatly->setIdempotencyKey(...)` beforehand.
+
+
+
+---
+
 ## List all customers
 
 `GET /v1/customers`
