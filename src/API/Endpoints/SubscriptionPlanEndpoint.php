@@ -20,6 +20,21 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
         return new SubscriptionPlan($this->client);
     }
 
+    /**
+     * Create a subscription plan. Plans created with a `live_` token start in
+     * `pending` status and must be approved by Vatly before use in checkouts;
+     * plans created with a `test_` token are auto-approved (`active`).
+     *
+     * `productType` must be `saas`. The `day` interval is sandbox-only; live
+     * plans support `week`, `month`, and `year`.
+     *
+     * @return SubscriptionPlan|BaseResource
+     * @throws ApiException
+     */
+    public function create(array $payload, array $filters = []): BaseResource
+    {
+        return $this->rest_create($payload, $filters);
+    }
 
     /**
      * @throws ApiException

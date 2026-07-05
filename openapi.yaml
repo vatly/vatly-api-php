@@ -144,12 +144,16 @@ tags:
       Customers are identified by email and can have multiple subscriptions and orders.
   - name: One-Off Products
     description: |
-      View available one-off products.
-      Products are configured in the Vatly dashboard and can be added to checkouts.
+      Create and view one-off products.
+      Products can be created in the Vatly dashboard or through the API. Live
+      products are reviewed and approved by Vatly before they can be added to
+      checkouts.
   - name: Subscription Plans
     description: |
-      View available subscription plans.
-      Plans define recurring billing intervals and pricing.
+      Create and view subscription plans.
+      Plans define recurring billing intervals and pricing, and can be created
+      in the Vatly dashboard or through the API. Live plans are reviewed and
+      approved by Vatly before they can be added to checkouts.
   - name: Orders
     description: |
       View orders and request invoice address updates.
@@ -883,6 +887,70 @@ paths:
           $ref: '#/components/responses/ValidationFailed'
         default:
           $ref: '#/components/responses/UnexpectedError'
+    post:
+      operationId: createOneOffProduct
+      summary: Create a one-off product
+      description: |
+        Creates a new one-off product for the authenticated merchant, in the
+        testmode determined from the API token.
+
+        A product created with a `live_` token starts in `pending` status and
+        must be approved by Vatly before it can be used in checkouts — the same
+        review that applies to products created in the dashboard. A product
+        created with a `test_` token is auto-approved (`active`) so you can trial
+        checkout immediately.
+      tags:
+        - One-Off Products
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOneOffProductRequest'
+            example:
+              name: Premium License
+              description: Lifetime access to all premium features
+              basePrice:
+                value: '299.00'
+                currency: EUR
+              productType: saas
+      responses:
+        '201':
+          description: One-off product created successfully
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OneOffProduct'
+              example:
+                id: one_off_product_Vr8kQdFhSrG4Y3DnfsdqH
+                resource: one_off_product
+                testmode: false
+                name: Premium License
+                description: Lifetime access to all premium features
+                basePrice:
+                  value: '299.00'
+                  currency: EUR
+                status: pending
+                createdAt: '2024-01-15T10:30:00Z'
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/one-off-products/one_off_product_Vr8kQdFhSrG4Y3DnfsdqH
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
   /one-off-products/{oneOffProductId}:
     get:
       operationId: getOneOffProduct
@@ -1005,6 +1073,82 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+    post:
+      operationId: createSubscriptionPlan
+      summary: Create a subscription plan
+      description: |
+        Creates a new subscription plan for the authenticated merchant, in the
+        testmode determined from the API token.
+
+        A plan created with a `live_` token starts in `pending` status and must be
+        approved by Vatly before it can be used in checkouts — the same review
+        that applies to plans created in the dashboard. A plan created with a
+        `test_` token is auto-approved (`active`) so you can trial checkout
+        immediately.
+
+        Constraints:
+        - `productType` must be `saas` (e-books are one-off purchases and cannot
+          be sold on a recurring basis).
+        - The `day` interval is sandbox-only; live plans support `week`, `month`,
+          and `year`.
+        - `intervalCount` is bounded per unit: up to 365 days, 52 weeks, or 12
+          months. `year` always bills once per year (`intervalCount` is ignored).
+      tags:
+        - Subscription Plans
+      parameters:
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionPlanRequest'
+            example:
+              name: Pro Monthly
+              description: Full access to all Pro features, billed monthly
+              basePrice:
+                value: '29.00'
+                currency: EUR
+              productType: saas
+              interval: month
+              intervalCount: 1
+      responses:
+        '201':
+          description: Subscription plan created successfully
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionPlan'
+              example:
+                id: subscription_plan_Bm7xNvPwKr3YjTgHcZaE
+                resource: subscription_plan
+                testmode: false
+                name: Pro Monthly
+                description: Full access to all Pro features, billed monthly
+                basePrice:
+                  value: '29.00'
+                  currency: EUR
+                interval: month
+                intervalCount: 1
+                status: pending
+                createdAt: '2024-01-15T10:30:00Z'
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/subscription-plans/subscription_plan_Bm7xNvPwKr3YjTgHcZaE
+                    type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationFailed'
         default:
@@ -4681,6 +4825,39 @@ components:
             self:
               $ref: '#/components/schemas/Link'
               description: Link to this product resource
+    CreateOneOffProductRequest:
+      type: object
+      description: Request body for creating a one-off product.
+      required:
+        - name
+        - description
+        - basePrice
+        - productType
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: Display name of the product.
+          example: Premium License
+        description:
+          type: string
+          description: Detailed description of the product.
+          example: Lifetime access to all premium features
+        basePrice:
+          $ref: '#/components/schemas/Money'
+          description: Price of the product.
+        productType:
+          type: string
+          description: |
+            Tax product classification:
+            - `saas` - Software as a Service
+            - `ebook` - Electronic book
+          enum:
+            - saas
+            - ebook
+          example: saas
     SubscriptionPlan:
       type: object
       description: |
@@ -4773,6 +4950,58 @@ components:
             self:
               $ref: '#/components/schemas/Link'
               description: Link to this plan resource
+    CreateSubscriptionPlanRequest:
+      type: object
+      description: Request body for creating a subscription plan.
+      required:
+        - name
+        - description
+        - basePrice
+        - productType
+        - interval
+        - intervalCount
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 255
+          description: Display name of the plan.
+          example: Pro Monthly
+        description:
+          type: string
+          description: Detailed description of the plan.
+          example: Full access to all Pro features, billed monthly
+        basePrice:
+          $ref: '#/components/schemas/Money'
+          description: Price per billing interval.
+        productType:
+          type: string
+          description: |
+            Tax product classification. Only `saas` is billable on a recurring
+            basis.
+          enum:
+            - saas
+          example: saas
+        interval:
+          type: string
+          description: |
+            Billing interval unit. `day` is sandbox-only (test mode); live plans
+            support `week`, `month`, and `year`.
+          enum:
+            - day
+            - week
+            - month
+            - year
+          example: month
+        intervalCount:
+          type: integer
+          minimum: 1
+          description: |
+            Number of interval units between billing cycles. Bounded per unit:
+            up to 365 days, 52 weeks, or 12 months. For `year`, billing is always
+            annual and this value is ignored.
+          example: 1
     Order:
       type: object
       description: |

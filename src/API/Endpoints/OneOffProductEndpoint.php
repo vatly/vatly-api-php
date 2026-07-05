@@ -20,6 +20,18 @@ class OneOffProductEndpoint extends BaseEndpoint
         return new OneOffProduct($this->client);
     }
 
+    /**
+     * Create a one-off product. Products created with a `live_` token start in
+     * `pending` status and must be approved by Vatly before use in checkouts;
+     * products created with a `test_` token are auto-approved (`active`).
+     *
+     * @return OneOffProduct|BaseResource
+     * @throws ApiException
+     */
+    public function create(array $payload, array $filters = []): BaseResource
+    {
+        return $this->rest_create($payload, $filters);
+    }
 
     /**
      * @throws ApiException

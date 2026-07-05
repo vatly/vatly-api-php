@@ -4,9 +4,54 @@ namespace Vatly\Tests\Endpoints;
 
 use Vatly\API\Resources\OneOffProduct;
 use Vatly\API\Resources\OneOffProductCollection;
+use Vatly\API\VatlyApiClient;
 
 class OneOffProductEndpointTest extends BaseEndpointTest
 {
+    /** @test */
+    public function it_can_create_a_one_off_product()
+    {
+        $productId = 'one_off_product_Vr8kQdFhSrG4Y3DnfsdqH';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $productId,
+            'resource' => 'one_off_product',
+            'name' => 'Premium License',
+            'description' => 'Lifetime access to all premium features',
+            'basePrice' => ['value' => '299.00', 'currency' => 'EUR'],
+            'testmode' => false,
+            'status' => 'pending',
+            'createdAt' => '2024-01-15T10:30:00Z',
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/one-off-products/'.$productId,
+                    'type' => 'application/json',
+                ],
+            ],
+        ]);
+
+        /** @var OneOffProduct $product */
+        $product = $this->client->oneOffProducts->create([
+            'name' => 'Premium License',
+            'description' => 'Lifetime access to all premium features',
+            'basePrice' => ['value' => '299.00', 'currency' => 'EUR'],
+            'productType' => 'saas',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/one-off-products',
+            [],
+            '{"name":"Premium License","description":"Lifetime access to all premium features","basePrice":{"value":"299.00","currency":"EUR"},"productType":"saas"}'
+        );
+
+        $this->assertInstanceOf(OneOffProduct::class, $product);
+        $this->assertEquals($productId, $product->id);
+        $this->assertEquals('Premium License', $product->name);
+        $this->assertEquals('299.00', $product->basePrice->value);
+        $this->assertEquals('pending', $product->status);
+    }
+
     /** @test */
     public function can_get_one_off_product()
     {

@@ -6,6 +6,18 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Added
 
+- **`oneOffProducts->create([...])`** (`POST /v1/one-off-products`). Body: `name` (3–255), `description`, `basePrice` (`['value' => '299.00', 'currency' => 'EUR']`), `productType` (`saas` or `ebook`). A product created with a `live_` token starts in `pending` status and must be approved by Vatly before use in checkouts; a `test_` token auto-approves it (`active`).
+- **`subscriptionPlans->create([...])`** (`POST /v1/subscription-plans`). Body: `name` (3–255), `description`, `basePrice`, `productType` (`saas` only), `interval` (`day` is sandbox-only; live plans support `week`/`month`/`year`), `intervalCount` (≤ 365 days / 52 weeks / 12 months; ignored for `year`). Same `pending`/`active` approval behaviour as one-off products.
+
+### Changed
+
+- Synced vendored `openapi.yaml` to the latest upstream spec (adds the one-off-product and subscription-plan create operations and their request schemas).
+- Corrected `docs/SubscriptionPlans.md` property table to match the resource (`basePrice` as `Money`; statuses `active`/`pending`/`rejected`) — it previously documented non-existent `amount`/`currency`/`trialDays` fields.
+
+## v0.1.0-alpha.23
+
+### Added
+
 - **Customer `name`.** `Vatly\API\Resources\Customer` now exposes a nullable `public ?string $name` (identity field for communication — distinct from the billing name on invoices), and `customers->create([...])` accepts it.
 - **`customers->update($id, [...])`** (`PATCH /v1/customers/{id}`). Updates a customer's identity fields — only `name` and `email`, both optional. Billing-address fields are not editable here. Also available on the resource as `$customer->update([...])`.
 - **Webhook Endpoints resource (CRUD).** New `webhookEndpoints` accessor on `VatlyApiClient` with `page()`, `create()`, `get()`, `update()`, and `delete()`, backed by `Vatly\API\Resources\WebhookEndpoint` (`id` (`webhook_` prefix), `resource: "webhook_endpoint"`, `testmode`, `url`, `createdAt`, `links.self`) and `WebhookEndpointCollection`. There is at most one endpoint per mode. The signing `secret` is **write-only** (min 10 chars): sent on create/update, never returned. `delete()` returns no content (`204`).

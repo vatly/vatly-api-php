@@ -4,9 +4,59 @@ namespace Vatly\Tests\Endpoints;
 
 use Vatly\API\Resources\SubscriptionPlan;
 use Vatly\API\Resources\SubscriptionPlanCollection;
+use Vatly\API\VatlyApiClient;
 
 class SubscriptionPlanEndpointTest extends BaseEndpointTest
 {
+    /** @test */
+    public function it_can_create_a_subscription_plan()
+    {
+        $planId = 'subscription_plan_Bm7xNvPwKr3YjTgHcZaE';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $planId,
+            'resource' => 'subscription_plan',
+            'name' => 'Pro Monthly',
+            'description' => 'Full access to all Pro features, billed monthly',
+            'basePrice' => ['value' => '29.00', 'currency' => 'EUR'],
+            'interval' => 'month',
+            'intervalCount' => 1,
+            'testmode' => false,
+            'status' => 'pending',
+            'createdAt' => '2024-01-15T10:30:00Z',
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/subscription-plans/'.$planId,
+                    'type' => 'application/json',
+                ],
+            ],
+        ]);
+
+        /** @var SubscriptionPlan $plan */
+        $plan = $this->client->subscriptionPlans->create([
+            'name' => 'Pro Monthly',
+            'description' => 'Full access to all Pro features, billed monthly',
+            'basePrice' => ['value' => '29.00', 'currency' => 'EUR'],
+            'productType' => 'saas',
+            'interval' => 'month',
+            'intervalCount' => 1,
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/subscription-plans',
+            [],
+            '{"name":"Pro Monthly","description":"Full access to all Pro features, billed monthly","basePrice":{"value":"29.00","currency":"EUR"},"productType":"saas","interval":"month","intervalCount":1}'
+        );
+
+        $this->assertInstanceOf(SubscriptionPlan::class, $plan);
+        $this->assertEquals($planId, $plan->id);
+        $this->assertEquals('Pro Monthly', $plan->name);
+        $this->assertEquals('29.00', $plan->basePrice->value);
+        $this->assertEquals('month', $plan->interval);
+        $this->assertEquals('pending', $plan->status);
+    }
+
     /** @test */
     public function can_get_subscription_plan()
     {
