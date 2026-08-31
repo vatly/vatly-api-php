@@ -20,15 +20,15 @@ All notable changes to `vatly-api-php` will be documented in this file.
 - `Checkout` resource now exposes `locale`, and `checkouts->create([...])` accepts a `locale` (folded language: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`).
 - `Subscription` resource now exposes `scheduledUpdate` (the target values of a change scheduled for the next billing cycle; always present, `null` when none).
 - `testHelpers->fastForwardSubscriptionRenewal($id, [...])` now accepts an optional body to force the renewal payment outcome (`paymentStatus`, `failureReason`).
-- Ten new `WebhookEventName` constants for the catalogue events: `one_off_product.update_submitted`/`update_approved`/`update_rejected`/`archived`/`unarchived` and the matching `subscription_plan.*`.
-- **Typed webhook event DTOs for all ten catalogue events** (`Vatly\API\Webhooks\Events\OneOffProduct*` and `SubscriptionPlan*`). `WebhookEventFactory` hydrates each event's `object` straight into the `OneOffProduct` / `SubscriptionPlan` resource (`$event->oneOffProduct` / `$event->subscriptionPlan`) with no follow-up API call, and each DTO exposes the resource id + `testmode` and a `VATLY_EVENT_NAME` constant. They are now reported by `getSupportedEvents()` / `isSupported()`.
+- Ten new `WebhookEventName` constants for the product events: `one_off_product.update_submitted`/`update_approved`/`update_rejected`/`archived`/`unarchived` and the matching `subscription_plan.*`.
+- **Typed webhook event DTOs for all ten product events** (`Vatly\API\Webhooks\Events\OneOffProduct*` and `SubscriptionPlan*`). `WebhookEventFactory` hydrates each event's `object` straight into the `OneOffProduct` / `SubscriptionPlan` resource (`$event->oneOffProduct` / `$event->subscriptionPlan`) with no follow-up API call, and each DTO exposes the resource id + `testmode` and a `VATLY_EVENT_NAME` constant. They are now reported by `getSupportedEvents()` / `isSupported()`.
 - New type constant classes `Vatly\API\Types\TaxBehavior` and `Vatly\API\Types\UpdateStatus`.
 
 ### Changed
 
 - Synced vendored `openapi.yaml` to the latest upstream spec (adds the one-off-product and subscription-plan create operations and their request schemas).
 - Corrected `docs/SubscriptionPlans.md` property table to match the resource (`basePrice` as `Money`; statuses `active`/`pending`/`rejected`) — it previously documented non-existent `amount`/`currency`/`trialDays` fields.
-- Catalogue listings (`oneOffProducts->page()`, `subscriptionPlans->page()`) document the `includeArchived` filter.
+- Product listings (`oneOffProducts->page()`, `subscriptionPlans->page()`) document the `includeArchived` filter.
 
 ## v0.1.0-alpha.23
 

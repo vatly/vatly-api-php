@@ -30,7 +30,7 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `one_off_product.update_submitted` | An update to a one-off product was submitted for review. |
 | `one_off_product.update_approved` | A submitted one-off product update was approved and applied. |
 | `one_off_product.update_rejected` | A submitted one-off product update was rejected. |
-| `one_off_product.archived` | A one-off product was archived (taken out of the sellable catalogue). |
+| `one_off_product.archived` | A one-off product was archived (it can no longer be sold). |
 | `one_off_product.unarchived` | An archived one-off product was put back on sale. |
 | `subscription_plan.update_submitted` | An update to a subscription plan was submitted for review. |
 | `subscription_plan.update_approved` | A submitted subscription plan update was approved and applied. |
@@ -39,7 +39,7 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `subscription_plan.unarchived` | An archived subscription plan was re-opened to new business. |
 | `webhook.setup` | Verification call sent when an endpoint is registered or its URL is updated. `entityType` is `webhook`; `object` is the (secret-free) endpoint config. |
 
-The ten catalogue events (`one_off_product.*` and `subscription_plan.*`) ship
+The ten product events (`one_off_product.*` and `subscription_plan.*`) ship
 dedicated typed event DTOs, just like the order/subscription/refund/checkout
 events. `WebhookEventFactory` hydrates each one's `object` — byte-identical to
 the corresponding `GET` body — straight into the matching resource, with **no
