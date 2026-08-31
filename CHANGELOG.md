@@ -4,6 +4,11 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- **`ScheduledSubscriptionUpdate` now carries `effectiveAt`** — the next-renewal date a scheduled change applies (nullable ISO 8601 date-time), matching the spec where it is a required field of `scheduledUpdate`. It is hydrated on both the `subscription.update_scheduled` webhook and the REST `Subscription` resource.
+- **`Subscription->scheduledUpdate` is now the typed `ScheduledSubscriptionUpdate`** (previously exposed as raw `\stdClass|null` so `effectiveAt` wasn't dropped). Both the REST resource and the webhook path (`SubscriptionUpdateScheduled`) hydrate the same typed class. Read `$subscription->scheduledUpdate->effectiveAt`, `->basePrice->value`, etc.
+
 ### Added
 
 - **`oneOffProducts->create([...])`** (`POST /v1/one-off-products`). Body: `name` (3–255), `description`, `basePrice` (`['value' => '299.00', 'currency' => 'EUR']`), `productType` (`saas` or `ebook`). A product created with a `live_` token starts in `pending` status and must be approved by Vatly before use in checkouts; a `test_` token auto-approves it (`active`).

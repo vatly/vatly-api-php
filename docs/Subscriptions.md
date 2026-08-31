@@ -31,7 +31,7 @@ Below you'll find all properties for the Vatly Subscription resource.
 | `nextRenewalAt` | `string \| null`    | When the next renewal will be attempted (ISO 8601). Null if canceled or ended. |
 | `trialUntil` | `string \| null`    | When the trial period ends (ISO 8601). Null if not in trial or trial has ended. |
 | `mandate` | `Mandate \| null`   | Payment method on file (`method`, `maskedIdentifier`). Null when the subscription has no mandate yet. |
-| `scheduledUpdate` | `object \| null`    | The target values for a change scheduled to take effect at the next billing cycle — set by an update with `applyImmediately: false` — or `null` when nothing is pending. Carries `subscriptionPlanId`, `name`, `description`, `basePrice`, `quantity`, `interval`, `intervalCount`, and `effectiveAt`. Always present on both the REST resource and webhook deliveries, so this is the authoritative way to reconcile a pending change. |
+| `scheduledUpdate` | `ScheduledSubscriptionUpdate \| null` | The target values for a change scheduled to take effect at the next billing cycle — set by an update with `applyImmediately: false` — or `null` when nothing is pending. A typed [`ScheduledSubscriptionUpdate`](../src/API/Types/ScheduledSubscriptionUpdate.php) carrying `subscriptionPlanId`, `name`, `description`, `basePrice` (`Money`), `quantity`, `interval`, `intervalCount`, and `effectiveAt` (next-renewal date the change applies, nullable). Always present on both the REST resource and webhook deliveries, so this is the authoritative way to reconcile a pending change. |
 | `links` | `SubscriptionLinks` | HATEOAS links to related resources (`self`, `customer`). |
 
 ---

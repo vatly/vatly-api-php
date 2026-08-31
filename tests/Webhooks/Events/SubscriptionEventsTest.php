@@ -117,6 +117,7 @@ class SubscriptionEventsTest extends BaseTestCase
                 'quantity' => 4,
                 'interval' => 'year',
                 'intervalCount' => 1,
+                'effectiveAt' => '2024-03-15T10:30:00Z',
             ],
         ]));
 
@@ -131,6 +132,26 @@ class SubscriptionEventsTest extends BaseTestCase
         $this->assertSame(4, $event->scheduledUpdate->quantity);
         $this->assertSame('year', $event->scheduledUpdate->interval);
         $this->assertSame(1, $event->scheduledUpdate->intervalCount);
+        $this->assertSame('2024-03-15T10:30:00Z', $event->scheduledUpdate->effectiveAt);
+    }
+
+    public function test_update_scheduled_effective_at_is_null_when_absent_or_null(): void
+    {
+        $event = SubscriptionUpdateScheduled::fromWebhook($this->makeWebhook('subscription.update_scheduled', [
+            'customerId' => 'cus_456',
+            'scheduledUpdate' => [
+                'subscriptionPlanId' => 'plan_next',
+                'name' => 'Pro Annual',
+                'description' => 'Billed yearly',
+                'basePrice' => ['value' => '990.00', 'currency' => 'EUR'],
+                'quantity' => 4,
+                'interval' => 'year',
+                'intervalCount' => 1,
+                'effectiveAt' => null,
+            ],
+        ]));
+
+        $this->assertNull($event->scheduledUpdate->effectiveAt);
     }
 
     public function test_started_builds_from_api_subscription_with_mandate(): void

@@ -6,6 +6,7 @@ use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
 use Vatly\API\Types\Mandate;
+use Vatly\API\Types\ScheduledSubscriptionUpdate;
 use Vatly\API\Types\SubscriptionStatus;
 use Vatly\API\VatlyApiClient;
 
@@ -345,6 +346,82 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         $this->expectException(\InvalidArgumentException::class);
 
         $this->client->subscriptions->get('invalid_subscription_id');
+    }
+
+    /** @test */
+    public function it_hydrates_scheduled_update_into_the_typed_object()
+    {
+        $subscriptionId = 'subscription_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $data = $this->subscriptionDemoData($subscriptionId);
+        $data['scheduledUpdate'] = [
+            'subscriptionPlanId' => 'subscription_plan_next',
+            'name' => 'Pro Annual',
+            'description' => 'Billed yearly',
+            'basePrice' => ['value' => '990.00', 'currency' => 'EUR'],
+            'quantity' => 2,
+            'interval' => 'year',
+            'intervalCount' => 1,
+            'effectiveAt' => '2024-03-15T10:30:00Z',
+        ];
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Subscription $subscription */
+        $subscription = $this->client->subscriptions->get($subscriptionId);
+
+        $this->assertInstanceOf(ScheduledSubscriptionUpdate::class, $subscription->scheduledUpdate);
+        $this->assertSame('subscription_plan_next', $subscription->scheduledUpdate->subscriptionPlanId);
+        $this->assertSame('Pro Annual', $subscription->scheduledUpdate->name);
+        $this->assertSame('Billed yearly', $subscription->scheduledUpdate->description);
+        $this->assertSame('990.00', $subscription->scheduledUpdate->basePrice->value);
+        $this->assertSame('EUR', $subscription->scheduledUpdate->basePrice->currency);
+        $this->assertSame(2, $subscription->scheduledUpdate->quantity);
+        $this->assertSame('year', $subscription->scheduledUpdate->interval);
+        $this->assertSame(1, $subscription->scheduledUpdate->intervalCount);
+        $this->assertSame('2024-03-15T10:30:00Z', $subscription->scheduledUpdate->effectiveAt);
+    }
+
+    /** @test */
+    public function it_exposes_null_scheduled_update_when_none_is_pending()
+    {
+        $subscriptionId = 'subscription_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $data = $this->subscriptionDemoData($subscriptionId);
+        $data['scheduledUpdate'] = null;
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Subscription $subscription */
+        $subscription = $this->client->subscriptions->get($subscriptionId);
+
+        $this->assertNull($subscription->scheduledUpdate);
+    }
+
+    /** @test */
+    public function it_hydrates_scheduled_update_with_null_effective_at()
+    {
+        $subscriptionId = 'subscription_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $data = $this->subscriptionDemoData($subscriptionId);
+        $data['scheduledUpdate'] = [
+            'subscriptionPlanId' => 'subscription_plan_next',
+            'name' => 'Pro Annual',
+            'description' => 'Billed yearly',
+            'basePrice' => ['value' => '990.00', 'currency' => 'EUR'],
+            'quantity' => 2,
+            'interval' => 'year',
+            'intervalCount' => 1,
+            'effectiveAt' => null,
+        ];
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Subscription $subscription */
+        $subscription = $this->client->subscriptions->get($subscriptionId);
+
+        $this->assertInstanceOf(ScheduledSubscriptionUpdate::class, $subscription->scheduledUpdate);
+        $this->assertNull($subscription->scheduledUpdate->effectiveAt);
     }
 
     private function subscriptionDemoData(string $subscriptionId, string $status = SubscriptionStatus::ACTIVE): array

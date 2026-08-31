@@ -4250,7 +4250,7 @@ webhooks:
         subscription's next billing cycle. `object` is the Subscription as it is
         *today* (the change has not applied yet); the scheduled target values are
         carried in `object.scheduledUpdate` (`subscriptionPlanId`, `name`,
-        `description`, `basePrice`, `quantity`, `interval`, `intervalCount`).
+        `description`, `basePrice`, `quantity`, `interval`, `intervalCount`, `effectiveAt`).
       tags:
         - Webhook Events
       parameters:
