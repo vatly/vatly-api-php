@@ -22,7 +22,7 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `subscription.cancellation_grace_period_completed` | Grace period after cancellation ended. |
 | `subscription.resumed` | A canceled subscription was resumed during its grace period. |
 | `subscription.updated` | A subscription changed immediately (plan, price, interval or quantity). `object` is the subscription with its new values. |
-| `subscription.update_scheduled` | A change was scheduled for the next billing cycle. `object` is the subscription's current state; the target values are in `object.scheduledUpdate` (`subscriptionPlanId`, `name`, `description`, `basePrice`, `quantity`, `interval`, `intervalCount`). |
+| `subscription.update_scheduled` | A change was scheduled for the next billing cycle. `object` is the subscription's current state; the target values are in `object.scheduledUpdate` (`subscriptionPlanId`, `name`, `description`, `basePrice`, `quantity`, `interval`, `intervalCount`, `effectiveAt`). |
 | `checkout.paid` | Checkout was paid successfully. |
 | `checkout.failed` | Checkout payment failed. |
 | `checkout.canceled` | Checkout was canceled. |

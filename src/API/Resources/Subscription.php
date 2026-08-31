@@ -8,6 +8,7 @@ use Vatly\API\Types\Address;
 use Vatly\API\Types\Link;
 use Vatly\API\Types\Mandate;
 use Vatly\API\Types\Money;
+use Vatly\API\Types\ScheduledSubscriptionUpdate;
 use Vatly\API\Types\SubscriptionStatus;
 
 class Subscription extends BaseResource
@@ -81,10 +82,8 @@ class Subscription extends BaseResource
      * nothing is pending. Always present on both the REST resource and webhook
      * deliveries, so this is the authoritative way to reconcile a pending change.
      * Cleared when the change is applied at renewal or discarded on cancellation.
-     *
-     * @var \stdClass|null
      */
-    public $scheduledUpdate = null;
+    public ?ScheduledSubscriptionUpdate $scheduledUpdate = null;
 
     public SubscriptionLinks $links;
 

@@ -294,6 +294,7 @@ class WebhookEventFactoryTest extends BaseTestCase
                     'quantity' => 2,
                     'interval' => 'year',
                     'intervalCount' => 1,
+                    'effectiveAt' => '2024-03-15T10:30:00Z',
                 ],
             ],
         );
@@ -308,6 +309,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame(99000, $event->scheduledUpdate->basePrice->toCents());
         $this->assertSame(2, $event->scheduledUpdate->quantity);
         $this->assertSame('year', $event->scheduledUpdate->interval);
+        $this->assertSame('2024-03-15T10:30:00Z', $event->scheduledUpdate->effectiveAt);
     }
 
     public function test_it_creates_order_paid_event_from_fat_payload_with_tax_breakdown(): void
