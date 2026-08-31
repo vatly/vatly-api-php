@@ -25,6 +25,18 @@ class WebhookEventName
     public const CHECKOUT_CANCELED = 'checkout.canceled';
     public const CHECKOUT_EXPIRED = 'checkout.expired';
 
+    public const ONE_OFF_PRODUCT_UPDATE_SUBMITTED = 'one_off_product.update_submitted';
+    public const ONE_OFF_PRODUCT_UPDATE_APPROVED = 'one_off_product.update_approved';
+    public const ONE_OFF_PRODUCT_UPDATE_REJECTED = 'one_off_product.update_rejected';
+    public const ONE_OFF_PRODUCT_ARCHIVED = 'one_off_product.archived';
+    public const ONE_OFF_PRODUCT_UNARCHIVED = 'one_off_product.unarchived';
+
+    public const SUBSCRIPTION_PLAN_UPDATE_SUBMITTED = 'subscription_plan.update_submitted';
+    public const SUBSCRIPTION_PLAN_UPDATE_APPROVED = 'subscription_plan.update_approved';
+    public const SUBSCRIPTION_PLAN_UPDATE_REJECTED = 'subscription_plan.update_rejected';
+    public const SUBSCRIPTION_PLAN_ARCHIVED = 'subscription_plan.archived';
+    public const SUBSCRIPTION_PLAN_UNARCHIVED = 'subscription_plan.unarchived';
+
     /**
      * Verification call sent when a webhook endpoint is registered or its URL is
      * updated. Delivered as a normal webhook event with `entityType` `webhook`;

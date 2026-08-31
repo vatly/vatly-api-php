@@ -27,7 +27,23 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `checkout.failed` | Checkout payment failed. |
 | `checkout.canceled` | Checkout was canceled. |
 | `checkout.expired` | Checkout session expired. |
+| `one_off_product.update_submitted` | An update to a one-off product was submitted for review. |
+| `one_off_product.update_approved` | A submitted one-off product update was approved and applied. |
+| `one_off_product.update_rejected` | A submitted one-off product update was rejected. |
+| `one_off_product.archived` | A one-off product was archived (taken out of the sellable catalogue). |
+| `one_off_product.unarchived` | An archived one-off product was put back on sale. |
+| `subscription_plan.update_submitted` | An update to a subscription plan was submitted for review. |
+| `subscription_plan.update_approved` | A submitted subscription plan update was approved and applied. |
+| `subscription_plan.update_rejected` | A submitted subscription plan update was rejected. |
+| `subscription_plan.archived` | A subscription plan was archived (closed to new business). |
+| `subscription_plan.unarchived` | An archived subscription plan was re-opened to new business. |
 | `webhook.setup` | Verification call sent when an endpoint is registered or its URL is updated. `entityType` is `webhook`; `object` is the (secret-free) endpoint config. |
+
+> The ten catalogue events (`one_off_product.*` and `subscription_plan.*`) have
+> `eventName` constants on [`Vatly\API\Types\WebhookEventName`](../src/API/Types/WebhookEventName.php).
+> They do not yet ship dedicated typed event DTOs, so `WebhookEventFactory`
+> resolves them to [`UnsupportedWebhookReceived`](../src/API/Webhooks/Events/UnsupportedWebhookReceived.php);
+> match on `eventName` (or `Webhook::parse()`) to handle them.
 
 ### The `webhook.setup` event
 

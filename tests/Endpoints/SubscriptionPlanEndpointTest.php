@@ -58,6 +58,135 @@ class SubscriptionPlanEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function it_exposes_tax_behavior_and_archived_at()
+    {
+        $planId = 'subscription_plan_Bm7xNvPwKr3YjTgHcZaE';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $planId,
+            'resource' => 'subscription_plan',
+            'name' => 'Pro Monthly',
+            'description' => 'Billed monthly',
+            'basePrice' => ['value' => '29.00', 'currency' => 'EUR'],
+            'taxBehavior' => 'inclusive',
+            'interval' => 'month',
+            'intervalCount' => 1,
+            'productType' => 'saas',
+            'testmode' => false,
+            'status' => 'active',
+            'archivedAt' => '2024-02-01T00:00:00Z',
+            'pendingUpdates' => null,
+            'updateStatus' => null,
+            'createdAt' => '2024-01-15T10:30:00Z',
+            'links' => ['self' => ['href' => self::API_ENDPOINT_URL.'/subscription-plans/'.$planId, 'type' => 'application/json']],
+        ]);
+
+        /** @var SubscriptionPlan $plan */
+        $plan = $this->client->subscriptionPlans->get($planId);
+
+        $this->assertEquals('inclusive', $plan->taxBehavior);
+        $this->assertEquals('saas', $plan->productType);
+        $this->assertEquals('2024-02-01T00:00:00Z', $plan->archivedAt);
+        $this->assertTrue($plan->isArchived());
+    }
+
+    /** @test */
+    public function it_can_update_a_subscription_plan()
+    {
+        $planId = 'subscription_plan_Bm7xNvPwKr3YjTgHcZaE';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $planId,
+            'resource' => 'subscription_plan',
+            'name' => 'Pro Monthly',
+            'description' => 'Billed monthly',
+            'basePrice' => ['value' => '29.00', 'currency' => 'EUR'],
+            'taxBehavior' => 'exclusive',
+            'interval' => 'month',
+            'intervalCount' => 1,
+            'productType' => 'saas',
+            'testmode' => false,
+            'status' => 'active',
+            'archivedAt' => null,
+            'pendingUpdates' => ['interval' => 'week', 'intervalCount' => 1],
+            'updateStatus' => 'pending',
+            'createdAt' => '2024-01-15T10:30:00Z',
+            'links' => ['self' => ['href' => self::API_ENDPOINT_URL.'/subscription-plans/'.$planId, 'type' => 'application/json']],
+        ]);
+
+        /** @var SubscriptionPlan $plan */
+        $plan = $this->client->subscriptionPlans->update($planId, [
+            'name' => 'Pro Weekly',
+            'interval' => 'week',
+            'intervalCount' => 1,
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_PATCH,
+            self::API_ENDPOINT_URL.'/subscription-plans/'.$planId,
+            [],
+            '{"name":"Pro Weekly","interval":"week","intervalCount":1}'
+        );
+
+        $this->assertInstanceOf(SubscriptionPlan::class, $plan);
+        $this->assertEquals('pending', $plan->updateStatus);
+        $this->assertEquals('week', $plan->pendingUpdates->interval);
+    }
+
+    /** @test */
+    public function it_can_archive_a_subscription_plan()
+    {
+        $planId = 'subscription_plan_Bm7xNvPwKr3YjTgHcZaE';
+
+        $this->httpClient->setSendReturnNull();
+
+        $this->client->subscriptionPlans->archive($planId);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/subscription-plans/'.$planId.'/archive',
+            [],
+            null
+        );
+    }
+
+    /** @test */
+    public function it_can_unarchive_a_subscription_plan()
+    {
+        $planId = 'subscription_plan_Bm7xNvPwKr3YjTgHcZaE';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $planId,
+            'resource' => 'subscription_plan',
+            'name' => 'Pro Monthly',
+            'description' => 'Billed monthly',
+            'basePrice' => ['value' => '29.00', 'currency' => 'EUR'],
+            'taxBehavior' => 'exclusive',
+            'interval' => 'month',
+            'intervalCount' => 1,
+            'productType' => 'saas',
+            'testmode' => false,
+            'status' => 'active',
+            'archivedAt' => null,
+            'createdAt' => '2024-01-15T10:30:00Z',
+            'links' => ['self' => ['href' => self::API_ENDPOINT_URL.'/subscription-plans/'.$planId, 'type' => 'application/json']],
+        ]);
+
+        /** @var SubscriptionPlan $plan */
+        $plan = $this->client->subscriptionPlans->unarchive($planId);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_DELETE,
+            self::API_ENDPOINT_URL.'/subscription-plans/'.$planId.'/archive',
+            [],
+            null
+        );
+
+        $this->assertInstanceOf(SubscriptionPlan::class, $plan);
+        $this->assertFalse($plan->isArchived());
+    }
+
+    /** @test */
     public function can_get_subscription_plan()
     {
         $productId = 'subscription_plan_78b146a7de7d417e9d68d7e6ef193d18';

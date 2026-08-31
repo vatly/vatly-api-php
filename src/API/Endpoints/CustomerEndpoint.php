@@ -64,6 +64,20 @@ class CustomerEndpoint extends BaseEndpoint
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
+    /**
+     * Look up customers by email address — the way back to a customer id you no
+     * longer have. The address is canonicalized before matching, exactly as on
+     * write. An address can be held by more than one customer, in which case all
+     * of them are returned, so this always yields a (possibly empty) collection.
+     *
+     * @return CustomerCollection|BaseResourcePage
+     * @throws ApiException
+     */
+    public function listByEmail(string $email, array $parameters = []): BaseResourcePage
+    {
+        return $this->rest_list(null, null, null, array_merge($parameters, ['email' => $email]));
+    }
+
     protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
     {
         return new CustomerCollection($this->client, $count, $links);

@@ -20,6 +20,7 @@ Below you'll find all properties for the Vatly Checkout resource.
 | `redirectUrlSuccess` | `string` | Success redirect URL. |
 | `redirectUrlCanceled` | `string` | Cancel redirect URL. |
 | `metadata` | `array` | Your custom metadata. |
+| `locale` | `string \| null` | The language the hosted checkout is presented in (`en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`), echoed back as the folded language. `null` means none was specified and the checkout picks a language from the shopper's browser. |
 | `expiresAt` | `string \| null` | Expiration timestamp (ISO 8601). |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 
@@ -47,6 +48,7 @@ Create a new hosted checkout for your customer.
 | --- | --- | --- |
 | `customerId` | `string` | Existing customer ID to associate with this checkout. |
 | `metadata` | `array` | Your custom metadata to store with the checkout. |
+| `locale` | `string` | Language to present the hosted checkout in — set this when you already know the customer's language. Accepts a bare language code (`de`), a BCP 47 tag (`de-AT`), or a POSIX/ISO 15897 locale (`de_DE`); all three fold to the language. Supported: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl` (anything else returns `422`). Omit (or `null`) to detect the language from the shopper's `Accept-Language` header, falling back to English. The response echoes back the folded language. |
 
 
 
@@ -63,10 +65,13 @@ $checkout = $vatly->checkouts->create([
     'redirectUrlSuccess' => 'https://yourapp.com/success',
     'redirectUrlCanceled' => 'https://yourapp.com/canceled',
     'customerId' => 'customer_xyz789',
+    'locale' => 'de', // optional; present the hosted checkout in German
     'metadata' => [
         'user_id' => '12345',
     ],
 ]);
+
+echo $checkout->locale; // 'de'
 
 // Redirect to hosted checkout
 $checkoutUrl = $checkout->getCheckoutUrl();

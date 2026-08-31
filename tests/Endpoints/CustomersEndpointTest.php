@@ -397,4 +397,48 @@ class CustomersEndpointTest extends BaseEndpointTest
         $this->assertEquals(self::API_ENDPOINT_URL . '/customers/customer_78b146a7de7d417e9d68d7e6ef193d19', $customer->links->self->href);
         $this->assertEquals('application/hal+json', $customer->links->self->type);
     }
+
+    /** @test */
+    public function it_can_look_up_customers_by_email(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray([
+            'count' => 1,
+            'data' => [
+                [
+                    'id' => 'customer_78b146a7de7d417e9d68d7e6ef193d18',
+                    'resource' => 'customer',
+                    'email' => 'john.doe@example.com',
+                    'name' => 'John Doe',
+                    'createdAt' => '2020-01-01T00:00:00+00:00',
+                    'testmode' => true,
+                    'metadata' => null,
+                    'links' => [
+                        'self' => [
+                            'href' => self::API_ENDPOINT_URL.'/customers/customer_78b146a7de7d417e9d68d7e6ef193d18',
+                            'type' => 'application/hal+json',
+                        ],
+                    ],
+                ],
+            ],
+            'links' => [
+                'self' => ['href' => self::API_ENDPOINT_URL.'/customers?email=john.doe%40example.com', 'type' => 'application/hal+json'],
+                'next' => null,
+                'prev' => null,
+            ],
+        ]);
+
+        $customers = $this->client->customers->listByEmail('john.doe@example.com');
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_GET,
+            self::API_ENDPOINT_URL.'/customers?email=john.doe%40example.com',
+            [],
+            null
+        );
+
+        $this->assertInstanceOf(CustomerCollection::class, $customers);
+        $this->assertEquals(1, $customers->count);
+        $this->assertEquals('customer_78b146a7de7d417e9d68d7e6ef193d18', $customers[0]->id);
+        $this->assertEquals('john.doe@example.com', $customers[0]->email);
+    }
 }

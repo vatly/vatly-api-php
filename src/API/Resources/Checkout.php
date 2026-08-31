@@ -52,6 +52,14 @@ class Checkout extends BaseResource
 
     public CheckoutLinks $links;
 
+    /**
+     * The language the hosted checkout is presented in, as sent on creation
+     * (one of `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`). `null` means you
+     * did not specify one, so the checkout picks a language from the shopper's
+     * browser.
+     */
+    public ?string $locale = null;
+
     /* @see CheckoutStatus */
     public string $status;
 

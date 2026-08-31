@@ -328,4 +328,41 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $this->assertEquals("order_123", $checkout->orderId);
         $this->assertTrue($checkout->testmode);
     }
+
+    /** @test */
+    public function can_create_checkout_with_a_locale()
+    {
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => 'checkout_dummy_id',
+            'resource' => 'checkout',
+            'testmode' => true,
+            'redirectUrlSuccess' => 'https://www.sandorian.com/success',
+            'redirectUrlCanceled' => 'https://www.sandorian.com/canceled',
+            'locale' => 'de',
+            'status' => CheckoutStatus::STATUS_CREATED,
+            'metadata' => null,
+            'links' => [
+                'checkoutUrl' => ['href' => self::WEBSITE_ENDPOINT_URL.'/checkout/checkout_dummy_id', 'type' => 'text/html'],
+                'self' => ['href' => self::API_ENDPOINT_URL.'/checkouts/checkout_dummy_id', 'type' => 'application/json'],
+            ],
+        ]);
+
+        /** @var Checkout $checkout */
+        $checkout = $this->client->checkouts->create([
+            'products' => [['id' => 'one_off_product_abc_987']],
+            'redirectUrlSuccess' => 'https://www.sandorian.com/success',
+            'redirectUrlCanceled' => 'https://www.sandorian.com/canceled',
+            'locale' => 'de',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/checkouts',
+            [],
+            '{"products":[{"id":"one_off_product_abc_987"}],"redirectUrlSuccess":"https://www.sandorian.com/success","redirectUrlCanceled":"https://www.sandorian.com/canceled","locale":"de"}'
+        );
+
+        $this->assertInstanceOf(Checkout::class, $checkout);
+        $this->assertEquals('de', $checkout->locale);
+    }
 }

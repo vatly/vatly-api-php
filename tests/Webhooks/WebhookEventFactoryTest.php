@@ -728,6 +728,59 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame(['url' => 'https://example.test/webhooks/vatly'], $event->object);
     }
 
+    /**
+     * @dataProvider catalogueEventNameProvider
+     */
+    public function test_catalogue_events_resolve_to_unsupported_for_now(string $eventName): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: $eventName,
+            entityType: 'one_off_product',
+            entityId: 'one_off_product_123',
+            object: [],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        // No typed event class ships for the catalogue events yet, so they fall
+        // through to the graceful Unsupported fallback (see WebhookEventName).
+        $this->assertInstanceOf(UnsupportedWebhookReceived::class, $event);
+        $this->assertSame($eventName, $event->eventName);
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function catalogueEventNameProvider(): array
+    {
+        return [
+            'one_off_product.update_submitted' => [\Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_SUBMITTED],
+            'one_off_product.update_approved' => [\Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_APPROVED],
+            'one_off_product.update_rejected' => [\Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_REJECTED],
+            'one_off_product.archived' => [\Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_ARCHIVED],
+            'one_off_product.unarchived' => [\Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UNARCHIVED],
+            'subscription_plan.update_submitted' => [\Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_SUBMITTED],
+            'subscription_plan.update_approved' => [\Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_APPROVED],
+            'subscription_plan.update_rejected' => [\Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_REJECTED],
+            'subscription_plan.archived' => [\Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_ARCHIVED],
+            'subscription_plan.unarchived' => [\Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UNARCHIVED],
+        ];
+    }
+
+    public function test_catalogue_event_name_constants_match_the_spec_strings(): void
+    {
+        $this->assertSame('one_off_product.update_submitted', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_SUBMITTED);
+        $this->assertSame('one_off_product.update_approved', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_APPROVED);
+        $this->assertSame('one_off_product.update_rejected', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_REJECTED);
+        $this->assertSame('one_off_product.archived', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_ARCHIVED);
+        $this->assertSame('one_off_product.unarchived', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UNARCHIVED);
+        $this->assertSame('subscription_plan.update_submitted', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_SUBMITTED);
+        $this->assertSame('subscription_plan.update_approved', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_APPROVED);
+        $this->assertSame('subscription_plan.update_rejected', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_REJECTED);
+        $this->assertSame('subscription_plan.archived', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_ARCHIVED);
+        $this->assertSame('subscription_plan.unarchived', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UNARCHIVED);
+    }
+
     public function test_it_returns_list_of_supported_events(): void
     {
         $supported = $this->factory->getSupportedEvents();
