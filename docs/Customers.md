@@ -157,3 +157,38 @@ $customers = $vatly->customers->list([
     'startingAfter' => 'customer_last_id',
 ]);
 ```
+
+---
+
+## Recover a customer by email
+
+`GET /v1/customers?email=...`
+
+
+
+Look up customers by email address — the way back to a customer id you no longer
+have (after a re-sync or reset). The address is canonicalized before matching,
+exactly as on write. An address can be held by more than one customer, so this
+always returns a (possibly empty) collection.
+
+
+
+
+```php
+$customers = $vatly->customers->listByEmail('john@example.com');
+
+if (count($customers) > 0) {
+    echo $customers[0]->id; // customer_abc123
+}
+```
+
+You can also recover in a single call by creating the customer again: create is
+get-or-create on the email, so posting a known address returns the existing
+customer (`200`) rather than a validation error, while a genuinely new address is
+created (`201`). Either way you get the customer back:
+
+```php
+$customer = $vatly->customers->create(['email' => 'john@example.com']);
+
+echo $customer->id; // the existing customer id, if the email was already known
+```

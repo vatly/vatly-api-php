@@ -8,11 +8,22 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 - **`oneOffProducts->create([...])`** (`POST /v1/one-off-products`). Body: `name` (3–255), `description`, `basePrice` (`['value' => '299.00', 'currency' => 'EUR']`), `productType` (`saas` or `ebook`). A product created with a `live_` token starts in `pending` status and must be approved by Vatly before use in checkouts; a `test_` token auto-approves it (`active`).
 - **`subscriptionPlans->create([...])`** (`POST /v1/subscription-plans`). Body: `name` (3–255), `description`, `basePrice`, `productType` (`saas` only), `interval` (`day` is sandbox-only; live plans support `week`/`month`/`year`), `intervalCount` (≤ 365 days / 52 weeks / 12 months; ignored for `year`). Same `pending`/`active` approval behaviour as one-off products.
+- **One-off product update/archive lifecycle**: `oneOffProducts->update($id, [...])` (`PATCH`), `oneOffProducts->archive($id)` (`POST .../archive`, `204`), and `oneOffProducts->unarchive($id)` (`DELETE .../archive`). Convenience methods `$product->update()`, `$product->archive()`, `$product->unarchive()`, and `$product->isArchived()` on the resource.
+- **Subscription plan update/archive lifecycle**: `subscriptionPlans->update($id, [...])`, `subscriptionPlans->archive($id)`, and `subscriptionPlans->unarchive($id)`, plus the same convenience methods on the `SubscriptionPlan` resource.
+- **`customers->listByEmail($email)`** — recover a customer id by email (`GET /v1/customers?email=...`); returns a (possibly empty) `CustomerCollection`.
+- New fields on the `OneOffProduct` and `SubscriptionPlan` resources: `taxBehavior` (`exclusive`/`inclusive`), `productType`, `archivedAt`, `pendingUpdates`, `updateStatus`. `taxBehavior` is also accepted (optional, defaults to `exclusive`) on `create`.
+- `Checkout` resource now exposes `locale`, and `checkouts->create([...])` accepts a `locale` (folded language: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`).
+- `Subscription` resource now exposes `scheduledUpdate` (the target values of a change scheduled for the next billing cycle; always present, `null` when none).
+- `testHelpers->fastForwardSubscriptionRenewal($id, [...])` now accepts an optional body to force the renewal payment outcome (`paymentStatus`, `failureReason`).
+- Ten new `WebhookEventName` constants for the catalogue events: `one_off_product.update_submitted`/`update_approved`/`update_rejected`/`archived`/`unarchived` and the matching `subscription_plan.*`.
+- **Typed webhook event DTOs for all ten catalogue events** (`Vatly\API\Webhooks\Events\OneOffProduct*` and `SubscriptionPlan*`). `WebhookEventFactory` hydrates each event's `object` straight into the `OneOffProduct` / `SubscriptionPlan` resource (`$event->oneOffProduct` / `$event->subscriptionPlan`) with no follow-up API call, and each DTO exposes the resource id + `testmode` and a `VATLY_EVENT_NAME` constant. They are now reported by `getSupportedEvents()` / `isSupported()`.
+- New type constant classes `Vatly\API\Types\TaxBehavior` and `Vatly\API\Types\UpdateStatus`.
 
 ### Changed
 
 - Synced vendored `openapi.yaml` to the latest upstream spec (adds the one-off-product and subscription-plan create operations and their request schemas).
 - Corrected `docs/SubscriptionPlans.md` property table to match the resource (`basePrice` as `Money`; statuses `active`/`pending`/`rejected`) — it previously documented non-existent `amount`/`currency`/`trialDays` fields.
+- Catalogue listings (`oneOffProducts->page()`, `subscriptionPlans->page()`) document the `includeArchived` filter.
 
 ## v0.1.0-alpha.23
 

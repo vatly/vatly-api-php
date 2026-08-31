@@ -27,7 +27,55 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `checkout.failed` | Checkout payment failed. |
 | `checkout.canceled` | Checkout was canceled. |
 | `checkout.expired` | Checkout session expired. |
+| `one_off_product.update_submitted` | An update to a one-off product was submitted for review. |
+| `one_off_product.update_approved` | A submitted one-off product update was approved and applied. |
+| `one_off_product.update_rejected` | A submitted one-off product update was rejected. |
+| `one_off_product.archived` | A one-off product was archived (taken out of the sellable catalogue). |
+| `one_off_product.unarchived` | An archived one-off product was put back on sale. |
+| `subscription_plan.update_submitted` | An update to a subscription plan was submitted for review. |
+| `subscription_plan.update_approved` | A submitted subscription plan update was approved and applied. |
+| `subscription_plan.update_rejected` | A submitted subscription plan update was rejected. |
+| `subscription_plan.archived` | A subscription plan was archived (closed to new business). |
+| `subscription_plan.unarchived` | An archived subscription plan was re-opened to new business. |
 | `webhook.setup` | Verification call sent when an endpoint is registered or its URL is updated. `entityType` is `webhook`; `object` is the (secret-free) endpoint config. |
+
+The ten catalogue events (`one_off_product.*` and `subscription_plan.*`) ship
+dedicated typed event DTOs, just like the order/subscription/refund/checkout
+events. `WebhookEventFactory` hydrates each one's `object` — byte-identical to
+the corresponding `GET` body — straight into the matching resource, with **no
+follow-up API call**:
+
+| Event | Typed DTO | Hydrated resource |
+|-------|-----------|-------------------|
+| `one_off_product.update_submitted` | `OneOffProductUpdateSubmitted` | `$event->oneOffProduct` (`OneOffProduct`) |
+| `one_off_product.update_approved` | `OneOffProductUpdateApproved` | `$event->oneOffProduct` |
+| `one_off_product.update_rejected` | `OneOffProductUpdateRejected` | `$event->oneOffProduct` |
+| `one_off_product.archived` | `OneOffProductArchived` | `$event->oneOffProduct` |
+| `one_off_product.unarchived` | `OneOffProductUnarchived` | `$event->oneOffProduct` |
+| `subscription_plan.update_submitted` | `SubscriptionPlanUpdateSubmitted` | `$event->subscriptionPlan` (`SubscriptionPlan`) |
+| `subscription_plan.update_approved` | `SubscriptionPlanUpdateApproved` | `$event->subscriptionPlan` |
+| `subscription_plan.update_rejected` | `SubscriptionPlanUpdateRejected` | `$event->subscriptionPlan` |
+| `subscription_plan.archived` | `SubscriptionPlanArchived` | `$event->subscriptionPlan` |
+| `subscription_plan.unarchived` | `SubscriptionPlanUnarchived` | `$event->subscriptionPlan` |
+
+Each DTO also exposes the resource id (`$event->oneOffProductId` /
+`$event->subscriptionPlanId`) and `$event->testmode` at the top level, and
+carries a `VATLY_EVENT_NAME` constant for matching (all live under
+`Vatly\API\Webhooks\Events\`).
+
+```php
+$event = $factory->createFromWebhook($webhook);
+
+if ($event instanceof OneOffProductUpdateApproved) {
+    // The approved product, already hydrated — no extra GET needed.
+    echo $event->oneOffProduct->name;
+    echo $event->oneOffProduct->basePrice->value;
+}
+
+if ($event instanceof SubscriptionPlanArchived) {
+    echo $event->subscriptionPlan->archivedAt; // non-null
+}
+```
 
 ### The `webhook.setup` event
 

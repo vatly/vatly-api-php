@@ -6,15 +6,22 @@ namespace Vatly\API\Webhooks;
 
 use Vatly\API\Resources\BaseResource;
 use Vatly\API\Resources\Chargeback as ApiChargeback;
+use Vatly\API\Resources\OneOffProduct as ApiOneOffProduct;
 use Vatly\API\Resources\Order as ApiOrder;
 use Vatly\API\Resources\Refund as ApiRefund;
 use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription as ApiSubscription;
+use Vatly\API\Resources\SubscriptionPlan as ApiSubscriptionPlan;
 use Vatly\API\VatlyApiClient;
 use Vatly\API\Webhooks\Events\CheckoutCanceled;
 use Vatly\API\Webhooks\Events\CheckoutExpired;
 use Vatly\API\Webhooks\Events\CheckoutFailed;
 use Vatly\API\Webhooks\Events\CheckoutPaid;
+use Vatly\API\Webhooks\Events\OneOffProductArchived;
+use Vatly\API\Webhooks\Events\OneOffProductUnarchived;
+use Vatly\API\Webhooks\Events\OneOffProductUpdateApproved;
+use Vatly\API\Webhooks\Events\OneOffProductUpdateRejected;
+use Vatly\API\Webhooks\Events\OneOffProductUpdateSubmitted;
 use Vatly\API\Webhooks\Events\OrderCanceled;
 use Vatly\API\Webhooks\Events\OrderChargebackReceived;
 use Vatly\API\Webhooks\Events\OrderChargebackReversed;
@@ -27,6 +34,11 @@ use Vatly\API\Webhooks\Events\SubscriptionBillingUpdated;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledImmediately;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
+use Vatly\API\Webhooks\Events\SubscriptionPlanArchived;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUnarchived;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUpdateApproved;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUpdateRejected;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUpdateSubmitted;
 use Vatly\API\Webhooks\Events\SubscriptionResumed;
 use Vatly\API\Webhooks\Events\SubscriptionStarted;
 use Vatly\API\Webhooks\Events\SubscriptionUpdated;
@@ -71,7 +83,7 @@ class WebhookEventFactory
      * bearing ones by hydrating the api-php Resource from `$webhook->object`,
      * the rest straight from the envelope. No follow-up API call is made.
      *
-     * @return SubscriptionStarted|SubscriptionBillingUpdated|SubscriptionResumed|SubscriptionUpdated|SubscriptionUpdateScheduled|SubscriptionCanceledImmediately|SubscriptionCanceledWithGracePeriod|SubscriptionCancellationGracePeriodCompleted|OrderPaid|OrderCanceled|OrderChargebackReceived|OrderChargebackReversed|OrderPaymentFailed|CheckoutPaid|CheckoutFailed|CheckoutCanceled|CheckoutExpired|RefundCompleted|RefundFailed|RefundCanceled|WebhookSetupReceived|UnsupportedWebhookReceived
+     * @return SubscriptionStarted|SubscriptionBillingUpdated|SubscriptionResumed|SubscriptionUpdated|SubscriptionUpdateScheduled|SubscriptionCanceledImmediately|SubscriptionCanceledWithGracePeriod|SubscriptionCancellationGracePeriodCompleted|OrderPaid|OrderCanceled|OrderChargebackReceived|OrderChargebackReversed|OrderPaymentFailed|CheckoutPaid|CheckoutFailed|CheckoutCanceled|CheckoutExpired|RefundCompleted|RefundFailed|RefundCanceled|OneOffProductUpdateSubmitted|OneOffProductUpdateApproved|OneOffProductUpdateRejected|OneOffProductArchived|OneOffProductUnarchived|SubscriptionPlanUpdateSubmitted|SubscriptionPlanUpdateApproved|SubscriptionPlanUpdateRejected|SubscriptionPlanArchived|SubscriptionPlanUnarchived|WebhookSetupReceived|UnsupportedWebhookReceived
      */
     public function createFromWebhook(WebhookReceived $webhook): object
     {
@@ -96,6 +108,16 @@ class WebhookEventFactory
             RefundCompleted::VATLY_EVENT_NAME => RefundCompleted::fromApiRefund($this->hydrateRefund($webhook)),
             RefundFailed::VATLY_EVENT_NAME => RefundFailed::fromApiRefund($this->hydrateRefund($webhook)),
             RefundCanceled::VATLY_EVENT_NAME => RefundCanceled::fromApiRefund($this->hydrateRefund($webhook)),
+            OneOffProductUpdateSubmitted::VATLY_EVENT_NAME => OneOffProductUpdateSubmitted::fromApiOneOffProduct($this->hydrateOneOffProduct($webhook)),
+            OneOffProductUpdateApproved::VATLY_EVENT_NAME => OneOffProductUpdateApproved::fromApiOneOffProduct($this->hydrateOneOffProduct($webhook)),
+            OneOffProductUpdateRejected::VATLY_EVENT_NAME => OneOffProductUpdateRejected::fromApiOneOffProduct($this->hydrateOneOffProduct($webhook)),
+            OneOffProductArchived::VATLY_EVENT_NAME => OneOffProductArchived::fromApiOneOffProduct($this->hydrateOneOffProduct($webhook)),
+            OneOffProductUnarchived::VATLY_EVENT_NAME => OneOffProductUnarchived::fromApiOneOffProduct($this->hydrateOneOffProduct($webhook)),
+            SubscriptionPlanUpdateSubmitted::VATLY_EVENT_NAME => SubscriptionPlanUpdateSubmitted::fromApiSubscriptionPlan($this->hydrateSubscriptionPlan($webhook)),
+            SubscriptionPlanUpdateApproved::VATLY_EVENT_NAME => SubscriptionPlanUpdateApproved::fromApiSubscriptionPlan($this->hydrateSubscriptionPlan($webhook)),
+            SubscriptionPlanUpdateRejected::VATLY_EVENT_NAME => SubscriptionPlanUpdateRejected::fromApiSubscriptionPlan($this->hydrateSubscriptionPlan($webhook)),
+            SubscriptionPlanArchived::VATLY_EVENT_NAME => SubscriptionPlanArchived::fromApiSubscriptionPlan($this->hydrateSubscriptionPlan($webhook)),
+            SubscriptionPlanUnarchived::VATLY_EVENT_NAME => SubscriptionPlanUnarchived::fromApiSubscriptionPlan($this->hydrateSubscriptionPlan($webhook)),
             WebhookSetupReceived::VATLY_EVENT_NAME => WebhookSetupReceived::fromWebhook($webhook),
             default => UnsupportedWebhookReceived::fromWebhook($webhook),
         };
@@ -131,6 +153,22 @@ class WebhookEventFactory
         assert($chargeback instanceof ApiChargeback);
 
         return $chargeback;
+    }
+
+    private function hydrateOneOffProduct(WebhookReceived $webhook): ApiOneOffProduct
+    {
+        $oneOffProduct = $this->hydrate($webhook, new ApiOneOffProduct($this->apiClient));
+        assert($oneOffProduct instanceof ApiOneOffProduct);
+
+        return $oneOffProduct;
+    }
+
+    private function hydrateSubscriptionPlan(WebhookReceived $webhook): ApiSubscriptionPlan
+    {
+        $subscriptionPlan = $this->hydrate($webhook, new ApiSubscriptionPlan($this->apiClient));
+        assert($subscriptionPlan instanceof ApiSubscriptionPlan);
+
+        return $subscriptionPlan;
     }
 
     /**
@@ -203,6 +241,16 @@ class WebhookEventFactory
             RefundCompleted::VATLY_EVENT_NAME,
             RefundFailed::VATLY_EVENT_NAME,
             RefundCanceled::VATLY_EVENT_NAME,
+            OneOffProductUpdateSubmitted::VATLY_EVENT_NAME,
+            OneOffProductUpdateApproved::VATLY_EVENT_NAME,
+            OneOffProductUpdateRejected::VATLY_EVENT_NAME,
+            OneOffProductArchived::VATLY_EVENT_NAME,
+            OneOffProductUnarchived::VATLY_EVENT_NAME,
+            SubscriptionPlanUpdateSubmitted::VATLY_EVENT_NAME,
+            SubscriptionPlanUpdateApproved::VATLY_EVENT_NAME,
+            SubscriptionPlanUpdateRejected::VATLY_EVENT_NAME,
+            SubscriptionPlanArchived::VATLY_EVENT_NAME,
+            SubscriptionPlanUnarchived::VATLY_EVENT_NAME,
             WebhookSetupReceived::VATLY_EVENT_NAME,
         ];
     }

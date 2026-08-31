@@ -5,10 +5,17 @@ declare(strict_types=1);
 namespace Vatly\Tests\Webhooks;
 
 use DateTimeInterface;
+use Vatly\API\Resources\OneOffProduct as ApiOneOffProduct;
+use Vatly\API\Resources\SubscriptionPlan as ApiSubscriptionPlan;
 use Vatly\API\Webhooks\Events\CheckoutCanceled;
 use Vatly\API\Webhooks\Events\CheckoutExpired;
 use Vatly\API\Webhooks\Events\CheckoutFailed;
 use Vatly\API\Webhooks\Events\CheckoutPaid;
+use Vatly\API\Webhooks\Events\OneOffProductArchived;
+use Vatly\API\Webhooks\Events\OneOffProductUnarchived;
+use Vatly\API\Webhooks\Events\OneOffProductUpdateApproved;
+use Vatly\API\Webhooks\Events\OneOffProductUpdateRejected;
+use Vatly\API\Webhooks\Events\OneOffProductUpdateSubmitted;
 use Vatly\API\Webhooks\Events\OrderCanceled;
 use Vatly\API\Webhooks\Events\OrderChargebackReceived;
 use Vatly\API\Webhooks\Events\OrderChargebackReversed;
@@ -21,6 +28,11 @@ use Vatly\API\Webhooks\Events\SubscriptionBillingUpdated;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledImmediately;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
+use Vatly\API\Webhooks\Events\SubscriptionPlanArchived;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUnarchived;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUpdateApproved;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUpdateRejected;
+use Vatly\API\Webhooks\Events\SubscriptionPlanUpdateSubmitted;
 use Vatly\API\Webhooks\Events\SubscriptionResumed;
 use Vatly\API\Webhooks\Events\SubscriptionStarted;
 use Vatly\API\Webhooks\Events\SubscriptionUpdated;
@@ -728,6 +740,180 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame(['url' => 'https://example.test/webhooks/vatly'], $event->object);
     }
 
+    public function test_it_creates_one_off_product_update_submitted_event_from_fat_payload(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'one_off_product.update_submitted',
+            entityType: 'one_off_product',
+            entityId: 'one_off_product_123',
+            object: [
+                'id' => 'one_off_product_123',
+                'resource' => 'one_off_product',
+                'testmode' => false,
+                'name' => 'Premium License',
+                'description' => 'Lifetime access',
+                'basePrice' => ['value' => '299.00', 'currency' => 'EUR'],
+                'taxBehavior' => 'exclusive',
+                'productType' => 'saas',
+                'status' => 'active',
+                'archivedAt' => null,
+                'pendingUpdates' => ['basePrice' => ['value' => '349.00', 'currency' => 'EUR']],
+                'updateStatus' => 'pending',
+                'createdAt' => '2024-01-15T10:30:00Z',
+                'links' => ['self' => ['href' => 'https://api.vatly.com/v1/one-off-products/one_off_product_123', 'type' => 'application/json']],
+            ],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(OneOffProductUpdateSubmitted::class, $event);
+        $this->assertSame('one_off_product_123', $event->oneOffProductId);
+        $this->assertFalse($event->testmode);
+        $this->assertInstanceOf(ApiOneOffProduct::class, $event->oneOffProduct);
+        $this->assertSame('Premium License', $event->oneOffProduct->name);
+        $this->assertSame('exclusive', $event->oneOffProduct->taxBehavior);
+        $this->assertSame('299.00', $event->oneOffProduct->basePrice->value);
+        $this->assertSame('pending', $event->oneOffProduct->updateStatus);
+        $this->assertSame('349.00', $event->oneOffProduct->pendingUpdates->basePrice->value);
+        // Spy records nothing: hydration is in-memory, no follow-up API GET.
+        $this->assertSame(0, $this->httpClient->countRecordedSends());
+    }
+
+    public function test_it_creates_one_off_product_archived_event_from_fat_payload(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'one_off_product.archived',
+            entityType: 'one_off_product',
+            entityId: 'one_off_product_123',
+            object: [
+                'id' => 'one_off_product_123',
+                'resource' => 'one_off_product',
+                'testmode' => true,
+                'name' => 'Premium License',
+                'description' => 'Lifetime access',
+                'basePrice' => ['value' => '299.00', 'currency' => 'EUR'],
+                'taxBehavior' => 'exclusive',
+                'productType' => 'saas',
+                'status' => 'active',
+                'archivedAt' => '2024-02-01T00:00:00Z',
+                'createdAt' => '2024-01-15T10:30:00Z',
+                'links' => ['self' => ['href' => 'https://api.vatly.com/v1/one-off-products/one_off_product_123', 'type' => 'application/json']],
+            ],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(OneOffProductArchived::class, $event);
+        $this->assertTrue($event->testmode);
+        $this->assertTrue($event->oneOffProduct->isArchived());
+        $this->assertSame('2024-02-01T00:00:00Z', $event->oneOffProduct->archivedAt);
+    }
+
+    public function test_it_creates_subscription_plan_update_approved_event_from_fat_payload(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'subscription_plan.update_approved',
+            entityType: 'subscription_plan',
+            entityId: 'subscription_plan_123',
+            object: [
+                'id' => 'subscription_plan_123',
+                'resource' => 'subscription_plan',
+                'testmode' => false,
+                'name' => 'Pro Weekly',
+                'description' => 'Billed weekly',
+                'basePrice' => ['value' => '9.00', 'currency' => 'EUR'],
+                'taxBehavior' => 'inclusive',
+                'interval' => 'week',
+                'intervalCount' => 1,
+                'productType' => 'saas',
+                'status' => 'active',
+                'archivedAt' => null,
+                'pendingUpdates' => null,
+                'updateStatus' => null,
+                'createdAt' => '2024-01-15T10:30:00Z',
+                'links' => ['self' => ['href' => 'https://api.vatly.com/v1/subscription-plans/subscription_plan_123', 'type' => 'application/json']],
+            ],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(SubscriptionPlanUpdateApproved::class, $event);
+        $this->assertSame('subscription_plan_123', $event->subscriptionPlanId);
+        $this->assertFalse($event->testmode);
+        $this->assertInstanceOf(ApiSubscriptionPlan::class, $event->subscriptionPlan);
+        $this->assertSame('Pro Weekly', $event->subscriptionPlan->name);
+        $this->assertSame('week', $event->subscriptionPlan->interval);
+        $this->assertSame('inclusive', $event->subscriptionPlan->taxBehavior);
+        $this->assertSame('9.00', $event->subscriptionPlan->basePrice->value);
+        $this->assertNull($event->subscriptionPlan->updateStatus);
+        $this->assertSame(0, $this->httpClient->countRecordedSends());
+    }
+
+    /**
+     * @dataProvider catalogueEventTypeProvider
+     */
+    public function test_catalogue_events_resolve_to_their_typed_dto(string $eventName, string $expectedClass, string $entityType, string $entityId): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: $eventName,
+            entityType: $entityType,
+            entityId: $entityId,
+            object: [
+                'id' => $entityId,
+                'resource' => $entityType,
+                'testmode' => true,
+                'name' => 'Name',
+                'description' => 'Description',
+                'basePrice' => ['value' => '10.00', 'currency' => 'EUR'],
+                'taxBehavior' => 'exclusive',
+                'interval' => 'month',
+                'intervalCount' => 1,
+                'productType' => 'saas',
+                'status' => 'active',
+                'archivedAt' => null,
+                'createdAt' => '2024-01-15T10:30:00Z',
+                'links' => ['self' => ['href' => 'https://api.vatly.com/v1/x/'.$entityId, 'type' => 'application/json']],
+            ],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf($expectedClass, $event);
+    }
+
+    /**
+     * @return array<string, array{string, class-string, string, string}>
+     */
+    public static function catalogueEventTypeProvider(): array
+    {
+        return [
+            'one_off_product.update_submitted' => ['one_off_product.update_submitted', OneOffProductUpdateSubmitted::class, 'one_off_product', 'one_off_product_1'],
+            'one_off_product.update_approved' => ['one_off_product.update_approved', OneOffProductUpdateApproved::class, 'one_off_product', 'one_off_product_1'],
+            'one_off_product.update_rejected' => ['one_off_product.update_rejected', OneOffProductUpdateRejected::class, 'one_off_product', 'one_off_product_1'],
+            'one_off_product.archived' => ['one_off_product.archived', OneOffProductArchived::class, 'one_off_product', 'one_off_product_1'],
+            'one_off_product.unarchived' => ['one_off_product.unarchived', OneOffProductUnarchived::class, 'one_off_product', 'one_off_product_1'],
+            'subscription_plan.update_submitted' => ['subscription_plan.update_submitted', SubscriptionPlanUpdateSubmitted::class, 'subscription_plan', 'subscription_plan_1'],
+            'subscription_plan.update_approved' => ['subscription_plan.update_approved', SubscriptionPlanUpdateApproved::class, 'subscription_plan', 'subscription_plan_1'],
+            'subscription_plan.update_rejected' => ['subscription_plan.update_rejected', SubscriptionPlanUpdateRejected::class, 'subscription_plan', 'subscription_plan_1'],
+            'subscription_plan.archived' => ['subscription_plan.archived', SubscriptionPlanArchived::class, 'subscription_plan', 'subscription_plan_1'],
+            'subscription_plan.unarchived' => ['subscription_plan.unarchived', SubscriptionPlanUnarchived::class, 'subscription_plan', 'subscription_plan_1'],
+        ];
+    }
+
+    public function test_catalogue_event_name_constants_match_the_spec_strings(): void
+    {
+        $this->assertSame('one_off_product.update_submitted', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_SUBMITTED);
+        $this->assertSame('one_off_product.update_approved', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_APPROVED);
+        $this->assertSame('one_off_product.update_rejected', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UPDATE_REJECTED);
+        $this->assertSame('one_off_product.archived', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_ARCHIVED);
+        $this->assertSame('one_off_product.unarchived', \Vatly\API\Types\WebhookEventName::ONE_OFF_PRODUCT_UNARCHIVED);
+        $this->assertSame('subscription_plan.update_submitted', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_SUBMITTED);
+        $this->assertSame('subscription_plan.update_approved', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_APPROVED);
+        $this->assertSame('subscription_plan.update_rejected', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UPDATE_REJECTED);
+        $this->assertSame('subscription_plan.archived', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_ARCHIVED);
+        $this->assertSame('subscription_plan.unarchived', \Vatly\API\Types\WebhookEventName::SUBSCRIPTION_PLAN_UNARCHIVED);
+    }
+
     public function test_it_returns_list_of_supported_events(): void
     {
         $supported = $this->factory->getSupportedEvents();
@@ -752,6 +938,16 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertContains('refund.completed', $supported);
         $this->assertContains('refund.failed', $supported);
         $this->assertContains('refund.canceled', $supported);
+        $this->assertContains('one_off_product.update_submitted', $supported);
+        $this->assertContains('one_off_product.update_approved', $supported);
+        $this->assertContains('one_off_product.update_rejected', $supported);
+        $this->assertContains('one_off_product.archived', $supported);
+        $this->assertContains('one_off_product.unarchived', $supported);
+        $this->assertContains('subscription_plan.update_submitted', $supported);
+        $this->assertContains('subscription_plan.update_approved', $supported);
+        $this->assertContains('subscription_plan.update_rejected', $supported);
+        $this->assertContains('subscription_plan.archived', $supported);
+        $this->assertContains('subscription_plan.unarchived', $supported);
         $this->assertContains('webhook.setup', $supported);
     }
 
@@ -775,6 +971,16 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertTrue($this->factory->isSupported('refund.completed'));
         $this->assertTrue($this->factory->isSupported('refund.failed'));
         $this->assertTrue($this->factory->isSupported('refund.canceled'));
+        $this->assertTrue($this->factory->isSupported('one_off_product.update_submitted'));
+        $this->assertTrue($this->factory->isSupported('one_off_product.update_approved'));
+        $this->assertTrue($this->factory->isSupported('one_off_product.update_rejected'));
+        $this->assertTrue($this->factory->isSupported('one_off_product.archived'));
+        $this->assertTrue($this->factory->isSupported('one_off_product.unarchived'));
+        $this->assertTrue($this->factory->isSupported('subscription_plan.update_submitted'));
+        $this->assertTrue($this->factory->isSupported('subscription_plan.update_approved'));
+        $this->assertTrue($this->factory->isSupported('subscription_plan.update_rejected'));
+        $this->assertTrue($this->factory->isSupported('subscription_plan.archived'));
+        $this->assertTrue($this->factory->isSupported('subscription_plan.unarchived'));
         $this->assertTrue($this->factory->isSupported('webhook.setup'));
         $this->assertFalse($this->factory->isSupported('unknown.event'));
     }

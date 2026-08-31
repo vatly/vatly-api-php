@@ -6,6 +6,7 @@ use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\BaseResource;
 use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
+use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\SubscriptionPlan;
 use Vatly\API\Resources\SubscriptionPlanCollection;
 
@@ -43,6 +44,68 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
     public function get(string $id, array $parameters = []): BaseResource
     {
         return $this->rest_read($id, $parameters);
+    }
+
+    /**
+     * Submit an update to a live subscription plan (PATCH). Each request is the
+     * complete set of changes relative to the current live plan. In live mode the
+     * change is held as a pending update and reviewed by Vatly before it takes
+     * effect (`updateStatus` moves `pending` → `reviewing` → applied); in test mode
+     * it is approved automatically. The interval cannot be changed once the plan
+     * has ever been used by a subscription; the price stays changeable.
+     *
+     * @return SubscriptionPlan|BaseResource|null
+     * @throws ApiException
+     */
+    public function update(string $id, array $data = [], array $filters = []): ?BaseResource
+    {
+        return $this->rest_update($id, $data, $filters);
+    }
+
+    /**
+     * Archive a subscription plan, closing it to new business
+     * (`POST /v1/subscription-plans/{id}/archive`). Subscribers already on the
+     * plan keep billing unchanged. The API returns `204 No Content`, so there is
+     * nothing to hydrate.
+     *
+     * @throws ApiException
+     */
+    public function archive(string $id, array $filters = []): void
+    {
+        if (empty($id)) {
+            throw new ApiException("Invalid resource id.");
+        }
+
+        $this->client->performHttpCall(
+            self::REST_CREATE,
+            "{$this->getResourcePath()}/" . urlencode($id) . "/archive" . $this->buildQueryString($filters),
+        );
+    }
+
+    /**
+     * Re-open an archived plan to new business
+     * (`DELETE /v1/subscription-plans/{id}/archive`). Returns the plan, now open
+     * to new business again.
+     *
+     * @return SubscriptionPlan|BaseResource|null
+     * @throws ApiException
+     */
+    public function unarchive(string $id, array $filters = []): ?BaseResource
+    {
+        if (empty($id)) {
+            throw new ApiException("Invalid resource id.");
+        }
+
+        $result = $this->client->performHttpCall(
+            self::REST_DELETE,
+            "{$this->getResourcePath()}/" . urlencode($id) . "/archive" . $this->buildQueryString($filters),
+        );
+
+        if ($result === null) {
+            return null;
+        }
+
+        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
     }
 
     /**

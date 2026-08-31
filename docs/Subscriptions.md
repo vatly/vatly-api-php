@@ -31,6 +31,7 @@ Below you'll find all properties for the Vatly Subscription resource.
 | `nextRenewalAt` | `string \| null`    | When the next renewal will be attempted (ISO 8601). Null if canceled or ended. |
 | `trialUntil` | `string \| null`    | When the trial period ends (ISO 8601). Null if not in trial or trial has ended. |
 | `mandate` | `Mandate \| null`   | Payment method on file (`method`, `maskedIdentifier`). Null when the subscription has no mandate yet. |
+| `scheduledUpdate` | `object \| null`    | The target values for a change scheduled to take effect at the next billing cycle — set by an update with `applyImmediately: false` — or `null` when nothing is pending. Carries `subscriptionPlanId`, `name`, `description`, `basePrice`, `quantity`, `interval`, `intervalCount`, and `effectiveAt`. Always present on both the REST resource and webhook deliveries, so this is the authoritative way to reconcile a pending change. |
 | `links` | `SubscriptionLinks` | HATEOAS links to related resources (`self`, `customer`). |
 
 ---
@@ -115,7 +116,7 @@ Change a subscription's plan, quantity and/or price. **At least one of
 | `price` | `array` | Override the recurring price: `['value' => '99.99', 'currency' => 'EUR']`. The `currency` must match the subscription's currency. Provide `price` alone to change the price in place, or combine it with `subscriptionPlanId` to switch plans at a custom price (overriding the new plan's default). |
 | `prorate` | `bool` | Prorate charges for the partial billing period (default `true`). |
 | `applyImmediately` | `bool` | Apply the change now (`true`) or at the end of the current period (`false`, default). |
-| `invoiceImmediately` | `bool` | Generate and charge a proration invoice immediately. Only applies when `applyImmediately` and `prorate` are both `true`. |
+| `invoiceImmediately` | `bool` | Generate and charge a proration invoice immediately. Only applies when `applyImmediately` and `prorate` are both `true`. Defaults to `false`, which parks the proration delta on the current cycle and bills it as a line on the next renewal invoice (and waives it if the subscription is cancelled first). **Set this to `true` on yearly and other long-interval plans**, where the deferral to the next renewal costs you the most. |
 | `anchor` | `string \| null` | Set the billing anchor to a specific date (`YYYY-MM-DD`, UTC). Cannot be combined with `resetAnchor`. |
 | `resetAnchor` | `bool` | Reset the billing anchor to now. Cannot be combined with `anchor`. |
 | `trialUntil` | `string \| null` | Extend or set a trial until this date (ISO 8601). Cannot be combined with `anchor`. |
