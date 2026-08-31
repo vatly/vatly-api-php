@@ -6620,6 +6620,8 @@ components:
               - `refund.*` → Refund
               - `subscription.*` → Subscription
               - `checkout.*` → Checkout
+              - `one_off_product.*` → OneOffProduct
+              - `subscription_plan.*` → SubscriptionPlan
 
             Note `object.resource` may differ from `entityType`: chargeback events carry
             `entityType: order` (the order the chargeback belongs to) but a Chargeback object.
@@ -6629,6 +6631,8 @@ components:
             - $ref: '#/components/schemas/Refund'
             - $ref: '#/components/schemas/Subscription'
             - $ref: '#/components/schemas/Checkout'
+            - $ref: '#/components/schemas/OneOffProduct'
+            - $ref: '#/components/schemas/SubscriptionPlan'
           discriminator:
             propertyName: resource
             mapping:
@@ -6637,6 +6641,8 @@ components:
               refund: '#/components/schemas/Refund'
               subscription: '#/components/schemas/Subscription'
               checkout: '#/components/schemas/Checkout'
+              one_off_product: '#/components/schemas/OneOffProduct'
+              subscription_plan: '#/components/schemas/SubscriptionPlan'
         createdAt:
           type: string
           format: date-time
@@ -7566,6 +7572,8 @@ components:
               - `subscription.*` → Subscription
               - `checkout.*` → Checkout
               - `webhook.setup` → Webhook (the endpoint config; verification handshake)
+              - `one_off_product.*` → OneOffProduct
+              - `subscription_plan.*` → SubscriptionPlan
 
             Note `object.resource` may differ from `entityType`: chargeback events carry
             `entityType: order` (the order the chargeback belongs to) but a Chargeback object.
@@ -7575,6 +7583,8 @@ components:
             - $ref: '#/components/schemas/Refund'
             - $ref: '#/components/schemas/Subscription'
             - $ref: '#/components/schemas/Checkout'
+            - $ref: '#/components/schemas/OneOffProduct'
+            - $ref: '#/components/schemas/SubscriptionPlan'
             - $ref: '#/components/schemas/Webhook'
           discriminator:
             propertyName: resource
@@ -7584,6 +7594,8 @@ components:
               refund: '#/components/schemas/Refund'
               subscription: '#/components/schemas/Subscription'
               checkout: '#/components/schemas/Checkout'
+              one_off_product: '#/components/schemas/OneOffProduct'
+              subscription_plan: '#/components/schemas/SubscriptionPlan'
               webhook: '#/components/schemas/Webhook'
         createdAt:
           type: string
