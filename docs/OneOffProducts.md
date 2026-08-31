@@ -119,7 +119,7 @@ echo $product->pendingUpdates->basePrice->value; // '349.00'
 
 
 
-Take a product out of your sellable catalogue. It is hidden from list calls
+Archive the product so it can no longer be sold. It is hidden from list calls
 (unless `includeArchived=true`) and refused by new checkouts; existing orders and
 refunds are untouched. Nothing is deleted — the product remains readable by id,
 now carrying a non-null `archivedAt`. The call returns no content.
