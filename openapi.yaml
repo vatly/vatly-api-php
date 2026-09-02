@@ -122,15 +122,82 @@ info:
       (UUIDv4 is recommended) and retry transparently with the same key
       on network errors.
     - **Keys are bound to the exact parameters of the first request.**
-      Replaying with a different body or different query parameters
-      returns `409 Conflict`. Either retry with the original parameters
-      or generate a new key.
+      The method, public endpoint, concrete path, query, body, normalized
+      `Content-Type` media type, and normalized ordered `Content-Encoding` are
+      contract-significant. Replaying with a different value returns
+      `409 Conflict` without executing again. Either retry with the original
+      parameters or generate a new key.
     - **Keys expire after 24 hours.** After that the key is reusable as
       a fresh idempotency boundary.
-    - **Scope is per endpoint.** The same key value on a different
-      endpoint is treated as a new key.
+    - **Scope is per public route URI template.** The same key value on a
+      different endpoint is treated as a new key. Internal route-name or
+      controller refactors do not change replay identity.
+    - **The first HTTP response is final for that key.** This includes a
+      rendered `4xx` or `5xx` response after request processing started.
+      Retry the exact request with the same key to retrieve that response;
+      use a fresh key for corrected parameters only after reconciling whether
+      the original mutation took effect.
+    - **Exact replays still consume rate-limit budget.** API and per-merchant
+      write throttles run before the idempotency lookup. An otherwise valid
+      replay can therefore return `429 Too Many Requests` instead of the stored
+      response. Wait for its `Retry-After` interval, then resend the exact same
+      request and key.
+    - **A `409` with `details.idempotency_outcome = in_progress` is
+      retryable.** Wait the number of seconds in `Retry-After`, then resend the
+      exact same request and key.
+    - **A `409` with `details.idempotency_outcome = unknown` is not
+      retryable.** The mutation may have completed but its response is not
+      replayable. Read and reconcile the affected resource before taking any
+      further mutating action; never automatically retry with either the same
+      or a fresh key.
 
     Sending an `Idempotency-Key` on a `GET` or `HEAD` request is ignored.
+
+    ## Handling failed subscription payments
+
+    When a subscription renewal payment fails, Vatly runs an automated
+    **payment recovery** process (dunning) on your behalf. You never have to
+    schedule your own retries — but you do decide when to restrict access.
+
+    **What happens, and what you receive:**
+
+    1. The renewal payment fails and recovery begins. You receive a single
+       **`order.payment_failed`** webhook for the renewal order (sent once, when
+       recovery starts — not on each retry). The subscription's `status` stays
+       `active` throughout recovery: it does **not** move to a "past due" state,
+       and `on_grace_period` is never used for payment failure — that status
+       means a *voluntary* cancellation that keeps access until the period ends.
+    2. Vatly attempts to recover the payment, and how it does so depends on why
+       the charge failed:
+       - **Soft decline** (e.g. insufficient funds, a temporary decline): the
+         payment method is still valid, so Vatly automatically re-attempts the
+         charge over a multi-week window, emailing the customer along the way.
+       - **Hard decline** (e.g. an expired, canceled or invalid payment method):
+         retrying cannot succeed, so Vatly instead prompts the customer to
+         supply a new payment method, on a shorter window.
+    3. **If recovery succeeds**, the original renewal order is paid and you
+       receive **`order.paid`** for that same order. Because the subscription was
+       never interrupted, access simply continues — nothing else is needed.
+    4. **If recovery is exhausted** (the customer never resolves it), Vatly
+       cancels the subscription: you receive **`subscription.canceled_for_nonpayment`**
+       and the subscription `status` becomes `canceled` with
+       `cancellationReason: payment_failure`.
+
+    **Recommended integration** — gate access on the events, not on a timer you
+    keep in sync with ours:
+
+    - On `order.payment_failed`: keep access on, and start your own grace period
+      if your product has one.
+    - On `order.paid` for the same order: recovery succeeded — clear that grace
+      period.
+    - If your grace period elapses with no matching `order.paid`: restrict access
+      on your side if you wish. Vatly's recovery keeps running underneath, so a
+      later `order.paid` lets you restore access automatically.
+    - On the subscription's cancellation: remove access permanently.
+
+    The number of retry attempts and the exact retry cadence are operational
+    details that Vatly tunes over time. Integrate against these webhook events
+    rather than against specific durations or attempt counts.
 
     ## Errors
 
@@ -142,7 +209,7 @@ info:
     | 401 | Unauthorized - Missing or invalid token |
     | 403 | Forbidden - Token invalid or insufficient permissions |
     | 404 | Not Found - Resource doesn't exist |
-    | 409 | Conflict - Idempotency-Key reused with different request parameters |
+    | 409 | Conflict - idempotency mismatch, request still in progress, outcome unknown, or concurrent write |
     | 422 | Unprocessable Entity - Validation failed |
     | 429 | Too Many Requests - Rate limit exceeded |
     | 500 | Internal Server Error |
@@ -702,6 +769,7 @@ paths:
         - Customers
       parameters:
         - $ref: '#/components/parameters/customerId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -714,6 +782,9 @@ paths:
       responses:
         '200':
           description: Customer updated successfully
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
           content:
             application/json:
               schema:
@@ -731,6 +802,70 @@ paths:
                   self:
                     href: https://api.vatly.com/v1/customers/customer_7kBmRtPvXw2NjLhYcZaE
                     type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /customers/{customerId}/portal-sessions:
+    post:
+      operationId: createCustomerPortalSession
+      summary: Create a hosted customer portal session
+      description: |
+        Creates a short-lived, single-use link that sends an authenticated
+        customer directly to this API token's storefront in Vatly's hosted
+        portal. The session is locked to the customer, storefront, merchant, and
+        live/test mode represented by the token; it never exposes a storefront
+        picker or other stores associated with the same email address.
+
+        Redirect the customer's browser to `url`. The link expires after roughly
+        15 minutes by default and can be consumed once. If an idempotency key
+        replays a response after its URL has already been used, request a
+        replacement with a fresh key.
+      tags:
+        - Customers
+      parameters:
+        - $ref: '#/components/parameters/customerId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePortalSessionRequest'
+            example:
+              returnUrl: https://merchant.example/account/billing
+      responses:
+        '201':
+          description: Hosted customer portal session created
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+            Cache-Control:
+              description: Prevents storage of the credential-bearing response.
+              schema:
+                type: string
+                example: no-store, private
+            Pragma:
+              description: Legacy proxy fallback preventing storage of the credential-bearing response.
+              schema:
+                type: string
+                example: no-cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalSession'
+              example:
+                url: https://billing.vatly.com/authenticate?credential=...
+                expiresAt: '2026-09-01T12:15:00Z'
+                returnUrl: https://merchant.example/account/billing
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -804,6 +939,7 @@ paths:
                     interval: month
                     intervalCount: 1
                     status: active
+                    cancellationReason: null
                     mandate:
                       method: card
                       maskedIdentifier: '4242'
@@ -881,6 +1017,7 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                cancellationReason: null
                 mandate:
                   method: card
                   maskedIdentifier: '4242'
@@ -1109,6 +1246,7 @@ paths:
         - One-Off Products
       parameters:
         - $ref: '#/components/parameters/oneOffProductId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -1123,6 +1261,9 @@ paths:
       responses:
         '200':
           description: Update submitted; the product now carries a pending update.
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
           content:
             application/json:
               schema:
@@ -1190,6 +1331,9 @@ paths:
       responses:
         '204':
           description: Product archived (or already archived).
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1489,6 +1633,7 @@ paths:
         - Subscription Plans
       parameters:
         - $ref: '#/components/parameters/subscriptionPlanId'
+        - $ref: '#/components/parameters/idempotencyKey'
       requestBody:
         required: true
         content:
@@ -1505,6 +1650,9 @@ paths:
       responses:
         '200':
           description: Update submitted; the plan now carries a pending update.
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
           content:
             application/json:
               schema:
@@ -1581,6 +1729,9 @@ paths:
       responses:
         '204':
           description: Plan archived (or already archived).
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -3322,6 +3473,7 @@ paths:
                     interval: month
                     intervalCount: 1
                     status: active
+                    cancellationReason: null
                     mandate:
                       method: card
                       maskedIdentifier: '4242'
@@ -3362,6 +3514,7 @@ paths:
                     interval: year
                     intervalCount: 1
                     status: active
+                    cancellationReason: null
                     mandate:
                       method: card
                       maskedIdentifier: '4242'
@@ -3433,6 +3586,7 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                cancellationReason: null
                 mandate:
                   method: card
                   maskedIdentifier: '4242'
@@ -3585,6 +3739,7 @@ paths:
                 interval: year
                 intervalCount: 1
                 status: active
+                cancellationReason: null
                 mandate:
                   method: card
                   maskedIdentifier: '4242'
@@ -3844,6 +3999,7 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                cancellationReason: null
                 mandate:
                   method: card
                   maskedIdentifier: '4242'
@@ -3963,6 +4119,7 @@ paths:
                 interval: month
                 intervalCount: 1
                 status: active
+                cancellationReason: null
                 mandate:
                   method: card
                   maskedIdentifier: '4242'
@@ -4063,7 +4220,12 @@ webhooks:
       operationId: onOrderPaymentFailed
       summary: Order payment failed
       description: |
-        A payment failed and a dunning process was initiated for the order.
+        A payment for this order failed and Vatly's automated payment recovery
+        (dunning) has started. Delivered once, when recovery begins — not on each
+        retry attempt. If recovery succeeds you receive `order.paid` for the same
+        order; if it is exhausted the related subscription is canceled. See
+        "Handling failed subscription payments" in the API overview for the full
+        recovery flow and the recommended way to gate access.
         `entityType` is `order` and `object` is the Order.
       tags:
         - Webhook Events
@@ -4139,7 +4301,28 @@ webhooks:
     post:
       operationId: onSubscriptionCanceledImmediately
       summary: Subscription canceled immediately
-      description: A subscription was canceled with immediate effect. `object` is the Subscription.
+      description: |
+        A subscription was canceled with immediate effect at the merchant's
+        request. `object` is the Subscription and carries
+        `cancellationReason: merchant_request`.
+      tags:
+        - Webhook Events
+      parameters:
+        - $ref: '#/components/parameters/VatlySignature'
+        - $ref: '#/components/parameters/VatlyEventId'
+      requestBody:
+        $ref: '#/components/requestBodies/WebhookDelivery'
+      responses:
+        2XX:
+          $ref: '#/components/responses/Acknowledged'
+  subscription.canceled_for_nonpayment:
+    post:
+      operationId: onSubscriptionCanceledForNonpayment
+      summary: Subscription canceled for nonpayment
+      description: |
+        Payment recovery for a failed subscription renewal was exhausted, so the
+        subscription was canceled with immediate effect. `object` is the
+        Subscription and carries `cancellationReason: payment_failure`.
       tags:
         - Webhook Events
       parameters:
@@ -4586,9 +4769,13 @@ components:
         requests with the same key, setting `Idempotent-Replayed: true` on
         the replayed response.
 
-        Replaying with a different request body or different query
-        parameters returns `409 Conflict`. Keys are scoped per endpoint and
-        retained for 24 hours.
+        Keys bind to the HTTP method, public endpoint, concrete path, query,
+        request body, normalized `Content-Type` media type, and normalized
+        ordered `Content-Encoding`. Media type and content encoding are
+        contract-significant: changing either on a replay returns `409 Conflict`
+        without executing the operation again. Keys are scoped per public route
+        URI template and retained for 24 hours; internal route-name changes do
+        not affect replay identity.
 
         Recommended format: UUIDv4. Send on every mutating request
         (POST, PATCH, PUT, DELETE) where retry safety matters.
@@ -4813,13 +5000,27 @@ components:
         - **Idempotency replay mismatch** (`Idempotency-Key` reused with
           different request parameters). Retry with the original parameters
           or generate a new key.
+        - **Idempotency request in progress**
+          (`details.idempotency_outcome = in_progress`). Wait the
+          `Retry-After` interval, then retry the exact request with the same key.
+        - **Idempotency outcome unknown**
+          (`details.idempotency_outcome = unknown`). This is not retryable: read
+          and reconcile resource/provider state before another mutation.
         - **Optimistic concurrency conflict** (two writers modifying the
           same resource at the same version). Reload the latest state
           and retry — the conflict resolves itself unless contention is
           sustained.
 
-        The HTTP status (`409`) is the same for both; the `message`
+        The HTTP status (`409`) is shared by all cases; the `message`
         distinguishes them.
+      headers:
+        Retry-After:
+          description: Present only for `in_progress`; seconds before retrying the exact request and key.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          example: 2
       content:
         application/json:
           schema:
@@ -4831,6 +5032,22 @@ components:
                 message: Idempotency-Key has already been used with different request parameters.
                 details:
                   idempotency_key: 9f6a3b1c-7e2d-4f7b-9c5a-2c1d5b7e9f3a
+            idempotency_in_progress:
+              summary: Another caller is still processing this exact request
+              value:
+                message: A request with this Idempotency-Key is still being processed. Retry the same request shortly.
+                details:
+                  idempotency_outcome: in_progress
+                  retryable: true
+                  retry_after_seconds: 2
+            idempotency_outcome_unknown:
+              summary: The request may have completed but cannot be replayed safely
+              value:
+                message: The prior request may have completed, but its response could not be recorded. Reconcile the resource state before attempting another mutation.
+                details:
+                  idempotency_outcome: unknown
+                  retryable: false
+                  recovery_action: reconcile_resource_state
             concurrency_conflict:
               summary: Concurrent write on the same resource
               value:
@@ -6554,6 +6771,7 @@ components:
             - `refund.canceled` - Refund was canceled
             - `subscription.started` - Subscription was started
             - `subscription.canceled_immediately` - Subscription was canceled immediately
+            - `subscription.canceled_for_nonpayment` - Subscription was canceled because payment recovery was exhausted
             - `subscription.canceled_with_grace_period` - Subscription was canceled with a grace period
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
@@ -6581,6 +6799,7 @@ components:
             - refund.canceled
             - subscription.started
             - subscription.canceled_immediately
+            - subscription.canceled_for_nonpayment
             - subscription.canceled_with_grace_period
             - subscription.cancellation_grace_period_completed
             - subscription.resumed
@@ -6787,6 +7006,7 @@ components:
         - interval
         - intervalCount
         - status
+        - cancellationReason
         - mandate
         - startedAt
         - endedAt
@@ -6871,6 +7091,23 @@ components:
             - paused
             - canceled
           example: active
+        cancellationReason:
+          type:
+            - string
+            - 'null'
+          description: |
+            Why the subscription was canceled. Null unless a cancellation has been
+            requested. Public values are intentionally decoupled from internal domain
+            reason names:
+            - `payment_failure` - Payment recovery was exhausted after failed renewals
+            - `merchant_request` - The merchant explicitly canceled the subscription
+            - `customer_request` - The customer canceled from the self-service portal
+          enum:
+            - payment_failure
+            - merchant_request
+            - customer_request
+            - null
+          example: null
         mandate:
           oneOf:
             - $ref: '#/components/schemas/Mandate'
@@ -7237,6 +7474,54 @@ components:
             returns `422`. Creating with a known address is a recovery; moving one
             customer onto another's address is a conflict.
           example: new.email@example.com
+    CreatePortalSessionRequest:
+      type: object
+      description: Options for a short-lived hosted customer portal session.
+      additionalProperties: false
+      properties:
+        returnUrl:
+          type:
+            - string
+            - 'null'
+          format: uri
+          pattern: ^[Hh][Tt][Tt][Pp][Ss]://
+          maxLength: 2048
+          description: |
+            Absolute HTTPS URL without embedded credentials, rendered as a return
+            link in the hosted portal. The runtime limit is 2,048 UTF-8 bytes.
+            Vatly never fetches or automatically redirects to this URL.
+          example: https://merchant.example/account/billing
+    PortalSession:
+      type: object
+      description: A short-lived, single-use entry link to the hosted customer portal.
+      required:
+        - url
+        - expiresAt
+        - returnUrl
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Single-use HTTPS URL to redirect the customer to.
+          example: https://billing.vatly.com/authenticate?credential=...
+        expiresAt:
+          type: string
+          format: date-time
+          description: Expiry of the one-time entry link, not of the resulting browser session.
+          example: '2026-09-01T12:15:00Z'
+        returnUrl:
+          type:
+            - string
+            - 'null'
+          format: uri
+          pattern: ^[Hh][Tt][Tt][Pp][Ss]://
+          maxLength: 2048
+          description: |
+            The validated absolute HTTPS return URL supplied in the request, or
+            null. It contains no embedded credentials and is limited to 2,048
+            UTF-8 bytes.
+          example: https://merchant.example/account/billing
     UpdateOneOffProductRequest:
       type: object
       description: |
@@ -7506,6 +7791,7 @@ components:
             - `refund.canceled` - Refund was canceled
             - `subscription.started` - Subscription was started
             - `subscription.canceled_immediately` - Subscription was canceled immediately
+            - `subscription.canceled_for_nonpayment` - Subscription was canceled because payment recovery was exhausted
             - `subscription.canceled_with_grace_period` - Subscription was canceled with a grace period
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
@@ -7531,6 +7817,7 @@ components:
             - refund.canceled
             - subscription.started
             - subscription.canceled_immediately
+            - subscription.canceled_for_nonpayment
             - subscription.canceled_with_grace_period
             - subscription.cancellation_grace_period_completed
             - subscription.resumed

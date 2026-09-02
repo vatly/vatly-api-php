@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Vatly\Tests\Webhooks\Events;
 
 use Vatly\API\Resources\Subscription;
+use Vatly\API\Types\CancellationReason;
 use Vatly\API\Types\Mandate;
 use Vatly\API\Types\Money;
 use Vatly\API\Webhooks\Events\SubscriptionBillingUpdated;
+use Vatly\API\Webhooks\Events\SubscriptionCanceledForNonpayment;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledImmediately;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
@@ -59,6 +61,7 @@ class SubscriptionEventsTest extends BaseTestCase
         $this->assertSame('subscription.updated', SubscriptionUpdated::VATLY_EVENT_NAME);
         $this->assertSame('subscription.update_scheduled', SubscriptionUpdateScheduled::VATLY_EVENT_NAME);
         $this->assertSame('subscription.canceled_immediately', SubscriptionCanceledImmediately::VATLY_EVENT_NAME);
+        $this->assertSame('subscription.canceled_for_nonpayment', SubscriptionCanceledForNonpayment::VATLY_EVENT_NAME);
         $this->assertSame('subscription.canceled_with_grace_period', SubscriptionCanceledWithGracePeriod::VATLY_EVENT_NAME);
         $this->assertSame('subscription.cancellation_grace_period_completed', SubscriptionCancellationGracePeriodCompleted::VATLY_EVENT_NAME);
     }
@@ -248,6 +251,29 @@ class SubscriptionEventsTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('sub_123', $event->subscriptionId);
         $this->assertSame('2024-03-15T08:30:00+00:00', $event->endsAt->format('c'));
+    }
+
+    public function test_canceled_for_nonpayment_builds_from_webhook_with_reason(): void
+    {
+        $event = SubscriptionCanceledForNonpayment::fromWebhook($this->makeWebhook('subscription.canceled_for_nonpayment', [
+            'customerId' => 'cus_456',
+            'cancellationReason' => 'payment_failure',
+        ], '2024-03-15T08:30:00+00:00'));
+
+        $this->assertSame('cus_456', $event->customerId);
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('2024-03-15T08:30:00+00:00', $event->endsAt->format('c'));
+        $this->assertTrue($event->testmode);
+        $this->assertSame(CancellationReason::PAYMENT_FAILURE, $event->cancellationReason);
+    }
+
+    public function test_canceled_for_nonpayment_defaults_reason_when_absent(): void
+    {
+        $event = SubscriptionCanceledForNonpayment::fromWebhook($this->makeWebhook('subscription.canceled_for_nonpayment', [
+            'customerId' => 'cus_456',
+        ]));
+
+        $this->assertSame(CancellationReason::PAYMENT_FAILURE, $event->cancellationReason);
     }
 
     public function test_canceled_with_grace_period_uses_ended_at(): void

@@ -4,6 +4,12 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **`customers->createPortalSession($id, [...])`** (`POST /v1/customers/{customerId}/portal-sessions`) — creates a short-lived, single-use hosted customer portal link. Returns a `Vatly\API\Types\PortalSession` (`url`, `expiresAt`, `returnUrl`). Optional body: `returnUrl` (absolute HTTPS URL, max 2048 bytes). The link is credential-bearing — redirect the customer to `url`; do not cache or log it.
+- **`Subscription->cancellationReason`** — nullable string (`payment_failure` / `merchant_request` / `customer_request`, or `null`) explaining why a subscription was canceled. New `Vatly\API\Types\CancellationReason` constant class.
+- **`subscription.canceled_for_nonpayment` webhook event** — payment recovery was exhausted, so the subscription was canceled. New `WebhookEventName::SUBSCRIPTION_CANCELED_FOR_NONPAYMENT` constant and typed DTO `Vatly\API\Webhooks\Events\SubscriptionCanceledForNonpayment` (exposes `customerId`, `subscriptionId`, `endsAt`, `testmode`, and `cancellationReason`), wired into `WebhookEventFactory` and reported by `getSupportedEvents()` / `isSupported()`.
+
 ### Fixed
 
 - **`ScheduledSubscriptionUpdate` now carries `effectiveAt`** — the next-renewal date a scheduled change applies (nullable ISO 8601 date-time), matching the spec where it is a required field of `scheduledUpdate`. It is hydrated on both the `subscription.update_scheduled` webhook and the REST `Subscription` resource.

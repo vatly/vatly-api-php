@@ -5,6 +5,7 @@ namespace Vatly\Tests\Endpoints;
 use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
+use Vatly\API\Types\CancellationReason;
 use Vatly\API\Types\Mandate;
 use Vatly\API\Types\ScheduledSubscriptionUpdate;
 use Vatly\API\Types\SubscriptionStatus;
@@ -422,6 +423,39 @@ class SubscriptionEndpointTest extends BaseEndpointTest
 
         $this->assertInstanceOf(ScheduledSubscriptionUpdate::class, $subscription->scheduledUpdate);
         $this->assertNull($subscription->scheduledUpdate->effectiveAt);
+    }
+
+    /** @test */
+    public function it_hydrates_cancellation_reason()
+    {
+        $subscriptionId = 'subscription_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $data = $this->subscriptionDemoData($subscriptionId, SubscriptionStatus::CANCELED);
+        $data['cancellationReason'] = 'payment_failure';
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Subscription $subscription */
+        $subscription = $this->client->subscriptions->get($subscriptionId);
+
+        $this->assertSame('payment_failure', $subscription->cancellationReason);
+        $this->assertSame(CancellationReason::PAYMENT_FAILURE, $subscription->cancellationReason);
+    }
+
+    /** @test */
+    public function it_exposes_null_cancellation_reason_when_not_canceled()
+    {
+        $subscriptionId = 'subscription_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $data = $this->subscriptionDemoData($subscriptionId);
+        $data['cancellationReason'] = null;
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Subscription $subscription */
+        $subscription = $this->client->subscriptions->get($subscriptionId);
+
+        $this->assertNull($subscription->cancellationReason);
     }
 
     private function subscriptionDemoData(string $subscriptionId, string $status = SubscriptionStatus::ACTIVE): array

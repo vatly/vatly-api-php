@@ -56,6 +56,14 @@ class Subscription extends BaseResource
     /** @see SubscriptionStatus */
     public string $status;
 
+    /**
+     * Why the subscription was canceled, or `null` unless a cancellation has
+     * been requested.
+     *
+     * @see \Vatly\API\Types\CancellationReason
+     */
+    public ?string $cancellationReason = null;
+
     public string $startedAt;
 
     public ?string $endedAt;

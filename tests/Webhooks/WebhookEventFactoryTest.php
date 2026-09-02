@@ -25,6 +25,7 @@ use Vatly\API\Webhooks\Events\RefundCanceled;
 use Vatly\API\Webhooks\Events\RefundCompleted;
 use Vatly\API\Webhooks\Events\RefundFailed;
 use Vatly\API\Webhooks\Events\SubscriptionBillingUpdated;
+use Vatly\API\Webhooks\Events\SubscriptionCanceledForNonpayment;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledImmediately;
 use Vatly\API\Webhooks\Events\SubscriptionCanceledWithGracePeriod;
 use Vatly\API\Webhooks\Events\SubscriptionCancellationGracePeriodCompleted;
@@ -208,6 +209,26 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertInstanceOf(SubscriptionCanceledImmediately::class, $event);
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('sub_123', $event->subscriptionId);
+    }
+
+    public function test_it_creates_subscription_canceled_for_nonpayment_event_from_webhook(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'subscription.canceled_for_nonpayment',
+            entityType: 'subscription',
+            entityId: 'sub_123',
+            object: [
+                'customerId' => 'cus_456',
+                'cancellationReason' => 'payment_failure',
+            ],
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(SubscriptionCanceledForNonpayment::class, $event);
+        $this->assertSame('cus_456', $event->customerId);
+        $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('payment_failure', $event->cancellationReason);
     }
 
     public function test_it_creates_subscription_canceled_with_grace_period_event_from_webhook(): void
@@ -926,6 +947,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertContains('subscription.updated', $supported);
         $this->assertContains('subscription.update_scheduled', $supported);
         $this->assertContains('subscription.canceled_immediately', $supported);
+        $this->assertContains('subscription.canceled_for_nonpayment', $supported);
         $this->assertContains('subscription.canceled_with_grace_period', $supported);
         $this->assertContains('subscription.cancellation_grace_period_completed', $supported);
         $this->assertContains('order.paid', $supported);
@@ -970,6 +992,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertTrue($this->factory->isSupported('checkout.canceled'));
         $this->assertTrue($this->factory->isSupported('checkout.expired'));
         $this->assertTrue($this->factory->isSupported('subscription.cancellation_grace_period_completed'));
+        $this->assertTrue($this->factory->isSupported('subscription.canceled_for_nonpayment'));
         $this->assertTrue($this->factory->isSupported('refund.completed'));
         $this->assertTrue($this->factory->isSupported('refund.failed'));
         $this->assertTrue($this->factory->isSupported('refund.canceled'));
