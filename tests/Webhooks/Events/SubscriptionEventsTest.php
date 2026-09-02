@@ -246,11 +246,22 @@ class SubscriptionEventsTest extends BaseTestCase
     {
         $event = SubscriptionCanceledImmediately::fromWebhook($this->makeWebhook('subscription.canceled_immediately', [
             'customerId' => 'cus_456',
+            'cancellationReason' => 'merchant_request',
         ], '2024-03-15T08:30:00+00:00'));
 
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('sub_123', $event->subscriptionId);
         $this->assertSame('2024-03-15T08:30:00+00:00', $event->endsAt->format('c'));
+        $this->assertSame(CancellationReason::MERCHANT_REQUEST, $event->cancellationReason);
+    }
+
+    public function test_canceled_immediately_reason_is_null_when_absent(): void
+    {
+        $event = SubscriptionCanceledImmediately::fromWebhook($this->makeWebhook('subscription.canceled_immediately', [
+            'customerId' => 'cus_456',
+        ]));
+
+        $this->assertNull($event->cancellationReason);
     }
 
     public function test_canceled_for_nonpayment_builds_from_webhook_with_reason(): void
@@ -281,9 +292,21 @@ class SubscriptionEventsTest extends BaseTestCase
         $event = SubscriptionCanceledWithGracePeriod::fromWebhook($this->makeWebhook('subscription.canceled_with_grace_period', [
             'customerId' => 'cus_456',
             'endedAt' => '2024-04-01T00:00:00+00:00',
+            'cancellationReason' => 'customer_request',
         ]));
 
         $this->assertSame('2024-04-01T00:00:00+00:00', $event->endsAt->format('c'));
+        $this->assertSame(CancellationReason::CUSTOMER_REQUEST, $event->cancellationReason);
+    }
+
+    public function test_canceled_with_grace_period_reason_is_null_when_absent(): void
+    {
+        $event = SubscriptionCanceledWithGracePeriod::fromWebhook($this->makeWebhook('subscription.canceled_with_grace_period', [
+            'customerId' => 'cus_456',
+            'endedAt' => '2024-04-01T00:00:00+00:00',
+        ]));
+
+        $this->assertNull($event->cancellationReason);
     }
 
     public function test_grace_period_completed_prefers_ended_at(): void

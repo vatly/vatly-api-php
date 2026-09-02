@@ -11,6 +11,9 @@ use Vatly\API\Types\WebhookEventName;
 /**
  * Event representing a subscription being canceled immediately at Vatly.
  *
+ * The `object` carries `cancellationReason: merchant_request`, surfaced here as
+ * {@see self::$cancellationReason}.
+ *
  * @immutable
  */
 class SubscriptionCanceledImmediately
@@ -22,6 +25,13 @@ class SubscriptionCanceledImmediately
         public string $subscriptionId,
         public DateTimeInterface $endsAt,
         public bool $testmode,
+        /**
+         * Why the subscription was canceled, read straight from the delivery, or
+         * `null` if absent. Typically `merchant_request` for this event.
+         *
+         * @see \Vatly\API\Types\CancellationReason
+         */
+        public ?string $cancellationReason = null,
     ) {
         //
     }
@@ -33,6 +43,7 @@ class SubscriptionCanceledImmediately
             subscriptionId: $webhook->entityId,
             endsAt: new DateTimeImmutable($webhook->createdAt),
             testmode: $webhook->testmode,
+            cancellationReason: $webhook->object['cancellationReason'] ?? null,
         );
     }
 }
