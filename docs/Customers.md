@@ -192,3 +192,52 @@ $customer = $vatly->customers->create(['email' => 'john@example.com']);
 
 echo $customer->id; // the existing customer id, if the email was already known
 ```
+
+---
+
+## Create a customer portal session
+
+`POST /v1/customers/:id/portal-sessions`
+
+
+
+Create a short-lived, single-use link that sends an authenticated customer
+straight to your storefront in Vatly's hosted portal (where they can manage
+their subscriptions, billing details, and invoices). The session is locked to
+the customer, storefront, merchant, and live/test mode of the API token.
+
+Redirect the customer's browser to the returned `url`. It expires after roughly
+15 minutes and can be consumed once, so create a fresh one per visit. The link
+is credential-bearing — do not cache or log it.
+
+### Optional attributes
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `returnUrl` | `string` | Absolute HTTPS URL (max 2048 bytes) rendered as a return link in the portal. Vatly never fetches or auto-redirects to it. |
+
+The returned `PortalSession` has three properties:
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `url` | `string` | Single-use HTTPS URL to redirect the customer to. |
+| `expiresAt` | `string` | Expiry of the one-time entry link (ISO 8601). |
+| `returnUrl` | `string \| null` | The validated return URL you supplied, or `null`. |
+
+
+
+
+```php
+$session = $vatly->customers->createPortalSession('customer_abc123', [
+    'returnUrl' => 'https://yourapp.com/account/billing',
+]);
+
+// Redirect the customer's browser to the hosted portal.
+header('Location: ' . $session->url);
+```
+
+The body is optional — omit it to create a session without a return link:
+
+```php
+$session = $vatly->customers->createPortalSession('customer_abc123');
+```

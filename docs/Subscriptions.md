@@ -23,6 +23,7 @@ Below you'll find all properties for the Vatly Subscription resource.
 | `interval` | `string`            | Billing interval unit: `day`, `week`, `month`, or `year`. |
 | `intervalCount` | `int`               | Number of interval units between billing cycles. |
 | `status` | `string`            | The subscription status (see [Subscription statuses](#subscription-statuses)). |
+| `cancellationReason` | `string \| null`    | Why the subscription was canceled — `payment_failure` (recovery exhausted after failed renewals), `merchant_request`, or `customer_request` (self-service portal) — or `null` unless a cancellation has been requested. See `Vatly\API\Types\CancellationReason`. |
 | `startedAt` | `string`            | When the subscription started (ISO 8601). |
 | `endedAt` | `string \| null`    | When the subscription ended (ISO 8601). |
 | `canceledAt` | `string \| null`    | When the subscription was canceled (ISO 8601). |

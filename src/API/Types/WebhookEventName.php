@@ -15,6 +15,7 @@ class WebhookEventName
     public const SUBSCRIPTION_STARTED = 'subscription.started';
     public const SUBSCRIPTION_BILLING_UPDATED = 'subscription.billing_updated';
     public const SUBSCRIPTION_CANCELED_IMMEDIATELY = 'subscription.canceled_immediately';
+    public const SUBSCRIPTION_CANCELED_FOR_NONPAYMENT = 'subscription.canceled_for_nonpayment';
     public const SUBSCRIPTION_CANCELED_WITH_GRACE_PERIOD = 'subscription.canceled_with_grace_period';
     public const SUBSCRIPTION_CANCELLATION_GRACE_PERIOD_COMPLETED = 'subscription.cancellation_grace_period_completed';
     public const SUBSCRIPTION_RESUMED = 'subscription.resumed';

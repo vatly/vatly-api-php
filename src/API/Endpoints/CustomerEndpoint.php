@@ -10,6 +10,7 @@ use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Customer;
 use Vatly\API\Resources\CustomerCollection;
 use Vatly\API\Resources\Links\PaginationLinks;
+use Vatly\API\Types\PortalSession;
 
 class CustomerEndpoint extends BaseEndpoint
 {
@@ -76,6 +77,39 @@ class CustomerEndpoint extends BaseEndpoint
     public function listByEmail(string $email, array $parameters = []): BaseResourcePage
     {
         return $this->rest_list(null, null, null, array_merge($parameters, ['email' => $email]));
+    }
+
+    /**
+     * Create a short-lived, single-use hosted customer portal session
+     * (`POST /v1/customers/{customerId}/portal-sessions`).
+     *
+     * Redirect the customer's browser to the returned `url`. The link is locked
+     * to this customer, storefront, merchant, and mode, expires after roughly 15
+     * minutes, and can be consumed once. It is credential-bearing — do not cache
+     * or log it. The request body is optional; pass `returnUrl` (an absolute
+     * HTTPS URL) to render a return link in the portal.
+     *
+     * @param string $id The customer's ID, e.g. customer_7kBmRtPvXw2NjLhYcZaE
+     * @param array $data Optional body (`returnUrl`).
+     *
+     * @return PortalSession
+     * @throws ApiException
+     */
+    public function createPortalSession(string $id, array $data = []): PortalSession
+    {
+        if (empty($id)) {
+            throw new ApiException("Invalid resource id.");
+        }
+
+        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/portal-sessions";
+
+        $result = $this->client->performHttpCall(
+            self::REST_CREATE,
+            $resource,
+            $this->parseRequestBody($data),
+        );
+
+        return PortalSession::createResourceFromApiResult($result);
     }
 
     protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage

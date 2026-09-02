@@ -4,6 +4,7 @@ namespace Vatly\Tests\Endpoints;
 
 use Vatly\API\Resources\Customer;
 use Vatly\API\Resources\CustomerCollection;
+use Vatly\API\Types\PortalSession;
 use Vatly\API\VatlyApiClient;
 
 class CustomersEndpointTest extends BaseEndpointTest
@@ -440,5 +441,58 @@ class CustomersEndpointTest extends BaseEndpointTest
         $this->assertEquals(1, $customers->count);
         $this->assertEquals('customer_78b146a7de7d417e9d68d7e6ef193d18', $customers[0]->id);
         $this->assertEquals('john.doe@example.com', $customers[0]->email);
+    }
+
+    /** @test */
+    public function it_can_create_a_portal_session_with_a_return_url(): void
+    {
+        $customerId = 'customer_7kBmRtPvXw2NjLhYcZaE';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'url' => 'https://billing.vatly.com/authenticate?credential=abc',
+            'expiresAt' => '2026-09-01T12:15:00Z',
+            'returnUrl' => 'https://merchant.example/account/billing',
+        ]);
+
+        $session = $this->client->customers->createPortalSession($customerId, [
+            'returnUrl' => 'https://merchant.example/account/billing',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/customers/'.$customerId.'/portal-sessions',
+            [],
+            '{"returnUrl":"https://merchant.example/account/billing"}'
+        );
+
+        $this->assertInstanceOf(PortalSession::class, $session);
+        $this->assertEquals('https://billing.vatly.com/authenticate?credential=abc', $session->url);
+        $this->assertEquals('2026-09-01T12:15:00Z', $session->expiresAt);
+        $this->assertEquals('https://merchant.example/account/billing', $session->returnUrl);
+    }
+
+    /** @test */
+    public function it_can_create_a_portal_session_without_a_body(): void
+    {
+        $customerId = 'customer_7kBmRtPvXw2NjLhYcZaE';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'url' => 'https://billing.vatly.com/authenticate?credential=abc',
+            'expiresAt' => '2026-09-01T12:15:00Z',
+            'returnUrl' => null,
+        ]);
+
+        $session = $this->client->customers->createPortalSession($customerId);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/customers/'.$customerId.'/portal-sessions',
+            [],
+            null
+        );
+
+        $this->assertInstanceOf(PortalSession::class, $session);
+        $this->assertEquals('https://billing.vatly.com/authenticate?credential=abc', $session->url);
+        $this->assertNull($session->returnUrl);
     }
 }
