@@ -204,7 +204,10 @@ echo $customer->id; // the existing customer id, if the email was already known
 Create a short-lived, single-use link that sends an authenticated customer
 straight to your storefront in Vatly's hosted portal (where they can manage
 their subscriptions, billing details, and invoices). The session is locked to
-the customer, storefront, merchant, and live/test mode of the API token.
+the customer, storefront, merchant, and live/test mode of the API token: the
+customer lands directly in that one storefront's portal — never a storefront
+picker or any other store. If your account has multiple storefronts, each API
+token mints portal links for its own store.
 
 Redirect the customer's browser to the returned `url`. It expires after roughly
 15 minutes and can be consumed once, so create a fresh one per visit. The link
