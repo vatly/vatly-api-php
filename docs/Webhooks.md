@@ -17,9 +17,9 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | `refund.failed` | Refund processing failed. |
 | `refund.canceled` | Refund was canceled. |
 | `subscription.started` | Subscription was started. |
-| `subscription.canceled_immediately` | Subscription was canceled immediately. |
+| `subscription.canceled_immediately` | Subscription was canceled immediately. `object` carries `cancellationReason` (typically `merchant_request`). |
 | `subscription.canceled_for_nonpayment` | Payment recovery was exhausted, so the subscription was canceled. `object` carries `cancellationReason: payment_failure`. |
-| `subscription.canceled_with_grace_period` | Subscription was canceled, customer keeps access until the period ends. |
+| `subscription.canceled_with_grace_period` | Subscription was canceled, customer keeps access until the period ends. `object` carries `cancellationReason` (`customer_request` or `merchant_request`). |
 | `subscription.cancellation_grace_period_completed` | Grace period after cancellation ended. |
 | `subscription.resumed` | A canceled subscription was resumed during its grace period. |
 | `subscription.updated` | A subscription changed immediately (plan, price, interval or quantity). `object` is the subscription with its new values. |

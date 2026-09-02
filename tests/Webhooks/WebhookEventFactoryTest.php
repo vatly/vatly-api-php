@@ -201,6 +201,7 @@ class WebhookEventFactoryTest extends BaseTestCase
             object: [
                 'customerId' => 'cus_456',
                 'endedAt' => '2024-01-15T10:00:00Z',
+                'cancellationReason' => 'merchant_request',
             ],
         );
 
@@ -209,6 +210,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertInstanceOf(SubscriptionCanceledImmediately::class, $event);
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('sub_123', $event->subscriptionId);
+        $this->assertSame('merchant_request', $event->cancellationReason);
     }
 
     public function test_it_creates_subscription_canceled_for_nonpayment_event_from_webhook(): void
@@ -240,6 +242,7 @@ class WebhookEventFactoryTest extends BaseTestCase
             object: [
                 'customerId' => 'cus_456',
                 'endedAt' => '2024-02-15T10:00:00Z',
+                'cancellationReason' => 'customer_request',
             ],
         );
 
@@ -249,6 +252,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('sub_123', $event->subscriptionId);
         $this->assertInstanceOf(DateTimeInterface::class, $event->endsAt);
+        $this->assertSame('customer_request', $event->cancellationReason);
     }
 
     public function test_it_creates_subscription_resumed_event_from_webhook(): void
