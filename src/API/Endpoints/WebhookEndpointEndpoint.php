@@ -25,7 +25,18 @@ class WebhookEndpointEndpoint extends BaseEndpoint
     /**
      * Register a webhook endpoint. Supply `url` and a write-only signing
      * `secret` (min 10 chars); the secret is never returned, so keep the value
-     * you send. There is at most one endpoint per mode.
+     * you send.
+     *
+     * A storefront may have up to five endpoints per mode; URLs must be unique
+     * within the storefront and mode. A duplicate URL or a sixth endpoint is
+     * rejected with `422`.
+     *
+     * Pass an optional `enabledEvents` (a list of
+     * {@see \Vatly\API\Types\WebhookSubscriptionEventName} values) to choose the
+     * subscription set. Omit it and Vatly subscribes the endpoint to every event
+     * available at registration time (not updated automatically afterwards); send
+     * an empty array to create a dormant endpoint. `webhook.setup` is not
+     * subscribable — it is always sent.
      *
      * @return WebhookEndpoint|BaseResource
      * @throws ApiException
@@ -45,8 +56,13 @@ class WebhookEndpointEndpoint extends BaseEndpoint
     }
 
     /**
-     * Update an endpoint's `url`, its signing `secret`, or both. Sending an
-     * empty body is a no-op that returns the current endpoint.
+     * Update an endpoint's `url`, its signing `secret`, and/or its
+     * `enabledEvents` subscription set. `enabledEvents` is a full-set
+     * replacement (a list of
+     * {@see \Vatly\API\Types\WebhookSubscriptionEventName} values): omit it to
+     * preserve the current subscriptions, or send an empty array to make the
+     * endpoint dormant. New event names are never added automatically.
+     * Sending an empty body is a no-op that returns the current endpoint.
      *
      * @return WebhookEndpoint|BaseResource|null
      * @throws ApiException
@@ -67,8 +83,8 @@ class WebhookEndpointEndpoint extends BaseEndpoint
     }
 
     /**
-     * List the webhook endpoints for the token's mode. Because there is at most
-     * one endpoint per mode, this returns at most one endpoint.
+     * List the webhook endpoints for the token's mode. A storefront may have up
+     * to five endpoints per mode, so this returns up to five endpoints.
      *
      * @return WebhookEndpointCollection|BaseResourcePage
      * @throws ApiException

@@ -1,9 +1,15 @@
 # Webhook Endpoints
 
 A webhook endpoint is the HTTPS URL Vatly POSTs event deliveries to. You register
-one from code (or infrastructure-as-code) instead of the dashboard. There is **at
-most one endpoint per mode** — one for test and one for live, determined by the
-API token.
+one from code (or infrastructure-as-code) instead of the dashboard. A storefront
+can have **up to five endpoints per mode** (test and live are determined by the
+API token); URLs must be unique within the storefront and mode. Registering a
+duplicate URL or a sixth endpoint is rejected with `422`.
+
+Each endpoint carries an `enabledEvents` subscription set — the public event names
+it receives (see [`WebhookSubscriptionEventName`](../src/API/Types/WebhookSubscriptionEventName.php)).
+An empty set makes the endpoint dormant; the `webhook.setup` verification event is
+never subscribable and is always sent when Vatly verifies the endpoint.
 
 The signing `secret` you provide is **write-only**: it is sent on create/update
 but is never returned in any response. Store the value you send — you use it to
@@ -21,6 +27,7 @@ Below you'll find all properties for the Vatly WebhookEndpoint resource.
 | `resource` | `string` | Resource type, always `webhook_endpoint`. |
 | `testmode` | `bool` | Whether this endpoint receives test-mode events. |
 | `url` | `string` | The HTTPS URL deliveries are POSTed to. |
+| `enabledEvents` | `string[]` | The endpoint's persisted subscription names. An empty array means no domain events are delivered (dormant); `webhook.setup` is still sent. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 | `links` | `WebhookEndpointLinks` | HATEOAS links (`self`). |
 
@@ -36,8 +43,9 @@ Below you'll find all properties for the Vatly WebhookEndpoint resource.
 
 Register the endpoint for the mode determined by the API token. Vatly sends a
 `webhook.setup` verification ping to the URL and validates its SSL certificate;
-if either fails the request is rejected. Registering a second endpoint for a mode
-that already has one is rejected — update or delete the existing one instead.
+if either fails the request is rejected. A storefront may have up to five
+endpoints per mode and URLs must be unique within the storefront and mode; a
+duplicate URL or a sixth endpoint is rejected with `422`.
 
 ### Required attributes
 
@@ -46,17 +54,30 @@ that already has one is rejected — update or delete the existing one instead.
 | `url` | `string` | Publicly reachable HTTPS URL with a valid SSL certificate. `localhost`/loopback addresses are not allowed. |
 | `secret` | `string` | Signing secret (min 10 chars). Write-only — keep this value, the API never returns it. |
 
+### Optional attributes
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `enabledEvents` | `string[]` | The events delivered to this endpoint (`WebhookSubscriptionEventName` values). **Omit** it and Vatly subscribes to every event available at registration (not updated automatically afterwards); send `[]` for a dormant endpoint. `webhook.setup` is not selectable. |
+
 
 
 
 ```php
+use Vatly\API\Types\WebhookSubscriptionEventName;
+
 $endpoint = $vatly->webhookEndpoints->create([
     'url' => 'https://merchant.example/webhooks/vatly',
     'secret' => getenv('VATLY_WEBHOOK_SECRET'), // min 10 chars, keep it — never returned
+    'enabledEvents' => [
+        WebhookSubscriptionEventName::ORDER_PAID,
+        WebhookSubscriptionEventName::REFUND_COMPLETED,
+    ],
 ]);
 
 echo $endpoint->id;  // webhook_...
 echo $endpoint->url;
+print_r($endpoint->enabledEvents);
 ```
 
 
@@ -90,8 +111,8 @@ echo $endpoint->url;
 
 
 
-List the endpoints for the token's mode. Because there is at most one endpoint
-per mode, this returns at most one endpoint.
+List the endpoints for the token's mode. A storefront may have up to five
+endpoints per mode, so this returns up to five endpoints.
 
 
 
@@ -114,9 +135,10 @@ foreach ($endpoints as $endpoint) {
 
 
 
-Repoint the endpoint (`url`), rotate the signing `secret`, or both. A new URL is
-revalidated for reachability and SSL just like on creation. Sending an empty body
-is a no-op that returns the current endpoint.
+Repoint the endpoint (`url`), rotate the signing `secret`, and/or replace its
+`enabledEvents` subscription set. A new URL is revalidated for reachability and
+SSL just like on creation. Sending an empty body is a no-op that returns the
+current endpoint.
 
 ### Optional attributes
 
@@ -124,13 +146,20 @@ is a no-op that returns the current endpoint.
 | --- | --- | --- |
 | `url` | `string` | New HTTPS delivery URL. |
 | `secret` | `string` | New signing secret (min 10 chars). Write-only — keep the value. |
+| `enabledEvents` | `string[]` | Replaces the **complete** subscription set (`WebhookSubscriptionEventName` values). Omit it to preserve the current subscriptions; send `[]` to make the endpoint dormant. New event names are never added automatically. |
 
 
 
 
 ```php
+use Vatly\API\Types\WebhookSubscriptionEventName;
+
 $endpoint = $vatly->webhookEndpoints->update('webhook_QdEpFhdSrG4Y3DnfsdqsH', [
     'url' => 'https://merchant.example/webhooks/vatly-v2',
+    'enabledEvents' => [
+        WebhookSubscriptionEventName::CHECKOUT_PAID,
+        WebhookSubscriptionEventName::ORDER_PAID,
+    ],
 ]);
 ```
 

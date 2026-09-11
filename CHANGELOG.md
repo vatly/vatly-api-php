@@ -6,10 +6,16 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Added
 
+- **`enabledEvents` on webhook endpoints** — the `WebhookEndpoint` resource now exposes `enabledEvents` (`string[]`, the endpoint's persisted subscription set; hydrated on every read). `webhookEndpoints->create([...])` accepts an optional `enabledEvents`: omit it and Vatly subscribes the endpoint to every event available at registration (not updated automatically afterwards), or send `[]` for a dormant endpoint. `webhookEndpoints->update($id, [...])` accepts an optional `enabledEvents` as a full-set replacement — omitting it preserves the current subscriptions, `[]` makes the endpoint dormant.
+- **`Vatly\API\Types\WebhookSubscriptionEventName`** — a constant class of the 31 public event names that can be enabled for a webhook endpoint. `webhook.setup` is deliberately excluded: it is always sent when Vatly verifies an endpoint and cannot be subscribed to.
 - **`cancellationReason` on the remaining cancel webhook DTOs** — `SubscriptionCanceledImmediately` and `SubscriptionCanceledWithGracePeriod` now expose a nullable `cancellationReason` (`?string`), read straight from the delivery's `object['cancellationReason']` (`merchant_request` / `customer_request`, or `null` if absent). Brings them in line with `SubscriptionCanceledForNonpayment` so every cancellation reason flows through. Values are the `Vatly\API\Types\CancellationReason` constants.
 - **`customers->createPortalSession($id, [...])`** (`POST /v1/customers/{customerId}/portal-sessions`) — creates a short-lived, single-use hosted customer portal link. Returns a `Vatly\API\Types\PortalSession` (`url`, `expiresAt`, `returnUrl`). Optional body: `returnUrl` (absolute HTTPS URL, max 2048 bytes). The link is credential-bearing — redirect the customer to `url`; do not cache or log it.
 - **`Subscription->cancellationReason`** — nullable string (`payment_failure` / `merchant_request` / `customer_request`, or `null`) explaining why a subscription was canceled. New `Vatly\API\Types\CancellationReason` constant class.
 - **`subscription.canceled_for_nonpayment` webhook event** — payment recovery was exhausted, so the subscription was canceled. New `WebhookEventName::SUBSCRIPTION_CANCELED_FOR_NONPAYMENT` constant and typed DTO `Vatly\API\Webhooks\Events\SubscriptionCanceledForNonpayment` (exposes `customerId`, `subscriptionId`, `endsAt`, `testmode`, and `cancellationReason`), wired into `WebhookEventFactory` and reported by `getSupportedEvents()` / `isSupported()`.
+
+### Changed
+
+- **Multiple webhook endpoints per mode.** A storefront may now register up to five webhook endpoints per mode (URLs unique within storefront + mode; a duplicate or sixth returns `422`), replacing the previous one-per-mode limit. Doc comments on `WebhookEndpointEndpoint`, `docs/WebhookEndpoints.md`, and the vendored `openapi.yaml` (webhook-endpoint paths + `WebhookEndpoint`/`CreateWebhookEndpointRequest`/`UpdateWebhookEndpointRequest` schemas, and the new `WebhookSubscriptionEventName` schema) were updated to match.
 
 ### Fixed
 

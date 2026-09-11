@@ -6,6 +6,7 @@ namespace Vatly\Tests\Endpoints;
 
 use Vatly\API\Resources\WebhookEndpoint;
 use Vatly\API\Resources\WebhookEndpointCollection;
+use Vatly\API\Types\WebhookSubscriptionEventName;
 use Vatly\API\VatlyApiClient;
 
 class WebhookEndpointEndpointTest extends BaseEndpointTest
@@ -35,11 +36,60 @@ class WebhookEndpointEndpointTest extends BaseEndpointTest
         $this->assertEquals('webhook_endpoint', $endpoint->resource);
         $this->assertFalse($endpoint->testmode);
         $this->assertEquals('https://merchant.example/webhooks/vatly', $endpoint->url);
+        $this->assertEquals(['order.paid', 'refund.completed'], $endpoint->enabledEvents);
         $this->assertEquals('2024-01-15T10:30:00Z', $endpoint->createdAt);
         $this->assertEquals(self::API_ENDPOINT_URL.'/webhook-endpoints/'.self::WEBHOOK_ENDPOINT_ID, $endpoint->links->self->href);
 
         // The write-only signing secret is never returned on the resource.
         $this->assertFalse(property_exists($endpoint, 'secret') && isset($endpoint->secret));
+    }
+
+    /** @test */
+    public function it_passes_enabled_events_through_when_registering(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray($this->demoData());
+
+        $this->client->webhookEndpoints->create([
+            'url' => 'https://merchant.example/webhooks/vatly',
+            'secret' => 'whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d',
+            'enabledEvents' => [
+                WebhookSubscriptionEventName::ORDER_PAID,
+                WebhookSubscriptionEventName::REFUND_COMPLETED,
+            ],
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/webhook-endpoints',
+            [],
+            '{"url":"https:\/\/merchant.example\/webhooks\/vatly",'
+            .'"secret":"whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d",'
+            .'"enabledEvents":["order.paid","refund.completed"]}'
+        );
+    }
+
+    /** @test */
+    public function it_creates_a_dormant_endpoint_with_an_empty_enabled_events_list(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray($this->demoData('https://merchant.example/webhooks/vatly', []));
+
+        /** @var WebhookEndpoint $endpoint */
+        $endpoint = $this->client->webhookEndpoints->create([
+            'url' => 'https://merchant.example/webhooks/vatly',
+            'secret' => 'whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d',
+            'enabledEvents' => [],
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/webhook-endpoints',
+            [],
+            '{"url":"https:\/\/merchant.example\/webhooks\/vatly",'
+            .'"secret":"whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d",'
+            .'"enabledEvents":[]}'
+        );
+
+        $this->assertSame([], $endpoint->enabledEvents);
     }
 
     /** @test */
@@ -117,6 +167,31 @@ class WebhookEndpointEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function it_replaces_the_full_enabled_events_set_on_update(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray(
+            $this->demoData('https://merchant.example/webhooks/vatly', ['checkout.paid', 'order.paid'])
+        );
+
+        /** @var WebhookEndpoint $endpoint */
+        $endpoint = $this->client->webhookEndpoints->update(self::WEBHOOK_ENDPOINT_ID, [
+            'enabledEvents' => [
+                WebhookSubscriptionEventName::CHECKOUT_PAID,
+                WebhookSubscriptionEventName::ORDER_PAID,
+            ],
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_PATCH,
+            self::API_ENDPOINT_URL.'/webhook-endpoints/'.self::WEBHOOK_ENDPOINT_ID,
+            [],
+            '{"enabledEvents":["checkout.paid","order.paid"]}'
+        );
+
+        $this->assertEquals(['checkout.paid', 'order.paid'], $endpoint->enabledEvents);
+    }
+
+    /** @test */
     public function it_can_update_a_webhook_endpoint_secret_from_a_resource_instance(): void
     {
         $endpoint = new WebhookEndpoint($this->client);
@@ -151,15 +226,19 @@ class WebhookEndpointEndpointTest extends BaseEndpointTest
     }
 
     /**
+     * @param string[] $enabledEvents
      * @return array<string, mixed>
      */
-    private function demoData(string $url = 'https://merchant.example/webhooks/vatly'): array
-    {
+    private function demoData(
+        string $url = 'https://merchant.example/webhooks/vatly',
+        array $enabledEvents = ['order.paid', 'refund.completed']
+    ): array {
         return [
             'id' => self::WEBHOOK_ENDPOINT_ID,
             'resource' => 'webhook_endpoint',
             'testmode' => false,
             'url' => $url,
+            'enabledEvents' => $enabledEvents,
             'createdAt' => '2024-01-15T10:30:00Z',
             'links' => [
                 'self' => [
