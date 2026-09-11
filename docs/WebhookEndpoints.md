@@ -1,19 +1,19 @@
 # Webhook Endpoints
 
-A webhook endpoint is the HTTPS URL Vatly POSTs event deliveries to. You register
-one from code (or infrastructure-as-code) instead of the dashboard. A storefront
-can have **up to five endpoints per mode** (test and live are determined by the
-API token); URLs must be unique within the storefront and mode. Registering a
-duplicate URL or a sixth endpoint is rejected with `422`.
+A webhook endpoint is the HTTPS URL Vatly POSTs event deliveries to — registered
+from code (or infrastructure-as-code) rather than the dashboard. A storefront can
+have **up to five endpoints per mode** (test and live are set by the API token),
+each with a URL unique within that storefront and mode. A duplicate URL or a sixth
+endpoint is rejected with `422`.
 
-Each endpoint carries an `enabledEvents` subscription set — the public event names
-it receives (see [`WebhookSubscriptionEventName`](../src/API/Types/WebhookSubscriptionEventName.php)).
-An empty set makes the endpoint dormant; the `webhook.setup` verification event is
-never subscribable and is always sent when Vatly verifies the endpoint.
+Each endpoint has its own `enabledEvents` set — the public event names it receives
+(see [`WebhookSubscriptionEventName`](../src/API/Types/WebhookSubscriptionEventName.php)).
+An empty set makes it dormant; `webhook.setup` is never subscribable and is always
+sent when Vatly verifies the endpoint.
 
-The signing `secret` you provide is **write-only**: it is sent on create/update
-but is never returned in any response. Store the value you send — you use it to
-verify the `Vatly-Signature` HMAC on deliveries (see [Webhooks](/docs/Webhooks.md)).
+The signing `secret` is **write-only**: sent on create/update, never returned.
+Store the value you send — you use it to verify the `Vatly-Signature` HMAC on
+deliveries (see [Webhooks](/docs/Webhooks.md)).
 
 ## The WebhookEndpoint Resource
 
@@ -27,11 +27,9 @@ Below you'll find all properties for the Vatly WebhookEndpoint resource.
 | `resource` | `string` | Resource type, always `webhook_endpoint`. |
 | `testmode` | `bool` | Whether this endpoint receives test-mode events. |
 | `url` | `string` | The HTTPS URL deliveries are POSTed to. |
-| `enabledEvents` | `string[]` | The endpoint's persisted subscription names. An empty array means no domain events are delivered (dormant); `webhook.setup` is still sent. |
+| `enabledEvents` | `string[]` | The event names this endpoint is subscribed to. An empty array means dormant (no domain events); `webhook.setup` is still sent. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 | `links` | `WebhookEndpointLinks` | HATEOAS links (`self`). |
-
-> The signing `secret` is never present on the resource — it is write-only.
 
 ---
 
@@ -41,24 +39,22 @@ Below you'll find all properties for the Vatly WebhookEndpoint resource.
 
 
 
-Register the endpoint for the mode determined by the API token. Vatly sends a
-`webhook.setup` verification ping to the URL and validates its SSL certificate;
-if either fails the request is rejected. A storefront may have up to five
-endpoints per mode and URLs must be unique within the storefront and mode; a
-duplicate URL or a sixth endpoint is rejected with `422`.
+Register an endpoint for the token's mode. Vatly sends a `webhook.setup`
+verification ping and validates the URL's SSL certificate; if either fails,
+registration is rejected with `422`.
 
 ### Required attributes
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `url` | `string` | Publicly reachable HTTPS URL with a valid SSL certificate. `localhost`/loopback addresses are not allowed. |
-| `secret` | `string` | Signing secret (min 10 chars). Write-only — keep this value, the API never returns it. |
+| `secret` | `string` | Signing secret (min 10 chars). Write-only — keep it, the API never returns it. |
 
 ### Optional attributes
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `enabledEvents` | `string[]` | The events delivered to this endpoint (`WebhookSubscriptionEventName` values). **Omit** it and Vatly subscribes to every event available at registration (not updated automatically afterwards); send `[]` for a dormant endpoint. `webhook.setup` is not selectable. |
+| `enabledEvents` | `string[]` | The events to deliver (`WebhookSubscriptionEventName` values). Omit to subscribe to every event available at registration (not updated afterwards); send `[]` for a dormant endpoint. `webhook.setup` is not selectable. |
 
 
 
@@ -68,7 +64,7 @@ use Vatly\API\Types\WebhookSubscriptionEventName;
 
 $endpoint = $vatly->webhookEndpoints->create([
     'url' => 'https://merchant.example/webhooks/vatly',
-    'secret' => getenv('VATLY_WEBHOOK_SECRET'), // min 10 chars, keep it — never returned
+    'secret' => getenv('VATLY_WEBHOOK_SECRET'),
     'enabledEvents' => [
         WebhookSubscriptionEventName::ORDER_PAID,
         WebhookSubscriptionEventName::REFUND_COMPLETED,
@@ -76,8 +72,6 @@ $endpoint = $vatly->webhookEndpoints->create([
 ]);
 
 echo $endpoint->id;  // webhook_...
-echo $endpoint->url;
-print_r($endpoint->enabledEvents);
 ```
 
 
@@ -111,8 +105,7 @@ echo $endpoint->url;
 
 
 
-List the endpoints for the token's mode. A storefront may have up to five
-endpoints per mode, so this returns up to five endpoints.
+List all endpoints for the token's mode.
 
 
 
@@ -136,17 +129,16 @@ foreach ($endpoints as $endpoint) {
 
 
 Repoint the endpoint (`url`), rotate the signing `secret`, and/or replace its
-`enabledEvents` subscription set. A new URL is revalidated for reachability and
-SSL just like on creation. Sending an empty body is a no-op that returns the
-current endpoint.
+`enabledEvents` set. A new URL is revalidated for reachability and SSL just like
+on creation. An empty body is a no-op that returns the current endpoint.
 
 ### Optional attributes
 
 | Name | Type | Description |
 | --- | --- | --- |
 | `url` | `string` | New HTTPS delivery URL. |
-| `secret` | `string` | New signing secret (min 10 chars). Write-only — keep the value. |
-| `enabledEvents` | `string[]` | Replaces the **complete** subscription set (`WebhookSubscriptionEventName` values). Omit it to preserve the current subscriptions; send `[]` to make the endpoint dormant. New event names are never added automatically. |
+| `secret` | `string` | New signing secret (min 10 chars). Write-only. |
+| `enabledEvents` | `string[]` | Replaces the **complete** subscription set (`WebhookSubscriptionEventName` values). Omit to preserve the current set; send `[]` to make the endpoint dormant. |
 
 
 
