@@ -32,8 +32,11 @@ class Chargeback extends BaseResource
     public bool $testmode;
 
     /**
-     * Dispute lifecycle status: pending, accepted, rejected,
-     * evidence_submitted, won, lost.
+     * Dispute lifecycle status: pending, requires_amount_review, accepted,
+     * rejected, evidence_submitted, won, lost.
+     *
+     * `requires_amount_review` means the provider's disputed amount exceeds the
+     * original order, so financial completion is quarantined pending review.
      * @example pending
      */
     public string $status;

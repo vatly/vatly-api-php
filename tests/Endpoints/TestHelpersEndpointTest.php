@@ -48,4 +48,49 @@ class TestHelpersEndpointTest extends BaseEndpointTest
             '{"paymentStatus":"failed","failureReason":"card_expired"}'
         );
     }
+
+    /** @test */
+    public function can_simulate_an_order_payment(): void
+    {
+        $orderId = 'order_Hn5xWqVfKm8RjTgYbUcP';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $orderId,
+            'resource' => 'order',
+        ]);
+
+        $this->client->testHelpers->simulateOrderPayment($orderId, [
+            'paymentStatus' => 'paid',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/test-helpers/orders/'.$orderId.'/simulate-payment',
+            [],
+            '{"paymentStatus":"paid"}'
+        );
+    }
+
+    /** @test */
+    public function can_simulate_an_order_payment_forcing_a_hard_decline(): void
+    {
+        $orderId = 'order_Hn5xWqVfKm8RjTgYbUcP';
+
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $orderId,
+            'resource' => 'order',
+        ]);
+
+        $this->client->testHelpers->simulateOrderPayment($orderId, [
+            'paymentStatus' => 'failed',
+            'failureReason' => 'card_expired',
+        ]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/test-helpers/orders/'.$orderId.'/simulate-payment',
+            [],
+            '{"paymentStatus":"failed","failureReason":"card_expired"}'
+        );
+    }
 }

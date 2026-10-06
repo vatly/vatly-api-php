@@ -39,4 +39,33 @@ class TestHelpersEndpoint
             empty($body) ? null : json_encode($body),
         );
     }
+
+    /**
+     * Simulate the outcome of a test order's pending payment (test mode only).
+     *
+     * Settles or declines a payment that is already awaiting an outcome — for
+     * example a subscription renewal, or a subscription update made with
+     * `invoiceImmediately: true`. Unlike {@see fastForwardSubscriptionRenewal()},
+     * this does not advance the billing cycle.
+     *
+     *  - `['paymentStatus' => 'paid']` settles the payment, so `order.paid` is
+     *    delivered to your webhook endpoint.
+     *  - `['paymentStatus' => 'failed']` declines it and starts a payment recovery,
+     *    so `order.payment_failed` is delivered. Add a `failureReason`
+     *    (e.g. `'card_expired'`) to pick which decline to simulate: a soft decline
+     *    (`insufficient_funds`, `temporary_decline`, `general_failure`) retries over
+     *    weeks; any other value is a hard decline that drives the customer to
+     *    supply a new payment method.
+     *
+     * @param array<string, mixed> $body
+     * @throws \Vatly\API\Exceptions\ApiException
+     */
+    public function simulateOrderPayment(string $orderId, array $body): ?object
+    {
+        return $this->client->performHttpCall(
+            VatlyApiClient::HTTP_POST,
+            "test-helpers/orders/" . urlencode($orderId) . "/simulate-payment",
+            json_encode($body),
+        );
+    }
 }
