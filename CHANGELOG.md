@@ -4,10 +4,18 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.30
+
 ### Added
 
 - **`testHelpers->simulateOrderPayment($orderId, [...])`** (`POST /v1/test-helpers/orders/{orderId}/simulate-payment`) — settles or declines a test order's pending payment (a subscription renewal, or a subscription update made with `invoiceImmediately: true`) without advancing the billing cycle. Body: `paymentStatus` (`paid` or `failed`, required) and an optional `failureReason` for `failed`. Like a live payment it is asynchronous — the returned order is still awaiting payment; follow the `order.paid` / `order.payment_failed` webhooks for the outcome.
 - **`reason` on the `WebhookEvent` resource** — nullable string explaining why an event fired. Always present; `null` for every event except `subscription.updated`, where it is `updated_immediately`, `updated_on_renewal`, or `renewed`.
+- **`requires_amount_review` chargeback status** — documented as a possible `Chargeback->status` value (the provider's disputed amount exceeds the original order, so completion is held pending review). `status` remains a plain string, so the value already flows through unchanged.
+
+## v0.1.0-alpha.29
+
+### Added
+
 - **`enabledEvents` on webhook endpoints** — the `WebhookEndpoint` resource now exposes `enabledEvents` (`string[]`, the endpoint's persisted subscription set; hydrated on every read). `webhookEndpoints->create([...])` accepts an optional `enabledEvents`: omit it and Vatly subscribes the endpoint to every event available at registration (not updated automatically afterwards), or send `[]` for a dormant endpoint. `webhookEndpoints->update($id, [...])` accepts an optional `enabledEvents` as a full-set replacement — omitting it preserves the current subscriptions, `[]` makes the endpoint dormant.
 - **`Vatly\API\Types\WebhookSubscriptionEventName`** — a constant class of the 31 public event names that can be enabled for a webhook endpoint. `webhook.setup` is deliberately excluded: it is always sent when Vatly verifies an endpoint and cannot be subscribed to.
 - **`cancellationReason` on the remaining cancel webhook DTOs** — `SubscriptionCanceledImmediately` and `SubscriptionCanceledWithGracePeriod` now expose a nullable `cancellationReason` (`?string`), read straight from the delivery's `object['cancellationReason']` (`merchant_request` / `customer_request`, or `null` if absent). Brings them in line with `SubscriptionCanceledForNonpayment` so every cancellation reason flows through. Values are the `Vatly\API\Types\CancellationReason` constants.
