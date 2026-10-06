@@ -27,6 +27,17 @@ class WebhookEvent extends BaseResource
     public string $eventName;
 
     /**
+     * Why the event fired, for events that have more than one cause.
+     *
+     * Always present; `null` for every event except `subscription.updated`,
+     * where it is `updated_immediately`, `updated_on_renewal`, or `renewed`.
+     * New values may be added over time.
+     *
+     * @example renewed
+     */
+    public ?string $reason = null;
+
+    /**
      * Type of the resource this event relates to.
      *
      * @example order

@@ -20,6 +20,7 @@ class WebhookEventEndpointTest extends BaseEndpointTest
             'id' => $webhookEventId,
             'resource' => 'webhook_event',
             'eventName' => WebhookEventName::ORDER_PAID,
+            'reason' => null,
             'entityType' => 'order',
             'entityId' => $orderId,
             'object' => [
@@ -54,6 +55,7 @@ class WebhookEventEndpointTest extends BaseEndpointTest
         $this->assertEquals($webhookEventId, $event->id);
         $this->assertEquals('webhook_event', $event->resource);
         $this->assertEquals(WebhookEventName::ORDER_PAID, $event->eventName);
+        $this->assertNull($event->reason);
         $this->assertEquals('order', $event->entityType);
         $this->assertEquals($orderId, $event->entityId);
         $this->assertIsObject($event->object);
