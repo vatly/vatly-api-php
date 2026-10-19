@@ -4,7 +4,10 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
-## v0.1.0-alpha.30
+### Changed
+
+- **`testHelpers->simulateOrderPayment()` and `testHelpers->fastForwardSubscriptionRenewal()` now return typed resources** — the hydrated `Vatly\API\Resources\Order` and `Vatly\API\Resources\Subscription` respectively, instead of a raw `?object`. This matches the operations' `200` responses in the spec and brings the helpers in line with the typed `vatly-js` surface. **Breaking** for anyone reading the old `stdClass` return by array/offset — read typed properties (`$order->id`, `$subscription->status`, `$subscription->basePrice->value`, …) instead.
+- **Synced vendored `openapi.yaml`** to the latest upstream spec from `vatly-docs`: adds the `simulateOrderPayment` path and the `SimulateOrderPaymentRequest` / `EurMoney` schemas, the `CreateCheckoutRequest.billingAddress` pre-fill, the `requires_amount_review` chargeback status, and the `reason` field on `WebhookEvent` / `WebhookDelivery`. All of these were already reflected in the SDK surface; this aligns the vendored copy with the published spec.
 
 ### Added
 

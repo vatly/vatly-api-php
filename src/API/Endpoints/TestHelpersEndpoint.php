@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Vatly\API\Endpoints;
 
+use Vatly\API\Resources\Order;
+use Vatly\API\Resources\ResourceFactory;
+use Vatly\API\Resources\Subscription;
 use Vatly\API\VatlyApiClient;
 
 class TestHelpersEndpoint
@@ -28,16 +31,24 @@ class TestHelpersEndpoint
      *    `general_failure`) retries over weeks; any other value is a hard decline
      *    that drives the customer to supply a new payment method.
      *
+     * Returns the renewed `Subscription`. The renewal payment is asynchronous —
+     * the subscription's next billing cycle reflects the fast-forward, but the
+     * payment outcome arrives via the `order.paid` / `order.payment_failed`
+     * webhooks.
+     *
      * @param array<string, mixed> $body
      * @throws \Vatly\API\Exceptions\ApiException
      */
-    public function fastForwardSubscriptionRenewal(string $subscriptionId, array $body = []): ?object
+    public function fastForwardSubscriptionRenewal(string $subscriptionId, array $body = []): Subscription
     {
-        return $this->client->performHttpCall(
+        $result = $this->client->performHttpCall(
             VatlyApiClient::HTTP_POST,
             "test-helpers/subscriptions/" . urlencode($subscriptionId) . "/fast-forward-renewal",
             empty($body) ? null : json_encode($body),
         );
+
+        /** @var Subscription */
+        return ResourceFactory::createResourceFromApiResult($result, new Subscription($this->client));
     }
 
     /**
@@ -57,15 +68,22 @@ class TestHelpersEndpoint
      *    weeks; any other value is a hard decline that drives the customer to
      *    supply a new payment method.
      *
+     * Returns the `Order`. Like a live payment it is asynchronous — the returned
+     * order is still awaiting payment; follow the `order.paid` /
+     * `order.payment_failed` webhooks for the settled outcome.
+     *
      * @param array<string, mixed> $body
      * @throws \Vatly\API\Exceptions\ApiException
      */
-    public function simulateOrderPayment(string $orderId, array $body): ?object
+    public function simulateOrderPayment(string $orderId, array $body): Order
     {
-        return $this->client->performHttpCall(
+        $result = $this->client->performHttpCall(
             VatlyApiClient::HTTP_POST,
             "test-helpers/orders/" . urlencode($orderId) . "/simulate-payment",
             json_encode($body),
         );
+
+        /** @var Order */
+        return ResourceFactory::createResourceFromApiResult($result, new Order($this->client));
     }
 }

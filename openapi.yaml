@@ -79,6 +79,10 @@ info:
 
     Values are strings to preserve decimal precision.
 
+    Prices you set (product and plan prices, checkout price overrides) are
+    currently accepted in EUR only. A subscription price update or a refund amount uses
+    the subscription's or order's own currency.
+
     ## Email Format
 
     Vatly canonicalizes every email address it accepts, and stores and returns
@@ -230,54 +234,37 @@ security:
 tags:
   - name: Checkouts
     description: |
-      Create and manage hosted checkout sessions.
-      Checkouts allow customers to purchase one-off products and subscription plans through a hosted payment page.
+      Create hosted payment sessions and track how they end.
   - name: Customers
     description: |
-      Manage customer records.
-      Customers are identified by email and can have multiple subscriptions and orders.
+      Manage buyer profiles, billing details, and portal access.
   - name: One-Off Products
     description: |
-      Create and view one-off products.
-      Products can be created in the Vatly dashboard or through the API. Live
-      products are reviewed and approved by Vatly before they can be added to
-      checkouts.
+      Define one-time products customers can buy at checkout.
   - name: Subscription Plans
     description: |
-      Create and view subscription plans.
-      Plans define recurring billing intervals and pricing, and can be created
-      in the Vatly dashboard or through the API. Live plans are reviewed and
-      approved by Vatly before they can be added to checkouts.
+      Define recurring subscription plans with prices, intervals, and trials.
   - name: Orders
     description: |
-      View orders and request invoice address updates.
-      Orders are created when checkouts complete or subscriptions renew.
+      Inspect completed purchases and renewal charges.
   - name: Refunds
     description: |
-      Create and manage refunds for paid orders.
-      Supports both partial (per-item) and full refunds.
+      Issue full or item-level refunds for paid orders.
   - name: Chargebacks
     description: |
-      View chargebacks initiated by the payment provider.
-      Chargebacks are created automatically when a customer disputes a payment.
+      Review customer disputes and chargeback outcomes.
   - name: Subscriptions
     description: |
-      Manage customer subscriptions.
-      Update plans, quantities, billing details, or cancel subscriptions.
+      Update, cancel, or resume customer subscriptions.
   - name: Webhook Events
     description: |
-      View webhook events that were sent to your webhook endpoints.
-      Each event contains the full resource payload at the time the event occurred.
+      Inspect webhook events and their captured payloads.
   - name: Webhook Endpoints
     description: |
-      Register and manage the endpoints Vatly delivers webhook events to.
-      Create, list, update, and delete endpoints programmatically — useful for
-      CI, infrastructure-as-code, and ephemeral preview environments. The
-      signing secret is write-only: you supply it and it is never returned.
+      Register callback URLs and choose which events they receive.
   - name: Test Helpers
     description: |
-      Sandbox-only endpoints for simulating billing events.
-      These endpoints require a `test_` prefixed API token.
+      Simulate billing events in sandbox mode.
 paths:
   /checkouts:
     get:
@@ -412,6 +399,24 @@ paths:
                         currency: EUR
                   metadata:
                     campaign: summer-sale
+              preFilledBillingAddress:
+                summary: Checkout with a pre-filled billing address
+                value:
+                  redirectUrlSuccess: https://example.com/success
+                  redirectUrlCanceled: https://example.com/canceled
+                  billingAddress:
+                    fullName: Jane Doe
+                    companyName: Acme B.V.
+                    taxId: NL123456789B01
+                    streetAndNumber: 123 Main Street
+                    streetAdditional: Suite 456
+                    city: Amsterdam
+                    region: North Holland
+                    postalCode: 1012 AB
+                    country: NL
+                  products:
+                    - id: one_off_product_Vr8kQdFhSrG4Y3DnfsdqH
+                      quantity: 1
       responses:
         '201':
           description: Checkout created successfully
@@ -819,16 +824,46 @@ paths:
       operationId: createCustomerPortalSession
       summary: Create a hosted customer portal session
       description: |
-        Creates a short-lived, single-use link that sends an authenticated
-        customer directly to this API token's storefront in Vatly's hosted
-        portal. The session is locked to the customer, storefront, merchant, and
-        live/test mode represented by the token; it never exposes a storefront
-        picker or other stores associated with the same email address.
+        Use this endpoint when a signed-in customer clicks "manage billing",
+        "manage subscription", or a similar action in your own app.
 
-        Redirect the customer's browser to `url`. The link expires after roughly
-        15 minutes by default and can be consumed once. If an idempotency key
-        replays a response after its URL has already been used, request a
-        replacement with a fresh key.
+        **Customer portal flow:**
+
+        1. Find or create the customer with `GET /v1/customers?email=...` or
+           `POST /v1/customers`.
+        2. Create a portal session with this endpoint.
+        3. Redirect the customer's browser to the `url` returned in the response.
+
+        The returned URL is a short-lived, single-use entry link to Vatly's hosted
+        customer portal. The portal lets the customer view invoices and manage
+        subscriptions for this API token's storefront, including opening invoice
+        history, viewing subscriptions, updating eligible payment methods, and
+        canceling an active subscription. Customers with one-off purchases and no
+        subscription can use the portal for their invoice history.
+
+        The session is locked to the customer, storefront, merchant, and live/test
+        mode represented by the API token. A token for one storefront cannot issue
+        a portal link for another storefront, and the request body cannot override
+        `testmode`. For a merchant with multiple storefronts, each API token
+        issues portal links for its own storefront.
+
+        Portal sessions are available only for customers that are active, not
+        archived, have a usable email address, belong to the authenticated API
+        token's storefront and mode, and have at least one issued invoice in that
+        storefront and mode. Invoices remain eligible after a refund or
+        chargeback; a subscription without an issued invoice does not grant
+        access. If those conditions are not met, Vatly returns `404`.
+
+        The request body may be omitted or sent as `{}`. Send `returnUrl` in the
+        JSON body, not as a query parameter, when you want the hosted portal to
+        show a link back to your app. `returnUrl` must be an absolute HTTPS URL
+        without embedded credentials; Vatly displays it as a customer-clicked link
+        and never fetches or automatically redirects to it.
+
+        The link expires after roughly 15 minutes by default and can be consumed
+        once. Use an `Idempotency-Key` for safe retries while creating the
+        session. If an idempotent replay returns a URL that the customer already
+        consumed, request a replacement with a fresh key.
       tags:
         - Customers
       parameters:
@@ -3081,6 +3116,7 @@ paths:
                 id: webhook_event_Qk8pRtSvWm2NjLhYcZaE
                 resource: webhook_event
                 eventName: order.paid
+                reason: null
                 entityType: order
                 entityId: order_Hn5xWqVfKm8RjTgYbUcP
                 object:
@@ -3175,9 +3211,9 @@ paths:
       summary: List webhook endpoints
       description: |
         Returns the webhook endpoints for the authenticated merchant, filtered by
-        the testmode determined from the API token. A storefront may have up to
-        five endpoints per mode, so this returns up to five endpoints. The signing
-        secret is never included.
+        the testmode determined from the API token. A storefront can have up to
+        five endpoints per mode. Each endpoint includes its explicit event
+        subscriptions; the signing secret is never included.
       tags:
         - Webhook Endpoints
       parameters:
@@ -3204,7 +3240,7 @@ paths:
                   count:
                     type: integer
                     description: Number of items in the current page
-                    example: 1
+                    example: 2
                   links:
                     $ref: '#/components/schemas/PaginationLinks'
               example:
@@ -3221,7 +3257,18 @@ paths:
                       self:
                         href: https://api.vatly.com/v1/webhook-endpoints/webhook_QdEpFhdSrG4Y3DnfsdqsH
                         type: application/json
-                count: 1
+                  - id: webhook_Vm6zTjNsKp9LcRwXyBaF
+                    resource: webhook_endpoint
+                    testmode: false
+                    url: https://analytics.example/webhooks/vatly
+                    enabledEvents:
+                      - checkout.paid
+                    createdAt: '2024-02-10T08:15:00Z'
+                    links:
+                      self:
+                        href: https://api.vatly.com/v1/webhook-endpoints/webhook_Vm6zTjNsKp9LcRwXyBaF
+                        type: application/json
+                count: 2
                 links:
                   self:
                     href: https://api.vatly.com/v1/webhook-endpoints
@@ -3248,15 +3295,14 @@ paths:
 
         Vatly sends a `webhook.setup` verification ping to the URL and validates
         its SSL certificate; if either fails the request is rejected with `422`.
+        A storefront may register up to five endpoints in each mode, and each URL
+        must be unique within that storefront and mode. A duplicate URL or a sixth
+        endpoint returns `422`.
 
-        Optionally pass `enabledEvents` to choose the endpoint's subscription set.
-        Omit it and Vatly subscribes the endpoint to every event available at
-        registration time (not updated automatically afterwards); send an empty
-        list to create a dormant endpoint.
-
-        A storefront may have up to five endpoints per mode, and URLs must be
-        unique within the storefront and mode. A duplicate URL or a sixth endpoint
-        returns `422`.
+        `enabledEvents` is an explicit snapshot. If omitted, Vatly stores every
+        event name available at registration time; events introduced later are
+        not enabled automatically. Send `[]` for a dormant endpoint. The
+        `webhook.setup` verification event is unconditional and cannot be selected.
 
         **Use cases:**
         - Provision an endpoint from CI / infrastructure-as-code
@@ -3274,6 +3320,9 @@ paths:
             example:
               url: https://merchant.example/webhooks/vatly
               secret: whsec_3f9a1c7e2d4f7b9c5a2c1d5b7e9f3a8d
+              enabledEvents:
+                - order.paid
+                - refund.completed
       responses:
         '201':
           description: Webhook endpoint registered successfully
@@ -3348,10 +3397,12 @@ paths:
       operationId: updateWebhookEndpoint
       summary: Update a webhook endpoint
       description: |
-        Updates a webhook endpoint's `url`, its signing `secret`, or both. A new
-        URL is revalidated for reachability and a valid SSL certificate just like
-        on creation. The secret is write-only and is never returned. Sending an
-        empty body is a no-op that returns the current endpoint.
+        Updates a webhook endpoint's `url`, signing `secret`, and/or complete
+        `enabledEvents` subscription set. A new URL is revalidated for
+        reachability and a valid SSL certificate just like on creation. The secret
+        is write-only and is never returned. Omitting `enabledEvents` preserves
+        the current set; sending `[]` makes the endpoint dormant. Sending an empty
+        body is a no-op that returns the current endpoint.
 
         Repointing the URL is the supported way to follow an ephemeral
         environment whose public URL changes between runs, without rotating the
@@ -3369,6 +3420,9 @@ paths:
               $ref: '#/components/schemas/UpdateWebhookEndpointRequest'
             example:
               url: https://merchant.example/webhooks/vatly-v2
+              enabledEvents:
+                - checkout.paid
+                - order.paid
       responses:
         '200':
           description: Webhook endpoint updated successfully
@@ -3385,8 +3439,8 @@ paths:
                 testmode: false
                 url: https://merchant.example/webhooks/vatly-v2
                 enabledEvents:
+                  - checkout.paid
                   - order.paid
-                  - refund.completed
                 createdAt: '2024-01-15T10:30:00Z'
                 links:
                   self:
@@ -3655,6 +3709,12 @@ paths:
         - By default, updates are prorated
         - Set `prorate: false` to disable proration
         - Proration credits unused time and charges for the new plan
+        - On an immediate prorated update (`applyImmediately: true`,
+          `prorate: true`), the unused-time credit can be larger than the new
+          charge (typically a price decrease or downgrade). The excess cannot be
+          refunded mid-cycle, so the request returns `422` instead of applying a
+          negative charge. Apply the change at the next cycle instead
+          (`applyImmediately: false`), where the lower price simply takes effect
 
         **Timing:**
         - By default, updates apply at the end of the current billing period
@@ -3795,6 +3855,8 @@ paths:
               cancellation grace period
             - Anchor, resetAnchor or interval change on a subscription that is on
               its cancellation grace period
+            - Immediate prorated update whose unused-time credit exceeds the new
+              charge (e.g. a price decrease); apply it at the next cycle instead
           content:
             application/json:
               schema:
@@ -3828,6 +3890,13 @@ paths:
                     errors:
                       subscriptionId:
                         - Unable to move the billing anchor of subscription_Lp3mNvBxKw7RjTgYcZaE. The subscription is canceled and ends on the date already communicated for the current cycle; changing the anchor, resetting it, or switching to a different interval would move that end date. Resume the subscription first, or apply an update that keeps the current interval and anchor.
+                negativeProration:
+                  summary: Immediate prorated credit exceeds the new charge
+                  value:
+                    message: The given data was invalid.
+                    errors:
+                      subscriptionId:
+                        - 'Unable to apply immediate subscription change for subscription_Lp3mNvBxKw7RjTgYcZaE. The prorated credit would exceed the new charge. Which otherwise would have resulted in prorated amount: -4.50 EUR. Please apply this change to the next billing cycle.'
         default:
           $ref: '#/components/responses/UnexpectedError'
     delete:
@@ -3916,8 +3985,13 @@ paths:
               redirectUrlSuccess: https://example.com/billing-updated
               redirectUrlCanceled: https://example.com/account/billing
               billingAddress:
+                fullName: Jane Doe
                 companyName: Acme Corp
                 taxId: DE123456789
+                streetAndNumber: Friedrichstrasse 1
+                city: Berlin
+                postalCode: '10117'
+                country: DE
       responses:
         '200':
           description: Billing update link generated
@@ -4066,6 +4140,7 @@ paths:
         **Requirements:**
         - Only available in test mode (requires `test_` prefixed API token)
         - Subscription must belong to the authenticated merchant
+        - Subscription must be active and have a scheduled next renewal
 
         **Use cases:**
         - Test renewal billing flows without waiting for the actual billing cycle
@@ -4075,8 +4150,33 @@ paths:
         - Reach both recovery timelines by naming the decline: a soft one retries
           over weeks, a hard one asks the customer for a new payment method
 
-        Requesting an outcome for a renewal that produced no payable order, or whose
-        payment has already settled, is an error rather than a silent no-op.
+        **Asynchronous, like a live renewal.** The request is checked straight away; the
+        renewal itself runs from a queue a few seconds later, so the response shows the
+        subscription as it was before the renewal: `renewedAt`, `renewedUntil`, and
+        `nextRenewalAt` have not yet changed. Follow
+        the `order.paid` and `order.payment_failed` webhooks for the outcome, the same
+        way your live integration should.
+
+        When the renewal produces a payment, the helper creates it locally and never
+        submits a charge to the provider sandbox. When `paymentStatus` is provided,
+        that status is the deterministic test-mode outcome. When it is omitted, the
+        local payment remains pending.
+
+        After a soft simulated failure, each scheduled payment-recovery retry also
+        creates a local pending payment without contacting the provider. Use the
+        order payment simulation helper on that retry's order to settle or decline
+        it.
+
+        Because that payment exists only inside Vatly, it cannot receive a
+        provider-originated chargeback or dispute. Use a normal provider-backed test
+        payment when testing chargeback webhooks.
+
+        Only one unresolved fast-forward per subscription can exist at a time. A
+        second request while the first is queued, running, or awaiting exact
+        recovery returns `409`. If the payment mandate is not active yet, the cycle
+        still advances. A requested `failed` outcome can start payment recovery
+        without creating a payment; `paid` cannot be applied until a chargeable
+        payment exists.
       tags:
         - Test Helpers
       parameters:
@@ -4107,7 +4207,7 @@ paths:
                   paymentStatus: paid
       responses:
         '200':
-          description: Subscription renewed successfully
+          description: Fast-forward accepted; the renewal runs from the queue shortly after
           headers:
             Idempotent-Replayed:
               $ref: '#/components/headers/IdempotentReplayed'
@@ -4144,9 +4244,9 @@ paths:
                 startedAt: '2024-01-15T10:30:00Z'
                 endedAt: null
                 canceledAt: null
-                renewedAt: '2024-03-15T10:30:00Z'
-                renewedUntil: '2024-04-15T10:30:00Z'
-                nextRenewalAt: '2024-04-15T10:30:00Z'
+                renewedAt: null
+                renewedUntil: null
+                nextRenewalAt: '2024-02-15T10:30:00Z'
                 trialUntil: null
                 scheduledUpdate: null
                 links:
@@ -4156,6 +4256,164 @@ paths:
                   customer:
                     href: https://api.vatly.com/v1/customers/customer_Lp3mNvBxKw7RjTgYcZaE
                     type: application/json
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        default:
+          $ref: '#/components/responses/UnexpectedError'
+  /test-helpers/orders/{orderId}/simulate-payment:
+    post:
+      operationId: simulateOrderPayment
+      summary: Simulate an order payment outcome
+      description: |
+        Settles or declines the pending payment of a test order that was charged to
+        the customer's saved payment method, such as a subscription renewal or a
+        subscription update with `invoiceImmediately: true`.
+
+        Use this endpoint when a test-mode payment on a saved payment method is
+        still pending. Test card payments settle as paid right away. Test SEPA
+        Direct Debit payments are settled as paid automatically 10 to 15 minutes
+        after they are created, unless you simulate an outcome first: simulate
+        `failed` within the first 10 minutes to test your payment-recovery handling.
+        Locally simulated payments created by the fast-forward and payment-recovery
+        helpers are never settled automatically; they stay pending until you
+        simulate an outcome.
+
+        **Requirements:**
+        - Only available in test mode (requires `test_` prefixed API token)
+        - Order must belong to the authenticated merchant
+        - Order must be charged to a saved payment method and still await payment
+
+        **Use cases:**
+        - Receive `order.paid` for a renewal or an immediately invoiced subscription update
+        - Exercise your payment-recovery handling (`paymentStatus: failed`), which
+          delivers `order.payment_failed`
+
+        Unlike fast-forward renewal, this does not advance the billing cycle.
+
+        **Asynchronous, like a live payment.** The request is checked straight away; the
+        outcome is applied from a queue a few seconds later, so the returned order is
+        still awaiting payment. Follow the
+        `order.paid` / `order.payment_failed` webhooks for the result.
+
+        A payment that already completed or failed cannot be simulated again. When the
+        payment mandate is not active yet, no payment exists: `failed` still starts a
+        payment recovery, but `paid` is rejected. Only one simulation per order can be
+        queued at a time; a second request while one is queued returns `409`.
+      tags:
+        - Test Helpers
+      parameters:
+        - $ref: '#/components/parameters/orderId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateOrderPaymentRequest'
+            examples:
+              paid:
+                summary: Settle the payment
+                value:
+                  paymentStatus: paid
+              failed:
+                summary: Decline the payment and start a recovery
+                value:
+                  paymentStatus: failed
+              hardDecline:
+                summary: Decline it as a dead payment method
+                value:
+                  paymentStatus: failed
+                  failureReason: card_expired
+      responses:
+        '200':
+          description: Simulation accepted; the outcome is applied from the queue shortly after
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                id: order_Hn5xWqVfKm8RjTgYbUcP
+                resource: order
+                customerId: customer_Xk9pQrSvWm4NjLhYbUcP
+                testmode: true
+                metadata: {}
+                paymentMethod: null
+                createdAt: '2024-01-15T10:30:00Z'
+                status: pending
+                invoiceNumber: null
+                total:
+                  value: '35.09'
+                  currency: EUR
+                subtotal:
+                  value: '29.00'
+                  currency: EUR
+                reversedSubtotal:
+                  value: '0.00'
+                  currency: EUR
+                refundableSubtotal:
+                  value: '29.00'
+                  currency: EUR
+                taxSummary:
+                  - taxRate:
+                      name: VAT
+                      percentage: 21
+                      taxablePercentage: 100
+                    amount:
+                      value: '6.09'
+                      currency: EUR
+                lines:
+                  - id: order_item_Jk4pQrSvWm8NjLhYbUcP
+                    resource: orderline
+                    description: Pro Monthly Subscription
+                    quantity: 1
+                    basePrice:
+                      value: '29.00'
+                      currency: EUR
+                    total:
+                      value: '35.09'
+                      currency: EUR
+                    subtotal:
+                      value: '29.00'
+                      currency: EUR
+                    taxes:
+                      - taxRate:
+                          name: VAT
+                          percentage: 21
+                          taxablePercentage: 100
+                        amount:
+                          value: '6.09'
+                          currency: EUR
+                    productType: subscription
+                    productId: subscription_Hn5xWqVfKm8RjTgYbUcP
+                customerDetails:
+                  fullName: John Doe
+                  companyName: Acme Corp
+                  streetAndNumber: 123 Main Street
+                  city: Berlin
+                  postalCode: '10115'
+                  country: DE
+                  email: john@acme.com
+                links:
+                  self:
+                    href: https://api.vatly.com/v1/orders/order_Hn5xWqVfKm8RjTgYbUcP
+                    type: application/json
+                  customer:
+                    href: https://api.vatly.com/v1/customers/customer_Xk9pQrSvWm4NjLhYbUcP
+                    type: application/json
+                  customerInvoice:
+                    href: https://vatly.com/invoices/order_Hn5xWqVfKm8RjTgYbUcP
+                    type: text/html
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -4429,9 +4687,25 @@ webhooks:
       operationId: onSubscriptionUpdated
       summary: Subscription updated
       description: |
-        A subscription changed immediately (effective now, not at the next billing
-        cycle) — a plan/price/interval change or a quantity change. `object` is the
-        Subscription reflecting the new values.
+        The subscription resource changed. Fires on immediate changes, when a
+        scheduled change takes effect at renewal, and when a renewal payment is
+        confirmed. `object` is the Subscription after the change; the envelope's
+        `reason` says what changed:
+
+        - `updated_immediately`: a plan, price, interval or quantity change took
+          effect immediately.
+        - `updated_on_renewal`: a scheduled change (see
+          `subscription.update_scheduled`) took effect at a renewal. Sent at
+          renewal time, before the renewal is paid.
+        - `renewed`: a renewal payment was confirmed, so `renewedAt` and
+          `renewedUntil` moved. Sent once per renewal.
+
+        A renewal that applies a scheduled change therefore sends two events:
+        `updated_on_renewal` at renewal, then `renewed` once it is paid. Each has
+        its own stable `Vatly-Event-Id`. Test-mode renewals, including
+        fast-forwarded ones, send these events too. New `reason` values may be
+        added; treat an unknown value as a generic change and re-read the
+        Subscription from `object`.
       tags:
         - Webhook Events
       parameters:
@@ -5194,6 +5468,28 @@ components:
                 - TND
             value:
               pattern: ^\d+\.\d{3}$
+    EurMoney:
+      type: object
+      description: |
+        Monetary value in EUR. Used where the API currently accepts EUR prices
+        only: catalog prices and checkout price overrides. The `value` takes
+        exactly two decimals.
+      required:
+        - value
+        - currency
+      additionalProperties: false
+      properties:
+        value:
+          type: string
+          description: The amount as a decimal string with exactly two decimals.
+          pattern: ^\d+\.\d{2}$
+          example: '99.99'
+        currency:
+          type: string
+          description: ISO 4217 currency code. Only `EUR` is accepted.
+          enum:
+            - EUR
+          example: EUR
     Link:
       type: object
       description: HATEOAS link to a related resource
@@ -5586,11 +5882,16 @@ components:
           example: 2
         price:
           oneOf:
-            - $ref: '#/components/schemas/Money'
+            - $ref: '#/components/schemas/EurMoney'
             - type: 'null'
           description: |
-            Custom price override for this product.
-            If not provided, the product's default price is used.
+            Custom price override for this product, in EUR. If not provided, the
+            product's default price is used.
+
+            Currently only EUR is accepted; any other currency returns a `422`.
+            When the customer pays in another currency, the amount is converted
+            from this EUR price at checkout. For a subscription, the converted
+            amount and currency are then fixed, so renewals charge the same amount.
         trialDays:
           type:
             - integer
@@ -5638,6 +5939,15 @@ components:
             If provided, the customer's email will be pre-filled.
             Must match the testmode of the API token.
           example: customer_7kBmRtPvXw2NjLhYcZaE
+        billingAddress:
+          allOf:
+            - $ref: '#/components/schemas/BillingAddress'
+          description: |
+            Optional editable prefill for the billing address fields on the hosted
+            checkout. When `country` is supplied, it takes precedence over the
+            shopper's IP address for determining their country. A supplied `taxId`
+            is only a prefill; it is not registered until the buyer submits the
+            checkout.
         metadata:
           $ref: '#/components/schemas/Metadata'
         locale:
@@ -5944,8 +6254,8 @@ components:
           description: Detailed description of the product.
           example: Lifetime access to all premium features
         basePrice:
-          $ref: '#/components/schemas/Money'
-          description: Price of the product.
+          $ref: '#/components/schemas/EurMoney'
+          description: Price of the product, in EUR.
         productType:
           type: string
           description: |
@@ -6176,8 +6486,8 @@ components:
           description: Detailed description of the plan.
           example: Full access to all Pro features, billed monthly
         basePrice:
-          $ref: '#/components/schemas/Money'
-          description: Price per billing interval.
+          $ref: '#/components/schemas/EurMoney'
+          description: Price per billing interval, in EUR.
         productType:
           type: string
           description: |
@@ -6666,6 +6976,7 @@ components:
           description: |
             Current status of the chargeback dispute:
             - `pending` - Dispute received, awaiting action
+            - `requires_amount_review` - Provider amount exceeds the original order; financial completion is quarantined pending review
             - `accepted` - Merchant accepted the dispute
             - `rejected` - Dispute rejected
             - `evidence_submitted` - Evidence submitted, awaiting decision
@@ -6673,6 +6984,7 @@ components:
             - `lost` - Dispute resolved in the customer's favor
           enum:
             - pending
+            - requires_amount_review
             - accepted
             - rejected
             - evidence_submitted
@@ -6758,6 +7070,7 @@ components:
         - id
         - resource
         - eventName
+        - reason
         - entityType
         - entityId
         - object
@@ -6794,7 +7107,7 @@ components:
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
             - `subscription.billing_updated` - A subscription's billing details changed; in practice today the mandate (payment method on file), e.g. to refresh the masked payment method identifier shown to the customer
-            - `subscription.updated` - A subscription changed immediately (plan/price/interval or quantity)
+            - `subscription.updated` - A subscription changed: on an immediate change, when a scheduled change takes effect at renewal, or when a renewal payment is confirmed; see `reason`
             - `subscription.update_scheduled` - A plan/price/quantity change was scheduled for the next billing cycle; the target values are in `object.scheduledUpdate`
             - `checkout.paid` - Checkout was paid successfully
             - `checkout.failed` - Checkout payment failed
@@ -6839,6 +7152,21 @@ components:
             - subscription_plan.archived
             - subscription_plan.unarchived
           example: order.paid
+        reason:
+          type:
+            - string
+            - 'null'
+          description: |
+            Why the event fired, for events that have more than one cause. Always
+            present; `null` for every event other than `subscription.updated`.
+
+            For `subscription.updated`:
+            - `updated_immediately` - A plan, price, interval or quantity change took effect immediately
+            - `updated_on_renewal` - A scheduled plan, price, interval or quantity change took effect at a renewal
+            - `renewed` - A renewal payment was confirmed; `renewedAt` and `renewedUntil` moved
+
+            New values may be added; treat an unknown value as a generic change.
+          example: renewed
         entityType:
           type: string
           description: Type of the resource this event relates to
@@ -7051,46 +7379,6 @@ components:
           example:
             - checkout.paid
             - order.paid
-    WebhookSubscriptionEventName:
-      type: string
-      description: |
-        A public event name that can be enabled for a webhook endpoint. The
-        `webhook.setup` verification event is deliberately excluded: Vatly sends
-        that event whenever it verifies endpoint configuration, regardless of the
-        endpoint's subscriptions.
-      enum:
-        - checkout.canceled
-        - checkout.expired
-        - checkout.failed
-        - checkout.paid
-        - one_off_product.archived
-        - one_off_product.unarchived
-        - one_off_product.update_approved
-        - one_off_product.update_rejected
-        - one_off_product.update_submitted
-        - order.canceled
-        - order.chargeback_received
-        - order.chargeback_reversed
-        - order.paid
-        - order.payment_failed
-        - refund.canceled
-        - refund.completed
-        - refund.failed
-        - subscription.billing_updated
-        - subscription.canceled_for_nonpayment
-        - subscription.canceled_immediately
-        - subscription.canceled_with_grace_period
-        - subscription.cancellation_grace_period_completed
-        - subscription.resumed
-        - subscription.started
-        - subscription.update_scheduled
-        - subscription.updated
-        - subscription_plan.archived
-        - subscription_plan.unarchived
-        - subscription_plan.update_approved
-        - subscription_plan.update_rejected
-        - subscription_plan.update_submitted
-      example: order.paid
     Subscription:
       type: object
       description: |
@@ -7499,8 +7787,13 @@ components:
             - $ref: '#/components/schemas/BillingAddress'
             - type: 'null'
           description: |
-            Pre-fill billing address fields.
-            Customer can modify these values in the hosted form.
+            Optional editable prefill for the hosted billing update form. When
+            supplied, it replaces the subscription's stored billing details as the
+            prefill, so send every field you want shown; empty strings give a blank
+            form. Omit it, or send `null` or `{}`, to prefill the stored details.
+            `country` must be an ISO 3166-1 alpha-2 code. A supplied `taxId` is
+            only a prefill; it is not registered until the customer submits the
+            form.
     Mandate:
       type: object
       description: |
@@ -7580,7 +7873,10 @@ components:
           example: new.email@example.com
     CreatePortalSessionRequest:
       type: object
-      description: Options for a short-lived hosted customer portal session.
+      description: |
+        Optional settings for a short-lived hosted customer portal session. The body
+        may be omitted or sent as `{}`. `returnUrl` must be sent here in the JSON
+        body; query-string input is rejected.
       additionalProperties: false
       properties:
         returnUrl:
@@ -7597,7 +7893,10 @@ components:
           example: https://merchant.example/account/billing
     PortalSession:
       type: object
-      description: A short-lived, single-use entry link to the hosted customer portal.
+      description: |
+        A short-lived, single-use entry link to the hosted customer portal. Redirect
+        the customer's browser to `url`; do not store it as a long-lived account
+        link.
       required:
         - url
         - expiresAt
@@ -7649,8 +7948,8 @@ components:
           description: New description of the product.
           example: Now with more premium
         basePrice:
-          $ref: '#/components/schemas/Money'
-          description: New price of the product.
+          $ref: '#/components/schemas/EurMoney'
+          description: New price of the product, in EUR.
         productType:
           type: string
           description: |
@@ -7691,8 +7990,8 @@ components:
           description: New description of the plan.
           example: Billed weekly
         basePrice:
-          $ref: '#/components/schemas/Money'
-          description: New price per billing interval.
+          $ref: '#/components/schemas/EurMoney'
+          description: New price per billing interval, in EUR.
         productType:
           type: string
           enum:
@@ -7772,6 +8071,46 @@ components:
             - 'null'
           description: Additional description line for the refund
           example: 'Ticket #12345'
+    WebhookSubscriptionEventName:
+      type: string
+      description: |
+        A public event name that can be enabled for a webhook endpoint. The
+        `webhook.setup` verification event is deliberately excluded: Vatly sends
+        that event whenever it verifies endpoint configuration, regardless of the
+        endpoint's subscriptions.
+      enum:
+        - checkout.canceled
+        - checkout.expired
+        - checkout.failed
+        - checkout.paid
+        - one_off_product.archived
+        - one_off_product.unarchived
+        - one_off_product.update_approved
+        - one_off_product.update_rejected
+        - one_off_product.update_submitted
+        - order.canceled
+        - order.chargeback_received
+        - order.chargeback_reversed
+        - order.paid
+        - order.payment_failed
+        - refund.canceled
+        - refund.completed
+        - refund.failed
+        - subscription.billing_updated
+        - subscription.canceled_for_nonpayment
+        - subscription.canceled_immediately
+        - subscription.canceled_with_grace_period
+        - subscription.cancellation_grace_period_completed
+        - subscription.resumed
+        - subscription.started
+        - subscription.update_scheduled
+        - subscription.updated
+        - subscription_plan.archived
+        - subscription_plan.unarchived
+        - subscription_plan.update_approved
+        - subscription_plan.update_rejected
+        - subscription_plan.update_submitted
+      example: order.paid
     FastForwardSubscriptionRenewalRequest:
       type: object
       properties:
@@ -7781,15 +8120,62 @@ components:
             - paid
             - failed
           description: |
-            Outcome to force on the renewal payment.
+            Deterministic outcome to simulate for the test-mode renewal payment. The
+            helper uses a local payment and does not submit a charge to the provider
+            sandbox, so a provider response cannot override this requested status.
 
-            Omit it to advance the billing cycle and leave the renewal payment
+            Omit it to advance the billing cycle and leave that local payment
             pending, which is this endpoint's original behaviour.
 
             `failed` declines the payment and starts a payment recovery for the
             renewal order, so `order.payment_failed` is delivered to your webhook
             endpoint. `paid` settles it.
           example: failed
+        failureReason:
+          type: string
+          enum:
+            - insufficient_funds
+            - temporary_decline
+            - general_failure
+            - invalid_mandate
+            - mandate_canceled
+            - account_closed
+            - card_expired
+            - card_lost_or_stolen
+            - invalid_card_details
+            - authentication_failed
+            - fraud_suspected
+          description: |
+            Which decline to simulate. Only valid alongside `paymentStatus: failed`;
+            sending it with `paid` is rejected.
+
+            The reason decides how the payment recovery proceeds. A soft decline
+            (`insufficient_funds`, `temporary_decline`, `general_failure`) means the
+            payment method is still good, so recovery retries on a multi-week
+            timeline. Every other value is a hard decline: the payment method is
+            dead, retrying is pointless, and recovery instead drives the customer to
+            supply a new one on a short timeline.
+
+            Defaults to `general_failure`, which is soft.
+          default: general_failure
+          example: card_expired
+    SimulateOrderPaymentRequest:
+      type: object
+      required:
+        - paymentStatus
+      properties:
+        paymentStatus:
+          type: string
+          enum:
+            - paid
+            - failed
+          description: |
+            Outcome to force on the order's pending payment.
+
+            `paid` settles it, so `order.paid` is delivered to your webhook endpoint.
+            `failed` declines it and starts a payment recovery, so
+            `order.payment_failed` is delivered.
+          example: paid
         failureReason:
           type: string
           enum:
@@ -7865,6 +8251,7 @@ components:
         - id
         - resource
         - eventName
+        - reason
         - entityType
         - entityId
         - object
@@ -7900,7 +8287,7 @@ components:
             - `subscription.cancellation_grace_period_completed` - Subscription grace period ended
             - `subscription.resumed` - A canceled subscription was resumed during its grace period
             - `subscription.billing_updated` - A subscription's billing details changed; in practice today the mandate (payment method on file), e.g. to refresh the masked payment method identifier shown to the customer
-            - `subscription.updated` - A subscription changed immediately (plan/price/interval or quantity)
+            - `subscription.updated` - A subscription changed: on an immediate change, when a scheduled change takes effect at renewal, or when a renewal payment is confirmed; see `reason`
             - `subscription.update_scheduled` - A plan/price/quantity change was scheduled for the next billing cycle; the target values are in `object.scheduledUpdate`
             - `checkout.paid` - Checkout was paid successfully
             - `checkout.failed` - Checkout payment failed
@@ -7944,6 +8331,21 @@ components:
             - subscription_plan.unarchived
             - webhook.setup
           example: order.paid
+        reason:
+          type:
+            - string
+            - 'null'
+          description: |
+            Why the event fired, for events that have more than one cause. Always
+            present; `null` for every event other than `subscription.updated`.
+
+            For `subscription.updated`:
+            - `updated_immediately` - A plan, price, interval or quantity change took effect immediately
+            - `updated_on_renewal` - A scheduled plan, price, interval or quantity change took effect at a renewal
+            - `renewed` - A renewal payment was confirmed; `renewedAt` and `renewedUntil` moved
+
+            New values may be added; treat an unknown value as a generic change.
+          example: renewed
         entityType:
           type: string
           description: Type of the resource this event relates to

@@ -2,6 +2,8 @@
 
 namespace Vatly\Tests\Endpoints;
 
+use Vatly\API\Resources\Order;
+use Vatly\API\Resources\Subscription;
 use Vatly\API\VatlyApiClient;
 
 class TestHelpersEndpointTest extends BaseEndpointTest
@@ -16,7 +18,11 @@ class TestHelpersEndpointTest extends BaseEndpointTest
             'resource' => 'subscription',
         ]);
 
-        $this->client->testHelpers->fastForwardSubscriptionRenewal($subscriptionId);
+        $subscription = $this->client->testHelpers->fastForwardSubscriptionRenewal($subscriptionId);
+
+        $this->assertInstanceOf(Subscription::class, $subscription);
+        $this->assertEquals($subscriptionId, $subscription->id);
+        $this->assertEquals('subscription', $subscription->resource);
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
@@ -36,10 +42,13 @@ class TestHelpersEndpointTest extends BaseEndpointTest
             'resource' => 'subscription',
         ]);
 
-        $this->client->testHelpers->fastForwardSubscriptionRenewal($subscriptionId, [
+        $subscription = $this->client->testHelpers->fastForwardSubscriptionRenewal($subscriptionId, [
             'paymentStatus' => 'failed',
             'failureReason' => 'card_expired',
         ]);
+
+        $this->assertInstanceOf(Subscription::class, $subscription);
+        $this->assertEquals($subscriptionId, $subscription->id);
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
@@ -59,9 +68,13 @@ class TestHelpersEndpointTest extends BaseEndpointTest
             'resource' => 'order',
         ]);
 
-        $this->client->testHelpers->simulateOrderPayment($orderId, [
+        $order = $this->client->testHelpers->simulateOrderPayment($orderId, [
             'paymentStatus' => 'paid',
         ]);
+
+        $this->assertInstanceOf(Order::class, $order);
+        $this->assertEquals($orderId, $order->id);
+        $this->assertEquals('order', $order->resource);
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
@@ -81,10 +94,13 @@ class TestHelpersEndpointTest extends BaseEndpointTest
             'resource' => 'order',
         ]);
 
-        $this->client->testHelpers->simulateOrderPayment($orderId, [
+        $order = $this->client->testHelpers->simulateOrderPayment($orderId, [
             'paymentStatus' => 'failed',
             'failureReason' => 'card_expired',
         ]);
+
+        $this->assertInstanceOf(Order::class, $order);
+        $this->assertEquals($orderId, $order->id);
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
