@@ -12,6 +12,12 @@ All notable changes to `vatly-api-php` will be documented in this file.
 ### Fixed
 
 - `docs/Orders.md` now matches the Order resource and the API: the statuses are `created`, `pending`, `paid`, `canceled` and `expired`, the helpers are `isCreated()`, `isPaid()`, `isPending()`, `isCanceled()` and `isExpired()` plus the reversal helpers (there is no `failed` status or `isFailed()`), and the properties and examples use the real fields (`total` and `subtotal` as `Money`, no `amount`, `currency`, `taxAmount`, `paidAt`, `checkoutId` or `subscriptionId`).
+- Corrected the code samples and reference tables in `docs/`, which called methods the SDK does not have:
+  - The list samples for checkouts, customers, subscriptions, refunds and chargebacks now call `page()`. There is no `list()` method, and `limit` and `startingAfter` are positional arguments, not an array. `endingBefore` is documented too.
+  - `docs/Refunds.md` now uses `orderRefunds->createForOrderId()` and `createFullRefundForOrderId()` (there is no `refunds->create()`), the `items` request body, the real properties and statuses, and documents canceling a refund. The status helpers it listed do not exist.
+  - The hosted checkout URL is read from `$checkout->links->checkoutUrl->href`. `getCheckoutUrl()` and `getOrderId()` do not exist.
+  - Removed the `customerId` filter on the subscriptions list, which the API does not offer, in favor of `customerSubscriptions->pageForCustomerId()`.
+  - `docs/Checkouts.md` and `docs/Chargebacks.md` no longer list `merchantId`, and the properties tables now include the fields the API returns. `docs/Chargebacks.md` also lists the dispute statuses.
 
 ## v0.1.0-alpha.30
 

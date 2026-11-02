@@ -11,11 +11,13 @@ Below you'll find all properties for the Vatly Customer resource.
 | Name | Type | Description |
 | --- | --- | --- |
 | `id` | `string` | Unique identifier for the customer (`customer_...`). |
+| `resource` | `string` | Always `customer`. |
 | `email` | `string` | Customer's email address. |
 | `name` | `string \| null` | Customer's name. |
 | `testmode` | `bool` | Whether this is a test customer. |
 | `metadata` | `array` | Your custom metadata. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
+| `links` | `CustomerLinks` | Link to this customer. |
 
 ---
 
@@ -138,24 +140,22 @@ Retrieve a paginated list of all your customers.
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `startingAfter` | `string` | A cursor for pagination: return the page after this customer ID. |
+| `endingBefore` | `string` | A cursor for pagination: return the page before this customer ID. |
 | `limit` | `integer` | The number of customers to return (default: 10, max: 100). |
-| `startingAfter` | `string` | A cursor for pagination. Returns results after this customer ID. |
 
 
 
 
 ```php
-$customers = $vatly->customers->list();
+$customers = $vatly->customers->page();
 
 foreach ($customers as $customer) {
     echo $customer->email;
 }
 
-// Pagination
-$customers = $vatly->customers->list([
-    'limit' => 25,
-    'startingAfter' => 'customer_last_id',
-]);
+// Pass the cursors and limit in order: startingAfter, endingBefore, limit
+$customers = $vatly->customers->page('customer_last_id', null, 25);
 ```
 
 ---
