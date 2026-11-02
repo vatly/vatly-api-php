@@ -2,6 +2,7 @@
 
 namespace Vatly\Tests\Endpoints;
 
+use Vatly\API\Resources\Customer;
 use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
@@ -456,6 +457,63 @@ class SubscriptionEndpointTest extends BaseEndpointTest
         $subscription = $this->client->subscriptions->get($subscriptionId);
 
         $this->assertNull($subscription->cancellationReason);
+    }
+
+    /** @test */
+    public function list_for_customer_id_uses_the_customer_scoped_endpoint(): void
+    {
+        $customerId = 'customer_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $this->httpClient->setSendReturnObjectFromArray($this->customerSubscriptionsPage($customerId));
+
+        $result = $this->client->subscriptions->listForCustomerId($customerId);
+
+        $this->assertInstanceOf(SubscriptionCollection::class, $result);
+        $this->assertCount(1, $result);
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_GET,
+            self::API_ENDPOINT_URL."/customers/$customerId/subscriptions?",
+            [],
+            null
+        );
+    }
+
+    /** @test */
+    public function list_for_customer_uses_the_customer_scoped_endpoint(): void
+    {
+        $customerId = 'customer_78b146a7de7d417e9d68d7e6ef193d18';
+
+        $this->httpClient->setSendReturnObjectFromArray($this->customerSubscriptionsPage($customerId));
+
+        $customer = new Customer($this->client);
+        $customer->id = $customerId;
+
+        $this->client->subscriptions->listForCustomer($customer);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_GET,
+            self::API_ENDPOINT_URL."/customers/$customerId/subscriptions?",
+            [],
+            null
+        );
+    }
+
+    private function customerSubscriptionsPage(string $customerId): array
+    {
+        return [
+            'count' => 1,
+            'data' => [
+                ['id' => 'subscription_123', 'resource' => 'subscription', 'customerId' => $customerId],
+            ],
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/customers/'.$customerId.'/subscriptions',
+                    'type' => 'application/hal+json',
+                ],
+                'next' => null,
+                'prev' => null,
+            ],
+        ];
     }
 
     private function subscriptionDemoData(string $subscriptionId, string $status = SubscriptionStatus::ACTIVE): array
