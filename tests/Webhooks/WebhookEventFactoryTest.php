@@ -478,6 +478,7 @@ class WebhookEventFactoryTest extends BaseTestCase
             object: [
                 'customerId' => 'cus_456',
                 'status' => 'canceled',
+                'cancellationReason' => 'payment_failure',
             ],
         );
 
@@ -487,6 +488,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_123', $event->orderId);
         $this->assertSame('canceled', $event->status);
+        $this->assertSame('payment_failure', $event->cancellationReason);
     }
 
     public function test_it_creates_order_chargeback_received_event_from_fat_payload(): void
