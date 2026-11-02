@@ -181,7 +181,9 @@ info:
     4. **If recovery is exhausted** (the customer never resolves it), Vatly
        cancels the subscription: you receive **`subscription.canceled_for_nonpayment`**
        and the subscription `status` becomes `canceled` with
-       `cancellationReason: payment_failure`.
+       `cancellationReason: payment_failure`. Each order that is still unpaid is
+       canceled too: you receive **`order.canceled`** for it, and the order
+       `status` becomes `canceled` with `cancellationReason: payment_failure`.
 
     **Recommended integration** — gate access on the events, not on a timer you
     keep in sync with ours:
@@ -4188,7 +4190,10 @@ webhooks:
     post:
       operationId: onOrderCanceled
       summary: Order canceled
-      description: An order was canceled. `object` is the Order.
+      description: |
+        An order was canceled. `object` is the Order. When payment recovery for
+        an unpaid order is exhausted, the order is canceled and carries
+        `cancellationReason: payment_failure`.
       tags:
         - Webhook Events
       parameters:
@@ -6232,6 +6237,7 @@ components:
         - metadata
         - createdAt
         - status
+        - cancellationReason
         - total
         - subtotal
         - reversedSubtotal
@@ -6292,6 +6298,18 @@ components:
             - canceled
             - expired
           example: paid
+        cancellationReason:
+          type:
+            - string
+            - 'null'
+          description: |
+            Why the order was canceled. Null unless the status is `canceled`, and null
+            for orders canceled before this field existed.
+            - `payment_failure` - Payment recovery for this unpaid order was exhausted
+          enum:
+            - payment_failure
+            - null
+          example: null
         invoiceNumber:
           type:
             - string

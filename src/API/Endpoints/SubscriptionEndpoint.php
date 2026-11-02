@@ -37,7 +37,7 @@ class SubscriptionEndpoint extends BaseEndpoint
 
     public function listForCustomerId(string $customerId)
     {
-        return $this->page(null, null, null, ['customer_id' => $customerId]);
+        return $this->client->customerSubscriptions->pageForCustomerId($customerId);
     }
 
     public function listForCustomer(Customer $customerId)

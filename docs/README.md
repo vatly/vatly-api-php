@@ -57,7 +57,7 @@ $checkout = $vatly->checkouts->create([
 ]);
 
 // Redirect customer to checkout
-header('Location: ' . $checkout->getCheckoutUrl());
+header('Location: ' . $checkout->links->checkoutUrl->href);
 ```
 
 

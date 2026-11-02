@@ -65,6 +65,15 @@ class Order extends BaseResource
     /** @see OrderStatus */
     public string $status;
 
+    /**
+     * Why the order was canceled. Null unless the status is `canceled`, and null
+     * for orders canceled before this field existed.
+     *
+     * @see \Vatly\API\Types\CancellationReason
+     * @example payment_failure
+     */
+    public ?string $cancellationReason = null;
+
     public $metadata = null;
 
     public OrderLinks $links;
