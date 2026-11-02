@@ -56,11 +56,11 @@ class CheckoutEndpointTest extends BaseEndpointTest
             'testmode' => true,
             'metadata' => ['order_id' => '123456'], // optional
             'webhookUrls' => [
-                'paid' => 'https://your-website.com/webhooks/vatlify/order/123/paid',
-                'canceled' => 'https://your-website.com/webhooks/vatlify/order/123/canceled',
-                'refundCompleted' => 'https://your-website.com/webhooks/vatlify/order/123/refund-completed',
-                'refundCanceled' => 'https://your-website.com/webhooks/vatlify/order/123/refund-canceled',
-                'refundFailed' => 'https://your-website.com/webhooks/vatlify/order/123/refund-failed',
+                'paid' => 'https://your-website.com/webhooks/vatly/order/123/paid',
+                'canceled' => 'https://your-website.com/webhooks/vatly/order/123/canceled',
+                'refundCompleted' => 'https://your-website.com/webhooks/vatly/order/123/refund-completed',
+                'refundCanceled' => 'https://your-website.com/webhooks/vatly/order/123/refund-canceled',
+                'refundFailed' => 'https://your-website.com/webhooks/vatly/order/123/refund-failed',
             ],
         ], [
             //
@@ -99,11 +99,11 @@ class CheckoutEndpointTest extends BaseEndpointTest
                             "order_id": "123456"
                         },
                         "webhookUrls": {
-                            "paid": "https://your-website.com/webhooks/vatlify/order/123/paid",
-                            "canceled": "https://your-website.com/webhooks/vatlify/order/123/canceled",
-                            "refundCompleted": "https://your-website.com/webhooks/vatlify/order/123/refund-completed",
-                            "refundCanceled": "https://your-website.com/webhooks/vatlify/order/123/refund-canceled",
-                            "refundFailed": "https://your-website.com/webhooks/vatlify/order/123/refund-failed"
+                            "paid": "https://your-website.com/webhooks/vatly/order/123/paid",
+                            "canceled": "https://your-website.com/webhooks/vatly/order/123/canceled",
+                            "refundCompleted": "https://your-website.com/webhooks/vatly/order/123/refund-completed",
+                            "refundCanceled": "https://your-website.com/webhooks/vatly/order/123/refund-canceled",
+                            "refundFailed": "https://your-website.com/webhooks/vatly/order/123/refund-failed"
                         }
                     }'
         );

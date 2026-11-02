@@ -1037,7 +1037,7 @@ class WebhookEventFactoryTest extends BaseTestCase
 
     /**
      * Build the fat (signed) `order` webhook `object` — byte-shape-equivalent to
-     * a `GET /orders/{id}` body, as emitted by vatlify's `OrderPayload::fromModel`.
+     * a `GET /orders/{id}` body, as emitted by the Vatly API.
      *
      * @param array<string, mixed> $data
      *
