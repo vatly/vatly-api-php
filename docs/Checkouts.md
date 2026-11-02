@@ -49,6 +49,7 @@ Create a new hosted checkout for your customer.
 | Name | Type | Description |
 | --- | --- | --- |
 | `customerId` | `string` | Existing customer ID to associate with this checkout. |
+| `billingAddress` | `array` | Editable prefill for the billing address fields on the hosted checkout (`fullName`, `companyName`, `taxId`, `streetAndNumber`, `streetAdditional`, `city`, `region`, `postalCode`, `country`, `email`). A supplied `country` takes precedence over the shopper's IP address for determining their country. A supplied `taxId` is only a prefill, and is not registered until the buyer submits the checkout. |
 | `metadata` | `array` | Your custom metadata to store with the checkout. |
 | `locale` | `string` | Language to present the hosted checkout in — set this when you already know the customer's language. Accepts a bare language code (`de`), a BCP 47 tag (`de-AT`), or a POSIX/ISO 15897 locale (`de_DE`); all three fold to the language. Supported: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl` (anything else returns `422`). Omit (or `null`) to detect the language from the shopper's `Accept-Language` header, falling back to English. The response echoes back the folded language. |
 
