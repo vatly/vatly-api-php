@@ -51,7 +51,7 @@ use Vatly\API\Webhooks\Events\WebhookSetupReceived;
 /**
  * Turns a raw Vatly webhook into a typed event.
  *
- * Vatlify sends **fat, HMAC-signed** webhook payloads: the delivery's `object`
+ * Vatly sends **fat, HMAC-signed** webhook payloads: the delivery's `object`
  * is the full resource — byte-identical to the corresponding `GET /…/{id}` body
  * (subtotal, the complete tax summary, lines, mandate, …). The HMAC signature
  * (verified by {@see Webhook::parse()}) is the trust boundary, so the payload is

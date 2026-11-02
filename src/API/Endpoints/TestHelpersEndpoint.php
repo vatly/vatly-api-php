@@ -68,7 +68,7 @@ class TestHelpersEndpoint
      *    weeks; any other value is a hard decline that drives the customer to
      *    supply a new payment method.
      *
-     * Returns the `Order`. Like a live payment it is asynchronous — the returned
+     * Returns the `Order`. Like a live payment it is asynchronous: the returned
      * order is still awaiting payment; follow the `order.paid` /
      * `order.payment_failed` webhooks for the settled outcome.
      *

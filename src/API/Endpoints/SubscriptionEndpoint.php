@@ -37,7 +37,7 @@ class SubscriptionEndpoint extends BaseEndpoint
 
     public function listForCustomerId(string $customerId)
     {
-        return $this->page(null, null, null, ['customer_id' => $customerId]);
+        return $this->client->customerSubscriptions->pageForCustomerId($customerId);
     }
 
     public function listForCustomer(Customer $customerId)
@@ -89,7 +89,7 @@ class SubscriptionEndpoint extends BaseEndpoint
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        // path renamed in vatlify #1495 (POST /subscriptions/{id}/billing-update-link)
+        // POST /subscriptions/{id}/billing-update-link
         $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/billing-update-link";
 
         $result = $this->client->performHttpCall(

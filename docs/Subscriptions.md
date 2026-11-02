@@ -75,24 +75,25 @@ Retrieve a paginated list of all subscriptions.
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `startingAfter` | `string` | A cursor for pagination: return the page after this subscription ID. |
+| `endingBefore` | `string` | A cursor for pagination: return the page before this subscription ID. |
 | `limit` | `integer` | The number of subscriptions to return (default: 10, max: 100). |
-| `startingAfter` | `string` | A cursor for pagination. |
-| `customerId` | `string` | Filter by customer ID. |
 
 
 
 
 ```php
-$subscriptions = $vatly->subscriptions->list();
+$subscriptions = $vatly->subscriptions->page();
 
 foreach ($subscriptions as $subscription) {
     echo $subscription->id . ': ' . $subscription->status;
 }
 
-// Filter by customer
-$subscriptions = $vatly->subscriptions->list([
-    'customerId' => 'customer_abc123',
-]);
+// Pass the cursors and limit in order: startingAfter, endingBefore, limit
+$subscriptions = $vatly->subscriptions->page('subscription_last_id', null, 25);
+
+// One customer's subscriptions (GET /v1/customers/:customerId/subscriptions)
+$subscriptions = $vatly->customerSubscriptions->pageForCustomerId('customer_abc123');
 ```
 
 
@@ -115,7 +116,8 @@ Change a subscription's plan, quantity and/or price. **At least one of
 | `subscriptionPlanId` | `string` | Switch to a new plan (`subscription_plan_...`). Must match the subscription's testmode. |
 | `quantity` | `int` | The **new total** quantity (e.g. number of seats). This sets the quantity to the given value — it is not added to the current quantity. |
 | `price` | `array` | Override the recurring price: `['value' => '99.99', 'currency' => 'EUR']`. The `currency` must match the subscription's currency. Provide `price` alone to change the price in place, or combine it with `subscriptionPlanId` to switch plans at a custom price (overriding the new plan's default). |
-| `prorate` | `bool` | Prorate charges for the partial billing period (default `true`). |
+| `prorate` | `bool` | How an immediate change is priced (default `true`). `true` charges the new price for the time left on the cycle, minus a credit for the old price over that same time. `false` charges the full new price for the current cycle on top of what was already paid. **`false` does not skip the charge:** use `prorationCharge` for that. Ignored when `prorationCharge` is `false`. |
+| `prorationCharge` | `bool` | Whether an immediate change is charged at all (default `true`). With `false`, the change applies now and nothing is charged for it: a downgrade gets no credit. The next renewal bills the new price, unless a change is already scheduled for that renewal: that change still applies. During a trial, the trial keeps running and its end bills the new plan. Sending `invoiceImmediately: true`, `anchor`, `resetAnchor`, `trialUntil` or a plan with a different interval with `false` returns `422`. |
 | `applyImmediately` | `bool` | Apply the change now (`true`) or at the end of the current period (`false`, default). |
 | `invoiceImmediately` | `bool` | Generate and charge a proration invoice immediately. Only applies when `applyImmediately` and `prorate` are both `true`. Defaults to `false`, which parks the proration delta on the current cycle and bills it as a line on the next renewal invoice (and waives it if the subscription is cancelled first). **Set this to `true` on yearly and other long-interval plans**, where the deferral to the next renewal costs you the most. |
 | `anchor` | `string \| null` | Set the billing anchor to a specific date (`YYYY-MM-DD`, UTC). Cannot be combined with `resetAnchor`. |
@@ -135,6 +137,13 @@ $subscription = $vatly->subscriptions->update('subscription_123', [
     'subscriptionPlanId' => 'subscription_plan_Wt5mNvBxKw7YcZaEjLhR',
     'price' => ['value' => '99.99', 'currency' => 'EUR'],
     'applyImmediately' => true,
+]);
+
+// Switch plan now without charging for the change. The next renewal bills the new price.
+$subscription = $vatly->subscriptions->update('subscription_123', [
+    'subscriptionPlanId' => 'subscription_plan_Wt5mNvBxKw7YcZaEjLhR',
+    'applyImmediately' => true,
+    'prorationCharge' => false,
 ]);
 ```
 

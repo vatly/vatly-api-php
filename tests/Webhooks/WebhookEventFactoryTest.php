@@ -478,6 +478,7 @@ class WebhookEventFactoryTest extends BaseTestCase
             object: [
                 'customerId' => 'cus_456',
                 'status' => 'canceled',
+                'cancellationReason' => 'payment_failure',
             ],
         );
 
@@ -487,6 +488,7 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_123', $event->orderId);
         $this->assertSame('canceled', $event->status);
+        $this->assertSame('payment_failure', $event->cancellationReason);
     }
 
     public function test_it_creates_order_chargeback_received_event_from_fat_payload(): void
@@ -1037,7 +1039,7 @@ class WebhookEventFactoryTest extends BaseTestCase
 
     /**
      * Build the fat (signed) `order` webhook `object` — byte-shape-equivalent to
-     * a `GET /orders/{id}` body, as emitted by vatlify's `OrderPayload::fromModel`.
+     * a `GET /orders/{id}` body, as emitted by the Vatly API.
      *
      * @param array<string, mixed> $data
      *

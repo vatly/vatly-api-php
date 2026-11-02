@@ -13,8 +13,9 @@ Below you'll find all properties for the Vatly Checkout resource.
 | Name | Type | Description |
 | --- | --- | --- |
 | `id` | `string` | Unique identifier for the checkout (`checkout_...`). |
+| `resource` | `string` | Always `checkout`. |
 | `status` | `string` | The status of the checkout: `created`, `paid`, `canceled`, `failed`, or `expired`. |
-| `merchantId` | `string` | Your merchant ID. |
+| `customerId` | `string \| null` | The customer ID, or `null` when the checkout has no associated customer yet. |
 | `orderId` | `string \| null` | Order ID (available after successful payment). |
 | `testmode` | `bool` | Whether this is a test checkout. |
 | `redirectUrlSuccess` | `string` | Success redirect URL. |
@@ -23,6 +24,7 @@ Below you'll find all properties for the Vatly Checkout resource.
 | `locale` | `string \| null` | The language the hosted checkout is presented in (`en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`), echoed back as the folded language. `null` means none was specified and the checkout picks a language from the shopper's browser. |
 | `expiresAt` | `string \| null` | Expiration timestamp (ISO 8601). |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
+| `links` | `CheckoutLinks` | Links to this checkout, the hosted checkout page (`checkoutUrl`) and the order (`null` until there is one). |
 
 ---
 
@@ -47,6 +49,7 @@ Create a new hosted checkout for your customer.
 | Name | Type | Description |
 | --- | --- | --- |
 | `customerId` | `string` | Existing customer ID to associate with this checkout. |
+| `billingAddress` | `array` | Editable prefill for the billing address fields on the hosted checkout (`fullName`, `companyName`, `taxId`, `streetAndNumber`, `streetAdditional`, `city`, `region`, `postalCode`, `country`, `email`). A supplied `country` takes precedence over the shopper's IP address for determining their country. A supplied `taxId` is only a prefill, and is not registered until the buyer submits the checkout. |
 | `metadata` | `array` | Your custom metadata to store with the checkout. |
 | `locale` | `string` | Language to present the hosted checkout in — set this when you already know the customer's language. Accepts a bare language code (`de`), a BCP 47 tag (`de-AT`), or a POSIX/ISO 15897 locale (`de_DE`); all three fold to the language. Supported: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl` (anything else returns `422`). Omit (or `null`) to detect the language from the shopper's `Accept-Language` header, falling back to English. The response echoes back the folded language. |
 
@@ -74,7 +77,7 @@ $checkout = $vatly->checkouts->create([
 echo $checkout->locale; // 'de'
 
 // Redirect to hosted checkout
-$checkoutUrl = $checkout->getCheckoutUrl();
+$checkoutUrl = $checkout->links->checkoutUrl->href;
 ```
 
 If you want to provide your own idempotency key for this request, pass it in the optional second argument:
@@ -157,7 +160,7 @@ $checkout = $vatly->checkouts->get('checkout_abc123');
 
 echo $checkout->id;
 echo $checkout->status;
-echo $checkout->getCheckoutUrl();
+echo $checkout->links->checkoutUrl->href;
 
 if ($checkout->isPaid()) {
     $orderId = $checkout->orderId;
@@ -180,25 +183,23 @@ Retrieve a paginated list of all your checkouts.
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `startingAfter` | `string` | A cursor for pagination: return the page after this checkout ID. |
+| `endingBefore` | `string` | A cursor for pagination: return the page before this checkout ID. |
 | `limit` | `integer` | The number of checkouts to return (default: 10, max: 100). |
-| `startingAfter` | `string` | A cursor for pagination. Returns results after this checkout ID. |
 
 
 
 
 ```php
 // Get all checkouts (paginated)
-$checkouts = $vatly->checkouts->list();
+$checkouts = $vatly->checkouts->page();
 
 foreach ($checkouts as $checkout) {
     echo $checkout->id . ': ' . $checkout->status;
 }
 
-// Pagination
-$checkouts = $vatly->checkouts->list([
-    'limit' => 25,
-    'startingAfter' => 'checkout_last_id',
-]);
+// Pass the cursors and limit in order: startingAfter, endingBefore, limit
+$checkouts = $vatly->checkouts->page('checkout_last_id', null, 25);
 ```
 
 
@@ -227,9 +228,9 @@ The Checkout object provides convenient helper methods.
 
 
 ```php
-$checkout->isPaid();         // true if status is 'paid'
-$checkout->isCanceled();     // true if status is 'canceled'
-$checkout->isExpired();      // true if status is 'expired'
-$checkout->getCheckoutUrl(); // Hosted checkout page URL
-$checkout->getOrderId();     // Order ID (null if not paid)
+$checkout->isCreated();  // true if status is 'created'
+$checkout->isPaid();     // true if status is 'paid'
+$checkout->isCanceled(); // true if status is 'canceled'
+$checkout->isFailed();   // true if status is 'failed'
+$checkout->isExpired();  // true if status is 'expired'
 ```

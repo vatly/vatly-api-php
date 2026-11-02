@@ -3,14 +3,15 @@
 namespace Vatly\API\Types;
 
 /**
- * Why a subscription was canceled, or `null` unless a cancellation has been
- * requested. The public values are intentionally decoupled from Vatly's
- * internal domain reason names.
+ * Why a subscription or an order was canceled, or `null` unless it was. The
+ * public values are intentionally decoupled from Vatly's internal domain reason
+ * names. Orders only use {@see self::PAYMENT_FAILURE}.
  */
 class CancellationReason
 {
     /**
-     * Payment recovery was exhausted after failed renewals.
+     * Payment recovery was exhausted: after failed renewals for a subscription,
+     * or for this unpaid order.
      */
     public const PAYMENT_FAILURE = "payment_failure";
 

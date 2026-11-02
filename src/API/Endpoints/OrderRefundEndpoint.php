@@ -90,9 +90,12 @@ class OrderRefundEndpoint extends BaseEndpoint
     public function createFullRefundForOrderId(string $orderId, array $data, array $filters = [])
     {
         $this->parentId = $orderId;
-        $this->setResourcePath($this->resourcePath . '/full');
 
-        return parent::rest_create($data, $filters);
+        // A clone, because this instance is shared by every later call on the client.
+        $fullRefunds = clone $this;
+        $fullRefunds->setResourcePath($this->resourcePath . '/full');
+
+        return $fullRefunds->rest_create($data, $filters);
     }
 
     /**

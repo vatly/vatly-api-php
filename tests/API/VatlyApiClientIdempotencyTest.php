@@ -70,8 +70,8 @@ class VatlyApiClientIdempotencyTest extends BaseTestCase
     /** @test */
     public function auto_generates_idempotency_key_on_delete_by_default()
     {
-        // The vatlify API accepts Idempotency-Key on DELETE per its middleware's
-        // ALLOWED_METHODS (POST, PATCH, PUT, DELETE), so we auto-key DELETE too.
+        // The Vatly API accepts Idempotency-Key on POST, PATCH, PUT and DELETE,
+        // so we auto-key DELETE too.
         // This makes transient retries safe for cancel-style endpoints.
         $this->client->setIdempotencyKeyGenerator(new DefaultIdempotencyKeyGenerator());
 

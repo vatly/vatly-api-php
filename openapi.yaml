@@ -167,7 +167,10 @@ info:
 
     1. The renewal payment fails and recovery begins. You receive a single
        **`order.payment_failed`** webhook for the renewal order (sent once, when
-       recovery starts — not on each retry). The subscription's `status` stays
+       recovery starts — not on each retry). Recovery runs per payment method:
+       if another order on the same payment method fails while it is running
+       (an immediate upgrade charge, say), that order joins the recovery and
+       you receive its own `order.payment_failed`. The subscription's `status` stays
        `active` throughout recovery: it does **not** move to a "past due" state,
        and `on_grace_period` is never used for payment failure — that status
        means a *voluntary* cancellation that keeps access until the period ends.
@@ -185,7 +188,9 @@ info:
     4. **If recovery is exhausted** (the customer never resolves it), Vatly
        cancels the subscription: you receive **`subscription.canceled_for_nonpayment`**
        and the subscription `status` becomes `canceled` with
-       `cancellationReason: payment_failure`.
+       `cancellationReason: payment_failure`. Each order that is still unpaid is
+       canceled too: you receive **`order.canceled`** for it, and the order
+       `status` becomes `canceled` with `cancellationReason: payment_failure`.
 
     **Recommended integration** — gate access on the events, not on a timer you
     keep in sync with ours:
@@ -3707,14 +3712,36 @@ paths:
 
         **Proration:**
         - By default, updates are prorated
-        - Set `prorate: false` to disable proration
         - Proration credits unused time and charges for the new plan
-        - On an immediate prorated update (`applyImmediately: true`,
-          `prorate: true`), the unused-time credit can be larger than the new
-          charge (typically a price decrease or downgrade). The excess cannot be
-          refunded mid-cycle, so the request returns `422` instead of applying a
-          negative charge. Apply the change at the next cycle instead
-          (`applyImmediately: false`), where the lower price simply takes effect
+        - Set `prorationCharge: false` to apply the change now without charging
+          for it. The next renewal bills the new price, unless a change is
+          already scheduled for that renewal: that change still applies. It
+          cannot be combined with `invoiceImmediately: true`, `anchor`,
+          `resetAnchor`, `trialUntil` or an interval change, which return `422`
+        - `prorate: false` does not skip the charge: it charges the full new
+          price for the current cycle, without a credit
+        - An immediate prorated update (`applyImmediately: true`,
+          `prorate: true`) that keeps the billing anchor charges the new price
+          for the time left on the current cycle, minus a credit for the old
+          price over that same time
+        - If that charge would be negative, which is the case for any downgrade,
+          price decrease or seat reduction while time is left on the cycle, the
+          request is rejected with `422`. The difference is not credited or refunded
+          mid-cycle
+        - **Recommended:** schedule the change for the next renewal
+          (`applyImmediately: false`). The customer keeps their current plan
+          until the cycle ends, and the lower price takes effect at renewal with
+          no extra charge
+        - To switch now without a credit or a charge, set
+          `prorationCharge: false`
+        - Only switch immediately without proration (`prorate: false`) if the
+          customer must lose access to the higher plan right away. This charges
+          the full price of the new plan for the current cycle, without
+          crediting what was already paid. It is billed right away with
+          `invoiceImmediately: true`, otherwise on the next renewal invoice
+        - An immediate prorated update that moves the anchor (`anchor`,
+          `resetAnchor`, or a different interval) returns the same `422` when
+          its charge would be negative
 
         **Timing:**
         - By default, updates apply at the end of the current billing period
@@ -3730,13 +3757,35 @@ paths:
           already-communicated end date
         - Set `invoiceImmediately: true` to charge proration immediately.
           Otherwise the delta is billed as a line on the next renewal invoice,
-          and is waived if the subscription is cancelled before that renewal
+          and is waived if the subscription is cancelled before that renewal.
+          An immediate update that ends a trial is always charged right away,
+          unless the subscription is `on_grace_period` (see Trial/Anchor)
         - On yearly and other long-interval plans, prefer
           `invoiceImmediately: true` — the default defers the delta until the
           next renewal, which can be many months away, and waives it if the
           customer cancels first
 
         **Trial/Anchor:**
+        - An immediate update (`applyImmediately: true`) during a trial ends
+          the trial. Without `anchor`, the first paid cycle starts that day and
+          is charged right
+          away at the full new price, whatever `prorate` and
+          `invoiceImmediately` are set to. The next renewal is one interval
+          later, not at the original end of the trial. For example, a monthly
+          plan with a trial until 15 October that is changed on 5 October is
+          charged on 5 October and renews on 5 November
+        - With `anchor`, the first paid cycle runs to that date instead. It is
+          priced per `prorate`, charged right away, and renews on the anchor.
+          For example, the same plan changed on 5 October with `anchor` set to
+          20 October is charged for 5 to 20 October (the full monthly price with
+          `prorate: false`) and renews on 20 October
+        - A scheduled update (`applyImmediately: false`) keeps the trial; the
+          new plan, price or quantity applies from the first paid cycle
+        - An immediate update with `prorationCharge: false` also keeps the
+          trial. The change applies now, and the trial end bills the new plan
+        - A subscription whose `status` is `on_grace_period` still ends on its
+          communicated date: an immediate update ends its trial without
+          starting a paid cycle, and `invoiceImmediately` applies as usual
         - Use `trialUntil` to extend or set a trial period
         - Use `anchor` to set the billing anchor to a specific date, or
           `resetAnchor: true` to reset it to the current date
@@ -3759,6 +3808,12 @@ paths:
                   subscriptionPlanId: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
                   prorate: true
                   applyImmediately: true
+              noCharge:
+                summary: Switch plans now without charging for the change
+                value:
+                  subscriptionPlanId: subscription_plan_Wt5mNvBxKw7YcZaEjLhR
+                  applyImmediately: true
+                  prorationCharge: false
               quantity:
                 summary: Set the number of seats to 10
                 value:
@@ -3855,8 +3910,11 @@ paths:
               cancellation grace period
             - Anchor, resetAnchor or interval change on a subscription that is on
               its cancellation grace period
-            - Immediate prorated update whose unused-time credit exceeds the new
-              charge (e.g. a price decrease); apply it at the next cycle instead
+            - Immediate prorated update whose charge would be negative. When the
+              update keeps the billing anchor this is any downgrade, price
+              decrease or seat reduction while time is left on the cycle.
+              Schedule it for the next renewal (`applyImmediately: false`)
+              instead
           content:
             application/json:
               schema:
@@ -3895,8 +3953,8 @@ paths:
                   value:
                     message: The given data was invalid.
                     errors:
-                      subscriptionId:
-                        - 'Unable to apply immediate subscription change for subscription_Lp3mNvBxKw7RjTgYcZaE. The prorated credit would exceed the new charge. Which otherwise would have resulted in prorated amount: -4.50 EUR. Please apply this change to the next billing cycle.'
+                      applyImmediately:
+                        - 'Unable to apply immediate subscription change for subscription_Lp3mNvBxKw7RjTgYcZaE. The prorated credit would exceed the new charge. Which otherwise would have resulted in prorated amount: -4.50 EUR. Please apply this change to the next billing cycle. Set applyImmediately to false to schedule it for the next billing cycle, or set prorate to false to apply it now without proration.'
         default:
           $ref: '#/components/responses/UnexpectedError'
     delete:
@@ -4446,7 +4504,10 @@ webhooks:
     post:
       operationId: onOrderCanceled
       summary: Order canceled
-      description: An order was canceled. `object` is the Order.
+      description: |
+        An order was canceled. `object` is the Order. When payment recovery for
+        an unpaid order is exhausted, the order is canceled and carries
+        `cancellationReason: payment_failure`.
       tags:
         - Webhook Events
       parameters:
@@ -4497,9 +4558,14 @@ webhooks:
       summary: Order payment failed
       description: |
         A payment for this order failed and Vatly's automated payment recovery
-        (dunning) has started. Delivered once, when recovery begins — not on each
-        retry attempt. If recovery succeeds you receive `order.paid` for the same
-        order; if it is exhausted the related subscription is canceled. See
+        (dunning) now covers it. Delivered once per failed order, when the order
+        enters recovery, and not on each retry attempt. Recovery is per payment
+        method: if another order on the same payment method fails while recovery
+        is already running (for example an immediate upgrade charge during a
+        renewal's recovery), it joins that recovery and you receive a separate
+        `order.payment_failed` for it. If recovery succeeds you receive
+        `order.paid` for each recovered order; if it is exhausted the related
+        subscriptions are canceled. See
         "Handling failed subscription payments" in the API overview for the full
         recovery flow and the recommended way to gate access.
         `entityType` is `order` and `object` is the Order.
@@ -5302,6 +5368,10 @@ components:
           same resource at the same version). Reload the latest state
           and retry — the conflict resolves itself unless contention is
           sustained.
+        - **Refund already being created for this order**
+          (`details.retry_with_new_idempotency_key = true`). Another refund of
+          the same order is still being created. This response is stored for the
+          `Idempotency-Key` you sent, so retry with a new key.
 
         The HTTP status (`409`) is shared by all cases; the `message`
         distinguishes them.
@@ -5396,8 +5466,8 @@ components:
           description: |
             ISO 4217 currency code. Vatly aligns its supported currency set
             with its payment provider's; currencies are enabled as PSP support and
-            downstream tax/FX coverage are in place. Expansion beyond this
-            list is tracked in issue #1404.
+            downstream tax/FX coverage are in place. More currencies may be added
+            later.
           enum:
             - EUR
             - USD
@@ -6542,6 +6612,7 @@ components:
         - metadata
         - createdAt
         - status
+        - cancellationReason
         - total
         - subtotal
         - reversedSubtotal
@@ -6602,6 +6673,18 @@ components:
             - canceled
             - expired
           example: paid
+        cancellationReason:
+          type:
+            - string
+            - 'null'
+          description: |
+            Why the order was canceled. Null unless the status is `canceled`, and null
+            for orders canceled before this field existed.
+            - `payment_failure` - Payment recovery for this unpaid order was exhausted
+          enum:
+            - payment_failure
+            - null
+          example: null
         invoiceNumber:
           type:
             - string
@@ -7096,7 +7179,7 @@ components:
             - `order.canceled` - Order was canceled
             - `order.chargeback_received` - Chargeback was received for an order
             - `order.chargeback_reversed` - Chargeback was reversed
-            - `order.payment_failed` - A payment failed and a dunning process was initiated for the order
+            - `order.payment_failed` - A payment failed and the order entered payment recovery (dunning); sent once per failed order
             - `refund.completed` - Refund was processed successfully
             - `refund.failed` - Refund processing failed
             - `refund.canceled` - Refund was canceled
@@ -7697,17 +7780,44 @@ components:
         prorate:
           type: boolean
           description: |
-            Whether to prorate charges for the partial billing period.
-            If true, the customer is credited for unused time on the old plan
-            and charged for remaining time on the new plan.
+            How an immediate change is priced.
+            - `true`: the new price for the time left on the cycle, minus a credit
+              for the old price over that same time
+            - `false`: the full new price for the current cycle, on top of what was
+              already paid. This does not skip the charge; use
+              `prorationCharge: false` for that
+
+            Ignored when `prorationCharge` is `false`.
           default: true
           example: true
+        prorationCharge:
+          type: boolean
+          description: |
+            Whether an immediate change is charged at all.
+            - `true`: charged as set by `prorate` and `invoiceImmediately`
+            - `false`: the change applies now and nothing is charged for it. The
+              next renewal bills the new price, unless a change is already
+              scheduled for that renewal: that change still applies. A downgrade
+              gets no credit. During a trial the trial keeps running and its end
+              bills the new plan
+
+            With `false`, `invoiceImmediately: true`, `anchor`, `resetAnchor`,
+            `trialUntil` and a change to a plan with a different interval are
+            rejected with `422`: each would start or bill a new cycle now.
+          default: true
+          example: false
         applyImmediately:
           type: boolean
           description: |
             Whether to apply changes immediately or at the end of the current billing period.
             - `true`: Changes take effect immediately (with proration if enabled)
             - `false`: Changes apply when the current period ends
+
+            During a trial, `true` ends the trial and starts the first paid cycle,
+            charged right away. Without `anchor` the cycle starts that day at the
+            full new price; with `anchor` it runs to that date, priced per
+            `prorate`. A subscription that is `on_grace_period` starts no paid
+            cycle and still ends on its communicated date.
           default: false
           example: true
         invoiceImmediately:
@@ -7730,6 +7840,10 @@ components:
             in between — so the longer the interval, the more the deferral costs
             you. Charging immediately trades that for a separate invoice and
             payment (and its transaction fee) per change.
+
+            An immediate update during a trial is always charged right away,
+            whatever this is set to, because it starts the first paid cycle. This
+            does not apply to a subscription that is `on_grace_period`.
           default: false
           example: false
         anchor:
@@ -8276,7 +8390,7 @@ components:
             - `order.canceled` - Order was canceled
             - `order.chargeback_received` - Chargeback was received for an order
             - `order.chargeback_reversed` - Chargeback was reversed
-            - `order.payment_failed` - A payment failed and a dunning process was initiated for the order
+            - `order.payment_failed` - A payment failed and the order entered payment recovery (dunning); sent once per failed order
             - `refund.completed` - Refund was processed successfully
             - `refund.failed` - Refund processing failed
             - `refund.canceled` - Refund was canceled

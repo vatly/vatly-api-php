@@ -13,6 +13,10 @@ use Vatly\API\Types\WebhookEventName;
  * new `status` ("canceled"), so — unlike `order.paid` — no API enrichment is
  * needed: a built-in reaction only mirrors the status onto the local row.
  *
+ * When payment recovery for an unpaid order is exhausted, the `object` carries
+ * `cancellationReason: payment_failure`, surfaced here as
+ * {@see self::$cancellationReason}.
+ *
  * @immutable
  */
 class OrderCanceled
@@ -24,6 +28,13 @@ class OrderCanceled
         public string $orderId,
         public string $status,
         public bool $testmode,
+        /**
+         * Why the order was canceled, read straight from the delivery, or `null`
+         * if absent.
+         *
+         * @see \Vatly\API\Types\CancellationReason
+         */
+        public ?string $cancellationReason = null,
     ) {
         //
     }
@@ -35,6 +46,7 @@ class OrderCanceled
             orderId: $webhook->entityId,
             status: $webhook->object['status'] ?? 'canceled',
             testmode: $webhook->testmode,
+            cancellationReason: $webhook->object['cancellationReason'] ?? null,
         );
     }
 }
