@@ -8,6 +8,7 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 - **`Order->cancellationReason`**: nullable string explaining why an order was canceled. `payment_failure` when payment recovery for the unpaid order was exhausted, otherwise `null`. Always `null` unless the order's `status` is `canceled`, and `null` for orders canceled before the API exposed this field. Compare against `Vatly\API\Types\CancellationReason::PAYMENT_FAILURE`.
 - **`cancellationReason` on the `OrderCanceled` webhook DTO**: a nullable `?string`, read straight from the delivery's `object`. Additive: it is an optional constructor argument that defaults to `null`.
+- **`orderId` on the refund webhook DTOs**: `RefundCompleted`, `RefundFailed`, and `RefundCanceled` now expose `orderId` (`?string`): the credit order Vatly creates from a refund, whose `customerInvoice` is the credit note. It is hydrated from the signed refund payload like every other field (the id is already present there), so a consumer stamping the credit note can reach it with a single `GetOrder` instead of first re-fetching the refund with `GetRefund`. `null` until a credit order has materialized.
 
 ### Fixed
 
