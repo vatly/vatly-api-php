@@ -31,7 +31,7 @@ class TestHelpersEndpoint
      *    `general_failure`) retries over weeks; any other value is a hard decline
      *    that drives the customer to supply a new payment method.
      *
-     * Returns the renewed `Subscription`. The renewal payment is asynchronous —
+     * Returns the renewed `Subscription`. The renewal payment is asynchronous:
      * the subscription's next billing cycle reflects the fast-forward, but the
      * payment outcome arrives via the `order.paid` / `order.payment_failed`
      * webhooks.
