@@ -13,9 +13,10 @@ use Vatly\API\Types\WebhookEventName;
  * Event representing a refund completing (funds returned to the customer) at Vatly.
  *
  * Carries the full tax breakdown so consumers can reconcile a local refund row
- * without a follow-up API call. The webhook event factory enriches via
- * `GetRefund` before dispatching — mirroring the `order.paid` pattern, since
- * refund tax data is compliance-critical and must be authoritative.
+ * without a follow-up API call. The webhook event factory hydrates this event
+ * straight from the fat, signed refund webhook payload (byte-identical to
+ * `GET /v1/refunds/{id}`), so the breakdown is authoritative with zero network
+ * round-trip — mirroring the `order.paid` pattern.
  *
  * @immutable
  */
@@ -32,6 +33,14 @@ class RefundCompleted
         public TaxSummaryCollection $taxSummary,
         public string $originalOrderId,
         public bool $testmode,
+        /**
+         * The credit order Vatly created from this refund, when one exists; its
+         * customerInvoice is the credit note. Carried so consumers can reach the
+         * credit note with a single GetOrder — the id is already present in the
+         * signed payload, so re-fetching it with a GetRefund is pure overhead.
+         * Null until a credit order is materialized.
+         */
+        public ?string $orderId = null,
     ) {
         //
     }
@@ -47,6 +56,7 @@ class RefundCompleted
             taxSummary: $refund->taxSummary,
             originalOrderId: $refund->originalOrderId,
             testmode: $refund->testmode,
+            orderId: $refund->orderId,
         );
     }
 }

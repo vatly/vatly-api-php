@@ -21,6 +21,7 @@ class RefundEventsTest extends BaseTestCase
         $refund->status = $status;
         $refund->customerId = 'cus_456';
         $refund->originalOrderId = 'ord_789';
+        $refund->orderId = 'ord_credit_1';
         $refund->testmode = true;
         $refund->total = new Money('EUR', '24.20');
         $refund->subtotal = new Money('EUR', '20.00');
@@ -58,10 +59,24 @@ class RefundEventsTest extends BaseTestCase
         $this->assertSame('20.00', $event->subtotal->value);
         $this->assertSame(2000, $event->subtotal->toCents());
         $this->assertSame('ord_789', $event->originalOrderId);
+        $this->assertSame('ord_credit_1', $event->orderId);
         $this->assertTrue($event->testmode);
         $this->assertSame($refund->taxSummary, $event->taxSummary);
         $this->assertCount(1, $event->taxSummary->items);
         $this->assertSame('VAT', $event->taxSummary->items[0]->taxRate->name);
+    }
+
+    public function test_refund_completed_order_id_defaults_to_null_when_no_credit_order(): void
+    {
+        // A refund whose credit order has not materialized leaves `orderId` null;
+        // the event must carry that through rather than fabricate an id, so a
+        // consumer stamping the credit note knows to wait for a later delivery.
+        $refund = $this->makeApiRefund('refunded');
+        $refund->orderId = null;
+
+        $event = RefundCompleted::fromApiRefund($refund);
+
+        $this->assertNull($event->orderId);
     }
 
     public function test_refund_failed_builds_from_api_refund(): void
