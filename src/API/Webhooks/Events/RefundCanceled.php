@@ -16,7 +16,7 @@ use Vatly\API\Types\WebhookEventName;
  * without a follow-up API call. The webhook event factory hydrates this event
  * straight from the fat, signed refund webhook payload (byte-identical to
  * `GET /v1/refunds/{id}`), so the breakdown is authoritative with zero network
- * round-trip — mirroring the `order.paid` pattern.
+ * round-trip, mirroring the `order.paid` pattern.
  *
  * @immutable
  */

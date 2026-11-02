@@ -6,11 +6,9 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Added
 
-<<<<<<< HEAD
-- **`orderId` on the refund webhook DTOs** — `RefundCompleted`, `RefundFailed`, and `RefundCanceled` now expose `orderId` (`?string`): the credit order Vatly creates from a refund, whose `customerInvoice` is the credit note. It is hydrated from the signed refund payload like every other field (the id is already present there), so a consumer stamping the credit note can reach it with a single `GetOrder` instead of first re-fetching the refund with `GetRefund`. `null` until a credit order has materialized.
-=======
 - **`Order->cancellationReason`**: nullable string explaining why an order was canceled. `payment_failure` when payment recovery for the unpaid order was exhausted, otherwise `null`. Always `null` unless the order's `status` is `canceled`, and `null` for orders canceled before the API exposed this field. Compare against `Vatly\API\Types\CancellationReason::PAYMENT_FAILURE`.
 - **`cancellationReason` on the `OrderCanceled` webhook DTO**: a nullable `?string`, read straight from the delivery's `object`. Additive: it is an optional constructor argument that defaults to `null`.
+- **`orderId` on the refund webhook DTOs**: `RefundCompleted`, `RefundFailed`, and `RefundCanceled` now expose `orderId` (`?string`): the credit order Vatly creates from a refund, whose `customerInvoice` is the credit note. It is hydrated from the signed refund payload like every other field (the id is already present there), so a consumer stamping the credit note can reach it with a single `GetOrder` instead of first re-fetching the refund with `GetRefund`. `null` until a credit order has materialized.
 
 ### Fixed
 
@@ -23,7 +21,6 @@ All notable changes to `vatly-api-php` will be documented in this file.
   - The hosted checkout URL is read from `$checkout->links->checkoutUrl->href`. `getCheckoutUrl()` and `getOrderId()` do not exist.
   - Removed the `customerId` filter on the subscriptions list, which the API does not offer, in favor of `customerSubscriptions->pageForCustomerId()`.
   - `docs/Checkouts.md` and `docs/Chargebacks.md` no longer list `merchantId`, and the properties tables now include the fields the API returns. `docs/Chargebacks.md` also lists the dispute statuses.
->>>>>>> docs/list-to-page
 
 ## v0.1.0-alpha.30
 
