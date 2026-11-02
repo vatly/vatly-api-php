@@ -11,6 +11,8 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Fixed
 
+- **`orderRefunds->createFullRefundForOrderId()` no longer changes the path of later calls.** It left `/full` on the shared endpoint, so every later `orderRefunds` call on the same client went to the wrong URL: a partial refund was sent to `/orders/{id}/refunds/full`, and a second full refund to `/refunds/full/full`. `Order::fullRefund()` was affected too. Long-lived clients, such as queue workers, are the ones that could hit this.
+- **`subscriptions->listForCustomerId()` and `listForCustomer()` now return only that customer's subscriptions.** They called `GET /subscriptions` with a `customer_id` parameter the API does not support, so the response held every subscription for the API token's storefront and mode. They now call `GET /customers/{customerId}/subscriptions`. If you worked around this by filtering the result yourself, that filter is no longer needed.
 - `docs/Orders.md` now matches the Order resource and the API: the statuses are `created`, `pending`, `paid`, `canceled` and `expired`, the helpers are `isCreated()`, `isPaid()`, `isPending()`, `isCanceled()` and `isExpired()` plus the reversal helpers (there is no `failed` status or `isFailed()`), and the properties and examples use the real fields (`total` and `subtotal` as `Money`, no `amount`, `currency`, `taxAmount`, `paidAt`, `checkoutId` or `subscriptionId`).
 - Corrected the code samples and reference tables in `docs/`, which called methods the SDK does not have:
   - The list samples for checkouts, customers, subscriptions, refunds and chargebacks now call `page()`. There is no `list()` method, and `limit` and `startingAfter` are positional arguments, not an array. `endingBefore` is documented too.

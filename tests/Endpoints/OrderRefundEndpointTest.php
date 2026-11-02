@@ -233,6 +233,51 @@ class OrderRefundEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function a_full_refund_does_not_change_the_path_of_later_calls(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => 'refund_dummy_id',
+            'resource' => 'refund',
+        ]);
+
+        $this->client->orderRefunds->createFullRefundForOrderId('order_full', []);
+
+        $this->client->orderRefunds->createForOrderId('order_partial', ['items' => []]);
+        $this->assertWasSent(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/orders/order_partial/refunds',
+            [],
+            '{"items":[]}'
+        );
+
+        $this->client->orderRefunds->createFullRefundForOrderId('order_second_full', []);
+        $this->assertWasSent(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/orders/order_second_full/refunds/full',
+            [],
+            null
+        );
+
+        $this->client->orderRefunds->getForOrderId('order_read', 'refund_dummy_id');
+        $this->assertWasSent(
+            VatlyApiClient::HTTP_GET,
+            self::API_ENDPOINT_URL.'/orders/order_read/refunds/refund_dummy_id',
+            [],
+            null
+        );
+
+        $this->httpClient->setSendReturnNull();
+
+        $this->client->orderRefunds->cancelRefundForOrderId('order_cancel', 'refund_dummy_id');
+        $this->assertWasSent(
+            'DELETE',
+            self::API_ENDPOINT_URL.'/orders/order_cancel/refunds/refund_dummy_id',
+            [],
+            null
+        );
+    }
+
+    /** @test */
     public function it_can_create_a_refund_directly_from_an_order(): void
     {
         $responseBodyArray = [
