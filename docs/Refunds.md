@@ -11,56 +11,94 @@ Below you'll find all properties for the Vatly Refund resource.
 | Name | Type | Description |
 | --- | --- | --- |
 | `id` | `string` | Unique identifier for the refund (`refund_...`). |
-| `status` | `string` | The status: `pending`, `completed`, `failed`, or `canceled`. |
-| `orderId` | `string` | The order ID being refunded. |
-| `amount` | `integer` | Refund amount in cents. |
-| `currency` | `string` | Three-letter ISO currency code. |
-| `reason` | `string \| null` | Reason for the refund. |
+| `resource` | `string` | Always `refund`. |
+| `status` | `string` | The refund status (see [Refund statuses](#refund-statuses)). |
+| `customerId` | `string` | ID of the customer who receives the refund. |
+| `originalOrderId` | `string` | The ID of the order being refunded. |
+| `orderId` | `string \| null` | The credit note order ID, `null` until the refund is processed. |
+| `total` | `Money` | Total amount including taxes. |
+| `subtotal` | `Money` | Subtotal amount before taxes. |
+| `taxSummary` | `TaxSummaryCollection` | Tax breakdown by rate. |
+| `lines` | `array` | The refund lines. Use `$refund->lines()` for a collection of `RefundLine` objects. |
 | `testmode` | `bool` | Whether this is a test refund. |
-| `metadata` | `array` | Your custom metadata. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
+| `links` | `RefundLinks` | Links to this refund, the original order and the credit note order (`null` until there is one). |
 
 ---
 
-## Create a refund
+## Create a partial refund
 
-`POST /v1/refunds`
+`POST /v1/orders/:orderId/refunds`
 
 
 
-Create a refund for an order.
+Refund part of an order, line by line.
 
 ### Required attributes
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `orderId` | `string` | The ID of the order to refund. |
+| `items` | `array` | The order lines to refund. See [Refund items](#refund-items) below. |
 
 ### Optional attributes
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `amount` | `integer` | Partial refund amount in cents (omit for full refund). |
-| `reason` | `string` | Reason for the refund. |
+| `metadata` | `array` | Your custom metadata. |
+
+### Refund items
+
+| Name | Type | Required | Description |
+| --- | --- | --- | --- |
+| `itemId` | `string` | Yes | The ID of the order line to refund. |
+| `amount` | `array` | Yes | Amount to refund for this line before taxes: `['value' => '10.00', 'currency' => 'EUR']`. Cannot exceed what is left to refund for the line. |
+| `description` | `string \| null` | No | Custom description for this refund line. |
+| `descriptionAdditionalLine` | `string \| null` | No | Additional description line. |
 
 
 
 
 ```php
-// Full refund
-$refund = $vatly->refunds->create([
-    'orderId' => 'order_abc123',
-    'reason' => 'Customer requested refund',
-]);
-
-// Partial refund
-$refund = $vatly->refunds->create([
-    'orderId' => 'order_abc123',
-    'amount' => 1000,  // Refund €10.00
+$refund = $vatly->orderRefunds->createForOrderId('order_abc123', [
+    'items' => [
+        [
+            'itemId' => 'order_item_abc123',
+            'amount' => ['value' => '10.00', 'currency' => 'EUR'],
+            'description' => 'Partial refund',
+        ],
+    ],
 ]);
 
 echo $refund->id;
 echo $refund->status;
+```
+
+
+
+---
+
+## Create a full refund
+
+`POST /v1/orders/:orderId/refunds/full`
+
+
+
+Refund everything that can still be refunded on an order.
+
+### Optional attributes
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `metadata` | `array` | Your custom metadata. |
+
+
+
+
+```php
+$refund = $vatly->orderRefunds->createFullRefundForOrderId('order_abc123', []);
+
+// Or from an order you already fetched
+$refund = $order->fullRefund([]);
 ```
 
 
@@ -82,7 +120,7 @@ Retrieve a refund by its ID.
 $refund = $vatly->refunds->get('refund_abc123');
 
 echo $refund->status;
-echo $refund->amount / 100 . ' ' . $refund->currency;
+echo $refund->total->value . ' ' . $refund->total->currency;
 ```
 
 
@@ -101,18 +139,47 @@ Retrieve a paginated list of all refunds.
 
 | Name | Type | Description |
 | --- | --- | --- |
+| `startingAfter` | `string` | A cursor for pagination: return the page after this refund ID. |
+| `endingBefore` | `string` | A cursor for pagination: return the page before this refund ID. |
 | `limit` | `integer` | The number of refunds to return (default: 10, max: 100). |
-| `startingAfter` | `string` | A cursor for pagination. |
 
 
 
 
 ```php
-$refunds = $vatly->refunds->list();
+$refunds = $vatly->refunds->page();
 
 foreach ($refunds as $refund) {
     echo $refund->id . ': ' . $refund->status;
 }
+
+// Pass the cursors and limit in order: startingAfter, endingBefore, limit
+$refunds = $vatly->refunds->page('refund_last_id', null, 25);
+
+// One order's refunds (GET /v1/orders/:orderId/refunds)
+$refunds = $vatly->orderRefunds->pageForOrderId('order_abc123');
+```
+
+
+
+---
+
+## Cancel a refund
+
+`DELETE /v1/orders/:orderId/refunds/:refundId`
+
+
+
+Cancel a refund that has not been processed yet. Once it is `processing`, cancellation is no longer possible.
+
+
+
+
+```php
+$vatly->orderRefunds->cancelRefundForOrderId('order_abc123', 'refund_abc123');
+
+// Or from a refund you already fetched
+$refund->cancel();
 ```
 
 
@@ -123,25 +190,19 @@ foreach ($refunds as $refund) {
 
 | Status | Description |
 |--------|-------------|
-| `pending` | Refund is being processed |
-| `completed` | Refund completed successfully |
-| `failed` | Refund failed |
+| `pending` | Refund is ready to be sent to the bank |
+| `queued` | Refund is queued due to a lack of balance |
+| `processing` | Refund is being processed (cancellation is no longer possible) |
+| `refunded` | Refund has been processed successfully |
+| `failed` | Refund failed after processing |
 | `canceled` | Refund was canceled |
 
----
-
-## Helper methods
-
-
-
-The Refund object provides convenient helper methods.
-
-
-
+The Refund object has no status helper methods. Compare `$refund->status` against the `Vatly\API\Types\RefundStatus` constants:
 
 ```php
-$refund->isPending();     // true if status is 'pending'
-$refund->isCompleted();   // true if status is 'completed'
-$refund->isFailed();      // true if status is 'failed'
-$refund->isCanceled();    // true if status is 'canceled'
+use Vatly\API\Types\RefundStatus;
+
+if ($refund->status === RefundStatus::REFUNDED) {
+    // The money is on its way back to the customer
+}
 ```
