@@ -5122,8 +5122,8 @@ components:
           description: |
             ISO 4217 currency code. Vatly aligns its supported currency set
             with its payment provider's; currencies are enabled as PSP support and
-            downstream tax/FX coverage are in place. Expansion beyond this
-            list is tracked in issue #1404.
+            downstream tax/FX coverage are in place. More currencies may be added
+            later.
           enum:
             - EUR
             - USD
