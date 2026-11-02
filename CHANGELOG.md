@@ -4,6 +4,15 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **`Order->cancellationReason`**: nullable string explaining why an order was canceled. `payment_failure` when payment recovery for the unpaid order was exhausted, otherwise `null`. Always `null` unless the order's `status` is `canceled`, and `null` for orders canceled before the API exposed this field. Compare against `Vatly\API\Types\CancellationReason::PAYMENT_FAILURE`.
+- **`cancellationReason` on the `OrderCanceled` webhook DTO**: a nullable `?string`, read straight from the delivery's `object`. Additive: it is an optional constructor argument that defaults to `null`.
+
+### Fixed
+
+- `docs/Orders.md` now matches the Order resource and the API: the statuses are `created`, `pending`, `paid`, `canceled` and `expired`, the helpers are `isCreated()`, `isPaid()`, `isPending()`, `isCanceled()` and `isExpired()` plus the reversal helpers (there is no `failed` status or `isFailed()`), and the properties and examples use the real fields (`total` and `subtotal` as `Money`, no `amount`, `currency`, `taxAmount`, `paidAt`, `checkoutId` or `subscriptionId`).
+
 ## v0.1.0-alpha.30
 
 ### Added

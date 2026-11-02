@@ -6,6 +6,7 @@ use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\Order;
 use Vatly\API\Resources\OrderCollection;
 use Vatly\API\Resources\OrderLine;
+use Vatly\API\Types\CancellationReason;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
 use Vatly\API\VatlyApiClient;
@@ -381,6 +382,48 @@ class OrderEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function it_hydrates_cancellation_reason(): void
+    {
+        $data = $this->canceledOrderDemoData();
+        $data['cancellationReason'] = 'payment_failure';
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Order $order */
+        $order = $this->client->orders->get($data['id']);
+
+        $this->assertTrue($order->isCanceled());
+        $this->assertSame(CancellationReason::PAYMENT_FAILURE, $order->cancellationReason);
+    }
+
+    /** @test */
+    public function it_exposes_null_cancellation_reason_when_the_api_returns_null(): void
+    {
+        $data = $this->canceledOrderDemoData();
+        $data['cancellationReason'] = null;
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Order $order */
+        $order = $this->client->orders->get($data['id']);
+
+        $this->assertNull($order->cancellationReason);
+    }
+
+    /** @test */
+    public function cancellation_reason_defaults_to_null_when_absent(): void
+    {
+        $data = $this->canceledOrderDemoData();
+
+        $this->httpClient->setSendReturnObjectFromArray($data);
+
+        /** @var Order $order */
+        $order = $this->client->orders->get($data['id']);
+
+        $this->assertNull($order->cancellationReason);
+    }
+
+    /** @test */
     public function reversal_predicates_reflect_the_reversed_subtotal(): void
     {
         // Not reversed.
@@ -417,6 +460,30 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->expectException(\InvalidArgumentException::class);
 
         $order->isFullyReversed();
+    }
+
+    private function canceledOrderDemoData(): array
+    {
+        return [
+            'id' => 'order_66fc8a40718b46bea50f1a25f456d243',
+            'resource' => 'order',
+            'testmode' => false,
+            'createdAt' => '2023-01-11T10:50:50+02:00',
+            'status' => OrderStatus::STATUS_CANCELED,
+            'total' => ['value' => '96.00', 'currency' => 'EUR'],
+            'subtotal' => ['value' => '80.00', 'currency' => 'EUR'],
+            'reversedSubtotal' => ['value' => '0.00', 'currency' => 'EUR'],
+            'refundableSubtotal' => ['value' => '0.00', 'currency' => 'EUR'],
+            'taxSummary' => [],
+            'lines' => [],
+            'customerDetails' => [],
+            'links' => [
+                'self' => [
+                    'href' => self::API_ENDPOINT_URL.'/orders/order_66fc8a40718b46bea50f1a25f456d243',
+                    'type' => 'application/hal+json',
+                ],
+            ],
+        ];
     }
 
     private function orderWith(string $subtotal, string $reversedSubtotal): Order

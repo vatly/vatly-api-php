@@ -9,7 +9,7 @@ The `eventName` field on a delivery identifies what happened. See [`Vatly\API\Ty
 | Event | Description |
 |-------|-------------|
 | `order.paid` | Order payment was successful. |
-| `order.canceled` | Order was canceled. |
+| `order.canceled` | Order was canceled. `object` carries `cancellationReason`: `payment_failure` when payment recovery for the unpaid order was exhausted, otherwise `null`. |
 | `order.chargeback_received` | Chargeback was received for an order. |
 | `order.chargeback_reversed` | Chargeback was reversed. |
 | `order.payment_failed` | A payment failed and a dunning process was initiated for the order. |

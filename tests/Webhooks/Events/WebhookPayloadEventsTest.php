@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\Tests\Webhooks\Events;
 
 use PHPUnit\Framework\TestCase;
+use Vatly\API\Types\CancellationReason;
 use Vatly\API\Webhooks\Events\OrderCanceled;
 use Vatly\API\Webhooks\Events\UnsupportedWebhookReceived;
 use Vatly\API\Webhooks\Events\WebhookReceived;
@@ -44,6 +45,18 @@ class WebhookPayloadEventsTest extends TestCase
         $this->assertSame('cus_456', $event->customerId);
         $this->assertSame('ord_123', $event->orderId);
         $this->assertSame('canceled', $event->status);
+        $this->assertNull($event->cancellationReason);
+    }
+
+    public function test_order_canceled_carries_the_cancellation_reason(): void
+    {
+        $event = OrderCanceled::fromWebhook($this->makeWebhook('order.canceled', 'order', 'ord_123', [
+            'customerId' => 'cus_456',
+            'status' => 'canceled',
+            'cancellationReason' => 'payment_failure',
+        ]));
+
+        $this->assertSame(CancellationReason::PAYMENT_FAILURE, $event->cancellationReason);
     }
 
     public function test_order_canceled_defaults(): void
@@ -52,6 +65,7 @@ class WebhookPayloadEventsTest extends TestCase
 
         $this->assertSame('', $event->customerId);
         $this->assertSame('canceled', $event->status);
+        $this->assertNull($event->cancellationReason);
     }
 
     public function test_webhook_received_carries_full_payload_and_helpers(): void
