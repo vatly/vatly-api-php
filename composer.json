@@ -1,6 +1,6 @@
 {
     "name": "vatly/vatly-api-php",
-    "description": "Vatly API client for PHP",
+    "description": "PHP API client for Vatly, the Merchant of Record for European software and digital products",
     "keywords": [
         "vatly",
         "vatly-api-php",

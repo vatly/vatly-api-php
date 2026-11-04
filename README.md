@@ -6,7 +6,7 @@
 [![Tests](https://github.com/Vatly/vatly-api-php/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Vatly/vatly-api-php/actions/workflows/tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/vatly/vatly-api-php.svg?style=flat-square)](https://packagist.org/packages/vatly/vatly-api-php)
 
-Sell worldwide, today, with Vatly. Dedicated to EU based SAAS merchants and software companies, accept creditcard, PayPal, ApplePay, iDEAL and more.
+PHP client for the [Vatly](https://vatly.com) API. Vatly is the Merchant of Record for European software and digital products. You just ship. Vatly is the legal seller on every sale and handles payments, tax and compliance, from Europe.
 
 ## Using a framework?
 
