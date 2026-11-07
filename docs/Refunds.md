@@ -22,7 +22,7 @@ Below you'll find all properties for the Vatly Refund resource.
 | `lines` | `array` | The refund lines. Use `$refund->lines()` for a collection of `RefundLine` objects. |
 | `testmode` | `bool` | Whether this is a test refund. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
-| `links` | `RefundLinks` | Links to this refund, the original order and the credit note order (`null` until there is one). |
+| `links` | `RefundLinks` | Links to this refund, the original order, the credit note order (`null` until there is one) and `customerInvoice`, the customer-portal page of the refund's credit note (`null` until the refund is processed). The `customerInvoice` URL is signed and expires after 72 hours (the customer then sees a page to request a new link). |
 
 ---
 

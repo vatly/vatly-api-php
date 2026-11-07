@@ -4,6 +4,17 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **`customerInvoiceUrl` on the `OrderPaid` webhook DTO**: a nullable `?string` read from the order's `links.customerInvoice`, which the `order.paid` payload already carries. You no longer need a follow-up `GetOrder` to link a customer to their invoice. Additive: an optional constructor argument, last, defaulting to `null`.
+- **`links->customerInvoice` on refunds and chargebacks**: `RefundLinks` and `ChargebackLinks` now declare `?Link $customerInvoice`. On a refund or chargeback it opens the **credit note** (the key matches the one on orders). `null` until the refund is processed or the chargeback is lost, and `null` when an older API response leaves the key out.
+- **`customerInvoiceUrl` on the `RefundCompleted` webhook DTO**: the URL of the refund's credit note, from the refund's `links.customerInvoice`. Additive, defaults to `null`.
+- These URLs are signed and expire after 72 hours; an expired link shows the customer a page to request a new one. Store them if useful, but do not treat them as permanent.
+
+### Fixed
+
+- `OrderLinks::$customerInvoice` now defaults to `null`, so reading it no longer throws when a response leaves the key out.
+
 ## v0.1.0-alpha.31
 
 ### Added

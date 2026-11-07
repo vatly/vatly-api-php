@@ -24,7 +24,7 @@ Below you'll find all properties for the Vatly Chargeback resource.
 | `originalOrderId` | `string` | The ID of the original order that was disputed. |
 | `orderId` | `string \| null` | The credit note order ID, `null` until the chargeback is processed. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
-| `links` | `ChargebackLinks` | Links to this chargeback, the original order and the credit note order (`null` until there is one). |
+| `links` | `ChargebackLinks` | Links to this chargeback, the original order, the credit note order (`null` until there is one) and `customerInvoice`, the customer-portal page of the chargeback's credit note (`null` until the chargeback is lost). The `customerInvoice` URL is signed and expires after 72 hours (the customer then sees a page to request a new link). |
 
 ---
 

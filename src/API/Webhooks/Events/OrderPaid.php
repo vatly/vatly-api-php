@@ -47,6 +47,14 @@ class OrderPaid
          * @var OrderLineData[]
          */
         public array $lines = [],
+        /**
+         * Customer-portal URL of the order's invoice (`links.customerInvoice`),
+         * so consumers need no follow-up GetOrder to link to it. Null when the
+         * payload carries no invoice link. The URL is signed and expires after
+         * 72 hours (the customer then sees a page to request a new link), so
+         * store it if useful but do not treat it as permanent.
+         */
+        public ?string $customerInvoiceUrl = null,
     ) {
         //
     }
@@ -65,6 +73,7 @@ class OrderPaid
             testmode: $order->testmode,
             metadata: self::normalizeMetadata($order->metadata),
             lines: self::mapLines($order),
+            customerInvoiceUrl: $order->links->customerInvoice->href ?? null,
         );
     }
 

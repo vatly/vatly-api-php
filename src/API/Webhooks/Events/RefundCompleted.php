@@ -41,6 +41,14 @@ class RefundCompleted
          * Null until a credit order is materialized.
          */
         public ?string $orderId = null,
+        /**
+         * Customer-portal URL of this refund's credit note (the refund's
+         * `links.customerInvoice`). Null until the refund is processed, or when
+         * the server does not send the link. The URL is signed and expires after
+         * 72 hours (the customer then sees a page to request a new link), so
+         * store it if useful but do not treat it as permanent.
+         */
+        public ?string $customerInvoiceUrl = null,
     ) {
         //
     }
@@ -57,6 +65,7 @@ class RefundCompleted
             originalOrderId: $refund->originalOrderId,
             testmode: $refund->testmode,
             orderId: $refund->orderId,
+            customerInvoiceUrl: $refund->links->customerInvoice->href ?? null,
         );
     }
 }

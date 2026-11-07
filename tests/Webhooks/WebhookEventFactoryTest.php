@@ -1016,6 +1016,150 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertFalse($this->factory->isSupported('unknown.event'));
     }
 
+    public function test_order_paid_event_carries_the_customer_invoice_url(): void
+    {
+        $event = $this->factory->createFromWebhook($this->orderPaidWebhookWithLinks([
+            'self' => ['href' => 'https://api.vatly.com/v1/orders/ord_123', 'type' => 'application/hal+json'],
+            'customerInvoice' => ['href' => 'https://portal.vatly.com/invoices/ord_123?signature=abc', 'type' => 'text/html'],
+        ]));
+
+        $this->assertInstanceOf(OrderPaid::class, $event);
+        $this->assertSame('https://portal.vatly.com/invoices/ord_123?signature=abc', $event->customerInvoiceUrl);
+    }
+
+    public function test_order_paid_event_customer_invoice_url_is_null_when_the_link_is_null(): void
+    {
+        $event = $this->factory->createFromWebhook($this->orderPaidWebhookWithLinks([
+            'self' => ['href' => 'https://api.vatly.com/v1/orders/ord_123', 'type' => 'application/hal+json'],
+            'customerInvoice' => null,
+        ]));
+
+        $this->assertInstanceOf(OrderPaid::class, $event);
+        $this->assertNull($event->customerInvoiceUrl);
+    }
+
+    public function test_order_paid_event_customer_invoice_url_is_null_when_the_link_key_is_absent(): void
+    {
+        $event = $this->factory->createFromWebhook($this->orderPaidWebhookWithLinks([
+            'self' => ['href' => 'https://api.vatly.com/v1/orders/ord_123', 'type' => 'application/hal+json'],
+        ]));
+
+        $this->assertInstanceOf(OrderPaid::class, $event);
+        $this->assertNull($event->customerInvoiceUrl);
+    }
+
+    public function test_order_paid_event_customer_invoice_url_is_null_when_the_payload_has_no_links(): void
+    {
+        $event = $this->factory->createFromWebhook($this->orderPaidWebhookWithLinks(null));
+
+        $this->assertInstanceOf(OrderPaid::class, $event);
+        $this->assertNull($event->customerInvoiceUrl);
+    }
+
+    public function test_refund_completed_event_carries_the_credit_note_url(): void
+    {
+        $event = $this->factory->createFromWebhook($this->refundCompletedWebhookWithLinks([
+            'self' => ['href' => 'https://api.vatly.com/v1/refunds/refund_123', 'type' => 'application/hal+json'],
+            'originalOrder' => ['href' => 'https://api.vatly.com/v1/orders/ord_original_1', 'type' => 'application/hal+json'],
+            'order' => null,
+            'customerInvoice' => ['href' => 'https://portal.vatly.com/invoices/ord_credit_1?signature=abc', 'type' => 'text/html'],
+        ]));
+
+        $this->assertInstanceOf(RefundCompleted::class, $event);
+        $this->assertSame('https://portal.vatly.com/invoices/ord_credit_1?signature=abc', $event->customerInvoiceUrl);
+    }
+
+    public function test_refund_completed_event_credit_note_url_is_null_when_the_link_is_null(): void
+    {
+        $event = $this->factory->createFromWebhook($this->refundCompletedWebhookWithLinks([
+            'self' => ['href' => 'https://api.vatly.com/v1/refunds/refund_123', 'type' => 'application/hal+json'],
+            'originalOrder' => ['href' => 'https://api.vatly.com/v1/orders/ord_original_1', 'type' => 'application/hal+json'],
+            'order' => null,
+            'customerInvoice' => null,
+        ]));
+
+        $this->assertInstanceOf(RefundCompleted::class, $event);
+        $this->assertNull($event->customerInvoiceUrl);
+    }
+
+    public function test_refund_completed_event_credit_note_url_is_null_when_the_link_key_is_absent(): void
+    {
+        $event = $this->factory->createFromWebhook($this->refundCompletedWebhookWithLinks([
+            'self' => ['href' => 'https://api.vatly.com/v1/refunds/refund_123', 'type' => 'application/hal+json'],
+            'originalOrder' => ['href' => 'https://api.vatly.com/v1/orders/ord_original_1', 'type' => 'application/hal+json'],
+            'order' => null,
+        ]));
+
+        $this->assertInstanceOf(RefundCompleted::class, $event);
+        $this->assertNull($event->customerInvoiceUrl);
+    }
+
+    public function test_refund_completed_event_credit_note_url_is_null_when_the_payload_has_no_links(): void
+    {
+        $event = $this->factory->createFromWebhook($this->refundCompletedWebhookWithLinks(null));
+
+        $this->assertInstanceOf(RefundCompleted::class, $event);
+        $this->assertNull($event->customerInvoiceUrl);
+    }
+
+    /**
+     * @param array<string, mixed>|null $links null leaves `links` out of the payload
+     */
+    private function orderPaidWebhookWithLinks(?array $links): WebhookReceived
+    {
+        $data = [
+            'id' => 'ord_123',
+            'customerId' => 'cus_456',
+            'status' => 'paid',
+            'total' => ['currency' => 'EUR', 'value' => '99.00'],
+            'subtotal' => ['currency' => 'EUR', 'value' => '81.82'],
+            'taxRates' => [
+                ['name' => 'VAT', 'percentage' => 21.0, 'taxablePercentage' => 100.0, 'amount' => '17.18'],
+            ],
+            'invoiceNumber' => 'INV-2024-001',
+        ];
+
+        if ($links !== null) {
+            $data['links'] = $links;
+        }
+
+        return $this->makeWebhook(
+            eventName: 'order.paid',
+            entityType: 'order',
+            entityId: 'ord_123',
+            object: $this->fatOrder($data),
+        );
+    }
+
+    /**
+     * @param array<string, mixed>|null $links null leaves `links` out of the payload
+     */
+    private function refundCompletedWebhookWithLinks(?array $links): WebhookReceived
+    {
+        $data = [
+            'id' => 'refund_123',
+            'customerId' => 'cus_456',
+            'status' => 'refunded',
+            'originalOrderId' => 'ord_original_1',
+            'total' => ['currency' => 'EUR', 'value' => '99.00'],
+            'subtotal' => ['currency' => 'EUR', 'value' => '81.82'],
+            'taxRates' => [
+                ['name' => 'VAT', 'percentage' => 21.0, 'taxablePercentage' => 100.0, 'amount' => '17.18'],
+            ],
+        ];
+
+        if ($links !== null) {
+            $data['links'] = $links;
+        }
+
+        return $this->makeWebhook(
+            eventName: 'refund.completed',
+            entityType: 'refund',
+            entityId: 'refund_123',
+            object: $this->fatRefund($data),
+        );
+    }
+
     /**
      * @param array<string, mixed> $object
      */
@@ -1081,6 +1225,10 @@ class WebhookEventFactoryTest extends BaseTestCase
             ),
         ];
 
+        if (array_key_exists('links', $data)) {
+            $object['links'] = $data['links'];
+        }
+
         return $object;
     }
 
@@ -1093,7 +1241,7 @@ class WebhookEventFactoryTest extends BaseTestCase
     {
         $currency = $data['total']['currency'];
 
-        return [
+        $object = [
             'id' => $data['id'],
             'resource' => 'refund',
             'createdAt' => '2024-01-15T10:00:00+00:00',
@@ -1106,6 +1254,12 @@ class WebhookEventFactoryTest extends BaseTestCase
             'taxSummary' => $this->fatTaxSummary($data['taxRates'], $currency),
             'lines' => [],
         ];
+
+        if (array_key_exists('links', $data)) {
+            $object['links'] = $data['links'];
+        }
+
+        return $object;
     }
 
     /**
