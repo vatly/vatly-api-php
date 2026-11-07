@@ -27,7 +27,7 @@ Below you'll find all properties for the Vatly Order resource.
 | `testmode` | `bool` | Whether this is a test order. |
 | `metadata` | `array` | Your custom metadata. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
-| `links` | `OrderLinks` | Links to this order, the customer (`null` for orders with no associated customer) and the customer invoice. |
+| `links` | `OrderLinks` | Links to this order, the customer (`null` for orders with no associated customer) and the customer invoice. The `customerInvoice` URL is signed and expires after 72 hours (the customer then sees a page to request a new link). |
 
 ---
 
