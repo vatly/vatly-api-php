@@ -4,6 +4,8 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.32
+
 ### Added
 
 - **`customerInvoiceUrl` on the `OrderPaid` webhook DTO**: a nullable `?string` read from the order's `links.customerInvoice`, which the `order.paid` payload already carries. You no longer need a follow-up `GetOrder` to link a customer to their invoice. Additive: an optional constructor argument, last, defaulting to `null`.
