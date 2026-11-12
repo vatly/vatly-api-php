@@ -4,7 +4,7 @@ info:
   version: '1.0'
   x-generated-at: '2026-05-28'
   description: |
-    Vatly is a Merchant of Record billing platform for European SaaS companies.
+    Vatly is the European Merchant of Record for AI, software and digital products.
     This API enables you to manage checkouts, customers, orders, subscriptions, refunds, and more.
 
     ## Authentication
