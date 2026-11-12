@@ -6,7 +6,7 @@
 [![Tests](https://github.com/Vatly/vatly-api-php/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Vatly/vatly-api-php/actions/workflows/tests.yml)
 [![Total Downloads](https://img.shields.io/packagist/dt/vatly/vatly-api-php.svg?style=flat-square)](https://packagist.org/packages/vatly/vatly-api-php)
 
-PHP client for the [Vatly](https://vatly.com) API. Vatly is the Merchant of Record for European software and digital products. You just ship. Vatly is the legal seller on every sale and handles payments, tax and compliance, from Europe.
+PHP client for the [Vatly](https://vatly.com) API. Vatly is the European Merchant of Record for AI, software and digital products. You just ship. Vatly is the legal seller on every sale and handles payments, tax and compliance, from Europe.
 
 ## Using a framework?
 
