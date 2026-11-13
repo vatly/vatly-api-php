@@ -11,6 +11,7 @@ use Vatly\API\Resources\Links\LinksResourceFactory;
 use Vatly\API\Types\Address;
 use Vatly\API\Types\Mandate;
 use Vatly\API\Types\Money;
+use Vatly\API\Types\OrderLineRelatedResources;
 use Vatly\API\Types\ScheduledSubscriptionUpdate;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\VatlyApiClient;
@@ -84,6 +85,13 @@ class ResourceFactory
                     $resource->{$property} = null === $value
                         ? null
                         : ScheduledSubscriptionUpdate::createResourceFromApiResult($value);
+
+                    break;
+
+                case 'relatedResources':
+                    $resource->{$property} = null === $value
+                        ? null
+                        : OrderLineRelatedResources::createResourceFromApiResult($value);
 
                     break;
 

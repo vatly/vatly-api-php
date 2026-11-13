@@ -7,6 +7,7 @@ namespace Vatly\Tests\Webhooks\Events;
 use Vatly\API\Resources\Order;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderLineData;
+use Vatly\API\Types\OrderLineRelatedResources;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
 use Vatly\API\Webhooks\Events\OrderPaid;
@@ -207,6 +208,36 @@ class OrderPaidTest extends BaseTestCase
         $this->assertCount(1, $event->lines);
         $this->assertNull($event->lines[0]->productType);
         $this->assertNull($event->lines[0]->productId);
+    }
+
+    public function test_it_maps_related_resources_and_keeps_null_and_unresolved_apart(): void
+    {
+        $signup = $this->makeApiLine('order_item_signup', 'Pro plan — initial checkout', 1, '20.00', '24.20', '20.00', 'subscription_plan', 'subscription_plan_pro');
+        $signup->relatedResources = json_decode('{"subscriptionId":"subscription_abc"}');
+
+        $unresolvedSignup = $this->makeApiLine('order_item_pending', 'Pro plan — initial checkout', 1, '20.00', '24.20', '20.00', 'subscription_plan', 'subscription_plan_pro');
+        $unresolvedSignup->relatedResources = json_decode('{"subscriptionId":null}');
+
+        $oneOff = $this->makeApiLine('order_item_book', 'PDF Book', 1, '10.00', '12.10', '10.00', 'one_off_product', 'product_book');
+        $oneOff->relatedResources = null;
+
+        $legacy = $this->makeApiLine('order_item_legacy', 'Legacy line', 1, '10.00', '10.00', '10.00', 'subscription', 'subscription_abc');
+
+        $order = $this->makeApiOrder();
+        $order->lines = [$signup, $unresolvedSignup, $oneOff, $legacy];
+
+        $event = OrderPaid::fromApiOrder($order);
+
+        $this->assertInstanceOf(OrderLineRelatedResources::class, $event->lines[0]->relatedResources);
+        $this->assertSame('subscription_abc', $event->lines[0]->relatedResources->subscriptionId);
+        $this->assertSame('subscription_plan', $event->lines[0]->productType);
+        $this->assertSame('subscription_plan_pro', $event->lines[0]->productId);
+
+        $this->assertInstanceOf(OrderLineRelatedResources::class, $event->lines[1]->relatedResources);
+        $this->assertNull($event->lines[1]->relatedResources->subscriptionId);
+
+        $this->assertNull($event->lines[2]->relatedResources);
+        $this->assertNull($event->lines[3]->relatedResources);
     }
 
     public function test_it_defaults_to_empty_lines(): void

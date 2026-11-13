@@ -4,6 +4,22 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.33
+
+### Added
+
+- **`relatedResources` on order lines**: `OrderLine->relatedResources` and `OrderLineData->relatedResources` (on the `OrderPaid` webhook DTO's `lines`) are a nullable `Vatly\API\Types\OrderLineRelatedResources` with a `?string $subscriptionId`: the subscription the line belongs to, on initial signup, renewal and immediate-update lines alike. To find the subscription a paid checkout created, follow `Checkout->orderId` and read its lines.
+  - `relatedResources` is `null` on historical lines, on lines unrelated to a subscription (such as one-off product lines), and when a payload leaves the key out.
+  - On a signup line, `subscriptionId` is `null` while the subscription is not available yet. Retrieve the order again later to read it.
+  - A subscription ID does not mean the subscription is active. Check its status before granting access.
+  - Additive: `OrderLineData` gains an optional last constructor argument that defaults to `null`.
+
+### Changed
+
+- **Synced `openapi.yaml`** with the published spec. It adds `lines[].relatedResources` to orders, and `links.customerInvoice` (the credit note, `Link` or `null`) to the Refund and Chargeback schemas, which the SDK already supported since v0.1.0-alpha.32.
+- `productType` and `productId` keep their meaning. The docs now say it correctly: an initial signup line references the plan (`subscription_plan`, a `subscription_plan_…` ID); renewal and immediate-update lines reference the subscription (`subscription`). Earlier docblocks said a subscription line always carried the subscription ID.
+- `docs/Orders.md` documents the order line properties.
+
 ## v0.1.0-alpha.32
 
 ### Added
