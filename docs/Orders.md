@@ -29,6 +29,34 @@ Below you'll find all properties for the Vatly Order resource.
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 | `links` | `OrderLinks` | Links to this order, the customer (`null` for orders with no associated customer) and the customer invoice. The `customerInvoice` URL is signed and expires after 72 hours (the customer then sees a page to request a new link). |
 
+### Order line properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Unique identifier for the order line. |
+| `description` | `string` | Line description. |
+| `quantity` | `int` | Quantity. On a subscription line this is the quantity of one subscription, not a count of subscriptions. |
+| `basePrice` | `Money` | Price per unit before taxes. |
+| `total` | `Money` | Line total including taxes. |
+| `subtotal` | `Money` | Line subtotal before taxes. |
+| `taxes` | `TaxSummaryCollection` | Tax breakdown for this line. |
+| `productType` | `string \| null` | The linked resource type: `subscription_plan` on an initial subscription signup line, `subscription` on a renewal or immediate-update line, `one_off_product` for a one-off product. `null` when the line has no product link. |
+| `productId` | `string \| null` | The linked resource's ID: a plan ID for `subscription_plan`, a subscription ID for `subscription`. |
+| `relatedResources` | `OrderLineRelatedResources \| null` | Additional relationships for this line. `null` on historical lines and on lines unrelated to a subscription. |
+| `relatedResources->subscriptionId` | `string \| null` | The subscription this line belongs to, on signup, renewal and immediate-update lines alike. `null` on a signup line while the subscription is not available yet; retrieve the order again later to read it. |
+
+To find the subscription a paid checkout created, follow the checkout's `orderId` and read the lines' `relatedResources`:
+
+```php
+$order = $vatly->orders->get($checkout->orderId);
+
+foreach ($order->lines() as $line) {
+    $subscriptionId = $line->relatedResources?->subscriptionId;
+}
+```
+
+A subscription ID alone does not mean the subscription is active. Check the subscription's status before granting access.
+
 ---
 
 ## Retrieve an order

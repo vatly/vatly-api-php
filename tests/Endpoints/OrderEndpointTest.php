@@ -61,6 +61,9 @@ class OrderEndpointTest extends BaseEndpointTest
                     "quantity" => 1,
                     "productType" => "subscription",
                     "productId" => "subscription_2a46f4c01d3b47979f4d7b3f58c98be7",
+                    "relatedResources" => [
+                        "subscriptionId" => "subscription_2a46f4c01d3b47979f4d7b3f58c98be7",
+                    ],
                     "basePrice" => [
                         "value" => "80.00",
                         "currency" => "EUR",
@@ -165,6 +168,7 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('PDF Book', $orderLine->description);
         $this->assertEquals('subscription', $orderLine->productType);
         $this->assertEquals('subscription_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->productId);
+        $this->assertSame('subscription_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->relatedResources->subscriptionId);
         $this->assertEquals("96.00", $orderLine->total->value);
         $this->assertEquals("80.00", $orderLine->subtotal->value);
         $this->assertEquals("80.00", $orderLine->basePrice->value);
@@ -224,6 +228,7 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertEquals('order_item_2a46f4c01d3b47979f4d7b3f58c98be7', $orderLine->id);
         $this->assertNull($orderLine->productType);
         $this->assertNull($orderLine->productId);
+        $this->assertNull($orderLine->relatedResources);
     }
 
     /** @test */

@@ -3,6 +3,7 @@
 namespace Vatly\API\Resources;
 
 use Vatly\API\Types\Money;
+use Vatly\API\Types\OrderLineRelatedResources;
 use Vatly\API\Types\TaxSummaryCollection;
 
 class OrderLine extends BaseResource
@@ -25,19 +26,28 @@ class OrderLine extends BaseResource
     public int $quantity;
 
     /**
-     * The product type this line links to. Null until the backend ships it.
+     * The resource type this line links to. An initial subscription signup
+     * line uses `subscription_plan`; renewal and immediate-update lines use
+     * `subscription`. Null when the line has no product link.
      *
-     * @example subscription
+     * @example subscription_plan
      */
     public ?string $productType = null;
 
     /**
-     * The linked product's id. For a subscription line this is the public
-     * `subscription_…` id. Null until the backend ships it.
+     * The linked resource's id: a plan id when `productType` is
+     * `subscription_plan`, a subscription id when it is `subscription`.
      *
-     * @example subscription_2a46f4c01d3b47979f4d7b3f58c98be7
+     * @example subscription_plan_2a46f4c01d3b47979f4d7b3f58c98be7
      */
     public ?string $productId = null;
+
+    /**
+     * Additional per-line relationships, such as the subscription this line
+     * belongs to. Null on historical lines and on lines unrelated to a
+     * subscription, and when an older response leaves the key out.
+     */
+    public ?OrderLineRelatedResources $relatedResources = null;
 
     public Money $basePrice;
 
