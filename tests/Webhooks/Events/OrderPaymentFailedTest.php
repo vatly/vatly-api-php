@@ -6,6 +6,8 @@ namespace Vatly\Tests\Webhooks\Events;
 
 use Vatly\API\Resources\Order;
 use Vatly\API\Types\Money;
+use Vatly\API\Types\OrderLineData;
+use Vatly\API\Types\OrderLineRelatedResources;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Webhooks\Events\OrderPaymentFailed;
 use Vatly\Tests\BaseTestCase;
@@ -67,6 +69,52 @@ class OrderPaymentFailedTest extends BaseTestCase
         $event = OrderPaymentFailed::fromApiOrder($order);
 
         $this->assertSame($order->taxSummary, $event->taxSummary);
+    }
+
+    public function test_it_maps_lines_with_their_subscription_link(): void
+    {
+        $order = $this->makeApiOrder();
+        $order->lines = json_decode((string) json_encode([
+            [
+                'id' => 'order_item_renewal',
+                'resource' => 'orderline',
+                'description' => 'Pro plan',
+                'quantity' => 1,
+                'productType' => 'subscription',
+                'productId' => 'subscription_abc',
+                'relatedResources' => ['subscriptionId' => 'subscription_abc'],
+                'basePrice' => ['currency' => 'EUR', 'value' => '81.82'],
+                'total' => ['currency' => 'EUR', 'value' => '99.00'],
+                'subtotal' => ['currency' => 'EUR', 'value' => '81.82'],
+                'taxes' => [],
+            ],
+            [
+                'id' => 'order_item_legacy',
+                'resource' => 'orderline',
+                'description' => 'Legacy line',
+                'quantity' => 1,
+                'productType' => 'subscription',
+                'productId' => 'subscription_old',
+                'basePrice' => ['currency' => 'EUR', 'value' => '0.00'],
+                'total' => ['currency' => 'EUR', 'value' => '0.00'],
+                'subtotal' => ['currency' => 'EUR', 'value' => '0.00'],
+                'taxes' => [],
+            ],
+        ]));
+
+        $event = OrderPaymentFailed::fromApiOrder($order);
+
+        $this->assertCount(2, $event->lines);
+        $this->assertContainsOnlyInstancesOf(OrderLineData::class, $event->lines);
+        $this->assertSame('order_item_renewal', $event->lines[0]->vatlyId);
+        $this->assertInstanceOf(OrderLineRelatedResources::class, $event->lines[0]->relatedResources);
+        $this->assertSame('subscription_abc', $event->lines[0]->relatedResources->subscriptionId);
+        $this->assertNull($event->lines[1]->relatedResources);
+    }
+
+    public function test_it_has_no_lines_when_the_payload_carries_none(): void
+    {
+        $this->assertSame([], OrderPaymentFailed::fromApiOrder($this->makeApiOrder())->lines);
     }
 
     public function test_it_normalizes_object_metadata(): void

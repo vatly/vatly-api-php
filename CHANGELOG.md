@@ -4,6 +4,16 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.34
+
+### Added
+
+- **`lines` on the `OrderPaymentFailed` webhook DTO**: an `OrderLineData[]` mapped from the payload exactly as on `OrderPaid`, so `$event->lines[0]->relatedResources?->subscriptionId` names the subscription whose payment failed without a follow-up `GetOrder`. The `order.payment_failed` payload already carried the lines; the DTO dropped them. Additive: an optional last constructor argument defaulting to `[]`, and a payload without a `lines` key still yields `[]`.
+
+### Changed
+
+- The `OrderPaymentFailed` docblock no longer says the event is enriched with a `GetOrder` call. Like `OrderPaid`, it is built from the signed payload.
+
 ## v0.1.0-alpha.33
 
 ### Added

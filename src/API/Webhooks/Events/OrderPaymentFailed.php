@@ -6,6 +6,7 @@ namespace Vatly\API\Webhooks\Events;
 
 use Vatly\API\Resources\Order as ApiOrder;
 use Vatly\API\Types\Money;
+use Vatly\API\Types\OrderLineData;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
 use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
@@ -14,13 +15,15 @@ use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
  * Event representing a failed payment attempt against an order at Vatly —
  * typically the start of dunning.
  *
- * The webhook is order-scoped; consumers that need to identify the affected
- * subscription should resolve it via their own customer/subscription map
- * (the same pattern as for renewal `order.paid`).
+ * The webhook is order-scoped. To find the affected subscription, read
+ * `lines[].relatedResources->subscriptionId`; it is null on orders from
+ * before Vatly linked lines to subscriptions, so keep a fallback for those.
  *
  * Carries the full order shape (mirroring {@see OrderPaid}) so consumers can
- * surface failure details without a follow-up API call. The webhook payload
- * itself is sparse; the webhook event factory enriches via `GetOrder`.
+ * surface failure details without a follow-up API call. The signed webhook
+ * payload carries the same body as `GET /orders/{id}`, and
+ * {@see \Vatly\API\Webhooks\WebhookEventFactory} hydrates this event straight
+ * from it, with no follow-up API GET.
  *
  * @immutable
  */
@@ -42,6 +45,13 @@ class OrderPaymentFailed
         public bool $testmode,
         /** @var array<string, mixed>|null */
         public ?array $metadata = null,
+        /**
+         * The order's lines, mapped the same way as on {@see OrderPaid}.
+         * Empty when the order carries none.
+         *
+         * @var OrderLineData[]
+         */
+        public array $lines = [],
     ) {
         //
     }
@@ -59,6 +69,27 @@ class OrderPaymentFailed
             paymentMethod: $order->paymentMethod,
             testmode: $order->testmode,
             metadata: self::normalizeMetadata($order->metadata),
+            lines: self::mapLines($order),
         );
+    }
+
+    /**
+     * Map the order's lines into {@see OrderLineData}. A payload without a
+     * `lines` key yields no lines, as this event carried none before.
+     *
+     * @return OrderLineData[]
+     */
+    private static function mapLines(ApiOrder $order): array
+    {
+        if (! isset($order->lines)) {
+            return [];
+        }
+
+        $lines = [];
+        foreach ($order->lines() as $line) {
+            $lines[] = OrderLineData::fromApiOrderLine($line);
+        }
+
+        return $lines;
     }
 }
