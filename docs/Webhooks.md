@@ -162,14 +162,20 @@ Verification is performed against the **raw request body bytes**. JSON that is p
 
 ```php
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Exceptions\WebhookSecretNotConfiguredException;
 use Vatly\API\Webhooks\Webhook;
 
 $payload   = file_get_contents('php://input');
 $signature = $_SERVER['HTTP_VATLY_SIGNATURE'] ?? '';
-$secret    = getenv('VATLY_WEBHOOK_SECRET');
+// getenv() returns false when the variable is unset; treat that as "no secret".
+$secret    = (string) getenv('VATLY_WEBHOOK_SECRET');
 
 try {
     $event = Webhook::parse($payload, $signature, $secret);
+} catch (WebhookSecretNotConfiguredException $e) {
+    // No secret configured yet: refuse, and let Vatly retry later.
+    http_response_code(503);
+    exit('Webhook secret not configured');
 } catch (InvalidSignatureException $e) {
     http_response_code(401);
     exit('Invalid signature');
@@ -193,7 +199,7 @@ markProcessed($eventId);
 http_response_code(200);
 ```
 
-`Webhook::parse()` throws `Vatly\API\Exceptions\InvalidSignatureException` when the signature header is malformed, the timestamp is outside the tolerance window, or the HMAC does not match. It throws `InvalidArgumentException` when the body is not valid JSON or is missing required fields.
+Webhooks are refused until a secret is configured: `Webhook::parse()` throws `Vatly\API\Exceptions\WebhookSecretNotConfiguredException` (a subclass of `InvalidSignatureException`) when the secret is empty or blank. It throws `Vatly\API\Exceptions\InvalidSignatureException` when the signature header is malformed, the timestamp is outside the tolerance window, or the HMAC does not match. It throws `InvalidArgumentException` when the body is not valid JSON or is missing required fields.
 
 ### Typed event DTOs
 

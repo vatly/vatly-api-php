@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\API\Webhooks;
 
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Exceptions\WebhookSecretNotConfiguredException;
 
 /**
  * Verify the `Vatly-Signature` header on incoming webhook deliveries.
@@ -61,12 +62,20 @@ class WebhookSignatureValidator
      * @param  string  $payload          Raw request body bytes, exactly as received.
      * @param  string  $signatureHeader  Full value of the `Vatly-Signature` header.
      *
+     * @throws WebhookSecretNotConfiguredException When the webhook secret is
+     *                                             empty or blank. Every
+     *                                             webhook is refused until a
+     *                                             secret is configured.
      * @throws InvalidSignatureException When the header is malformed, the
      *                                   timestamp is outside the tolerance
      *                                   window, or the HMAC does not match.
      */
     public function verify(string $payload, string $signatureHeader): void
     {
+        if (trim($this->webhookSecret) === '') {
+            throw new WebhookSecretNotConfiguredException();
+        }
+
         $parsed = $this->parseHeader($signatureHeader);
 
         if ($parsed === null) {

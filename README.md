@@ -98,6 +98,8 @@ use Vatly\API\Webhooks\Webhook;
 $event = Webhook::parse($rawBody, $signatureHeader, $webhookSecret);
 ```
 
+Webhooks are refused until a secret is configured: with an empty or blank `$webhookSecret`, `parse()` and `WebhookSignatureValidator::verify()` throw `Vatly\API\Exceptions\WebhookSecretNotConfiguredException` (a subclass of `InvalidSignatureException`). Catch it to answer `503`, so Vatly retries the delivery once the secret is set.
+
 For strongly-typed, per-event objects, this package also owns immutable event DTOs under `Vatly\API\Webhooks\Events\*` (e.g. `OrderPaid`, `RefundCompleted`, `SubscriptionStarted`). Money fields are `Vatly\API\Types\Money` (decimal-string + currency; call `$event->total->toCents()` / read `$event->total->currency` to flatten at your persistence edge) and the VAT breakdown is `Vatly\API\Types\TaxSummaryCollection`; order lines are `Vatly\API\Types\OrderLineData`. These are the canonical event shapes that higher-level integrations build on.
 
 `Vatly\API\Webhooks\WebhookEventFactory` turns a verified payload into one of these typed events — verify, parse, and map all happen in api-php now. Pass it a `VatlyApiClient` and hand it the `WebhookReceived` from `fromPayload()`:
