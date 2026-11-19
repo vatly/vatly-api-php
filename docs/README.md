@@ -10,12 +10,14 @@ Official PHP SDK for the Vatly API. Handle subscriptions, one-off payments, tax 
 
 
 
-Install the SDK via Composer.
+The SDK is in alpha, and every alpha release may include breaking changes. Allow alpha releases, then install the SDK via Composer. `prefer-stable` keeps your other dependencies on stable releases.
 
 
 
 
 ```bash
+composer config minimum-stability alpha
+composer config prefer-stable true
 composer require vatly/vatly-api-php
 ```
 

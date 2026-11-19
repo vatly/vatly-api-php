@@ -16,9 +16,11 @@ Other framework drivers (Symfony, WordPress) are on the roadmap. To build one, s
 
 ## Installation
 
-You can install the package via composer:
+The package is in alpha, and every alpha release may include breaking changes. Allow alpha releases, then install it via Composer. `prefer-stable` keeps your other dependencies on stable releases:
 
 ```bash
+composer config minimum-stability alpha
+composer config prefer-stable true
 composer require vatly/vatly-api-php
 ```
 
