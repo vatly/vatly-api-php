@@ -287,6 +287,24 @@ class SubscriptionEventsTest extends BaseTestCase
         $this->assertSame(CancellationReason::PAYMENT_FAILURE, $event->cancellationReason);
     }
 
+    public function test_canceled_with_grace_period_ends_at_the_paid_through_date_while_endedAt_is_null(): void
+    {
+        // What Vatly delivers: the subscription is on its grace period, so it
+        // has no endedAt yet. Access ends when the paid period does.
+        $event = SubscriptionCanceledWithGracePeriod::fromWebhook($this->makeWebhook('subscription.canceled_with_grace_period', [
+            'customerId' => 'cus_456',
+            'status' => 'on_grace_period',
+            'endedAt' => null,
+            'canceledAt' => '2024-01-01T10:00:00+00:00',
+            'renewedUntil' => '2024-02-01T09:00:00+00:00',
+            'nextRenewalAt' => '2024-02-01T09:00:00+00:00',
+            'cancellationReason' => 'merchant_request',
+        ]));
+
+        $this->assertSame('2024-02-01T09:00:00+00:00', $event->endsAt->format(DATE_ATOM));
+        $this->assertSame('merchant_request', $event->cancellationReason);
+    }
+
     public function test_canceled_with_grace_period_uses_ended_at(): void
     {
         $event = SubscriptionCanceledWithGracePeriod::fromWebhook($this->makeWebhook('subscription.canceled_with_grace_period', [

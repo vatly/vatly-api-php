@@ -4,6 +4,12 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.35
+
+### Fixed
+
+- **`SubscriptionCanceledWithGracePeriod` no longer throws on a real delivery.** While the subscription is on its grace period, Vatly sends `endedAt: null`, and `fromWebhook()` passed that to `new DateTimeImmutable()`, which threw a `TypeError` for every grace-period cancellation. `endsAt` now reads `endedAt`, then `renewedUntil` (the paid-through date), then `nextRenewalAt`, then the delivery time.
+
 ## v0.1.0-alpha.34
 
 ### Added
