@@ -43,7 +43,14 @@ class SubscriptionCanceledWithGracePeriod
         return new self(
             customerId: $webhook->object['customerId'],
             subscriptionId: $webhook->entityId,
-            endsAt: new DateTimeImmutable($webhook->object['endedAt']),
+            // During the grace period the subscription hasn't ended, so Vatly
+            // sends `endedAt: null`; access runs until the paid-through date.
+            endsAt: new DateTimeImmutable(
+                $webhook->object['endedAt']
+                    ?? $webhook->object['renewedUntil']
+                    ?? $webhook->object['nextRenewalAt']
+                    ?? $webhook->createdAt
+            ),
             testmode: $webhook->testmode,
             cancellationReason: $webhook->object['cancellationReason'] ?? null,
         );
