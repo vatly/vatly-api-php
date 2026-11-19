@@ -20,6 +20,8 @@ class Webhook
      *
      * @return WebhookPayload
      *
+     * @throws \Vatly\API\Exceptions\WebhookSecretNotConfiguredException  When `$secret` is empty or blank.
+     *                                                                     Extends InvalidSignatureException.
      * @throws InvalidSignatureException  When the signature does not match.
      * @throws \InvalidArgumentException  When the payload is not valid JSON or is missing required fields.
      */

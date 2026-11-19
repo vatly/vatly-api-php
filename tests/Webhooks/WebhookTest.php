@@ -117,6 +117,14 @@ class WebhookTest extends TestCase
         Webhook::parse($payload, 'bad_signature', $this->secret);
     }
 
+    public function test_it_refuses_a_webhook_when_no_secret_is_configured(): void
+    {
+        $this->expectException(\Vatly\API\Exceptions\WebhookSecretNotConfiguredException::class);
+
+        $payload = $this->makePayload();
+        Webhook::parse($payload, $this->sign($payload, ''), '');
+    }
+
     public function test_it_throws_for_wrong_secret(): void
     {
         $this->expectException(InvalidSignatureException::class);

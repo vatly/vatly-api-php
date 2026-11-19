@@ -6,6 +6,7 @@ namespace Vatly\Tests\Webhooks;
 
 use PHPUnit\Framework\TestCase;
 use Vatly\API\Exceptions\InvalidSignatureException;
+use Vatly\API\Exceptions\WebhookSecretNotConfiguredException;
 use Vatly\API\Webhooks\WebhookSignatureValidator;
 
 class WebhookSignatureValidatorTest extends TestCase
@@ -168,6 +169,36 @@ class WebhookSignatureValidatorTest extends TestCase
             $validator->calculateSignature($payload, $timestamp),
             'Webhook signing vector changed. If intentional, update the fixture.'
         );
+    }
+
+    /**
+     * @dataProvider blankSecrets
+     */
+    public function test_it_refuses_every_webhook_when_the_secret_is_blank(string $blankSecret): void
+    {
+        $validator = new WebhookSignatureValidator($blankSecret);
+        // Signed with the same (blank) key, so only the secret check can refuse it.
+        $header = $this->buildHeader(time(), $this->payload, $blankSecret);
+
+        $this->assertFalse($validator->isValid($this->payload, $header));
+
+        try {
+            $validator->verify($this->payload, $header);
+            $this->fail('A webhook was accepted without a configured secret.');
+        } catch (WebhookSecretNotConfiguredException $exception) {
+            $this->assertInstanceOf(InvalidSignatureException::class, $exception);
+        }
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function blankSecrets(): array
+    {
+        return [
+            'empty' => [''],
+            'whitespace' => ["  \n\t"],
+        ];
     }
 
     private function buildHeader(int $timestamp, string $payload, string $secret): string
