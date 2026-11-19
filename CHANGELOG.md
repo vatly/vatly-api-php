@@ -4,6 +4,8 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.36
+
 ### Fixed
 
 - **Webhooks are refused until a secret is configured.** `WebhookSignatureValidator::verify()` (and so `Webhook::parse()`) now throws `Vatly\API\Exceptions\WebhookSecretNotConfiguredException` when the webhook secret is empty or blank, instead of checking the signature against an empty key. `isValid()` returns `false`. The new exception extends `InvalidSignatureException`, so existing `catch` blocks keep refusing the request; constructors and method signatures are unchanged.
