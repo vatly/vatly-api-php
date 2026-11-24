@@ -1546,10 +1546,8 @@ paths:
         Constraints:
         - `productType` must be `saas` (e-books are one-off purchases and cannot
           be sold on a recurring basis).
-        - The `day` interval is sandbox-only; live plans support `week`, `month`,
-          and `year`.
-        - `intervalCount` is bounded per unit: up to 365 days, 52 weeks, or 12
-          months. `year` always bills once per year (`intervalCount` is ignored).
+        - `interval` must be `month` or `year`, and `intervalCount` must be `1`,
+          in live and test mode alike. Any other value returns `422`.
       tags:
         - Subscription Plans
       parameters:
@@ -1669,6 +1667,10 @@ paths:
         return `409`. Changing the interval on a plan that has ever been used by a
         subscription — active or not — also returns `409`. The price stays
         changeable.
+
+        A new `interval` must be `month` or `year` with `intervalCount: 1`, sent
+        together, in live and test mode alike; any other value returns `422`. A
+        plan that already bills on another interval keeps it.
       tags:
         - Subscription Plans
       parameters:
@@ -1681,11 +1683,11 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateSubscriptionPlanRequest'
             example:
-              name: Pro Weekly
+              name: Pro Yearly
               basePrice:
                 value: '9.00'
                 currency: EUR
-              interval: week
+              interval: year
               intervalCount: 1
       responses:
         '200':
@@ -1713,11 +1715,11 @@ paths:
                 status: active
                 archivedAt: null
                 pendingUpdates:
-                  name: Pro Weekly
+                  name: Pro Yearly
                   basePrice:
                     value: '9.00'
                     currency: EUR
-                  interval: week
+                  interval: year
                   intervalCount: 1
                 updateStatus: pending
                 createdAt: '2024-01-15T10:30:00Z'
@@ -2148,6 +2150,7 @@ paths:
                   - id: refund_Bm7xNvPwKr3YjTgHcZaE
                     resource: refund
                     orderId: null
+                    metadata: null
                     customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                     testmode: false
                     createdAt: '2024-01-20T14:00:00Z'
@@ -2222,6 +2225,8 @@ paths:
         Creates a partial refund for specific items in an order.
 
         **Requirements:**
+        - Order must be a sale: a checkout or subscription order. Payment-method
+          authorization requests and billing-details verification charges cannot be refunded.
         - Order must have `paid` status
         - Order's payment provider must support refunds
         - Refund amount per item cannot exceed remaining refundable amount
@@ -2280,6 +2285,8 @@ paths:
                 id: refund_Mn6xBtPvKw2RjTgYcZaE
                 resource: refund
                 orderId: null
+                metadata:
+                  ticketId: SUPPORT-12345
                 customerId: customer_Lp3mNvBxKw7RjTgYcZaE
                 testmode: false
                 createdAt: '2024-01-15T10:30:00Z'
@@ -2341,14 +2348,27 @@ paths:
         '422':
           description: |
             Validation failed. Common errors:
+            - Order is not a sale. Uses the standard error shape, and `details.orderType`
+              names the order's type, informational only. Possible values: every order
+              type except `checkout_order` and `mandated_order`, for example `auth_request`
+              (payment-method authorization) or `update_details_order` (billing-details
+              verification charge).
             - Order is not in `paid` status
             - Order's payment provider does not support refunds
             - Refund amount exceeds remaining refundable amount
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ValidationError'
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/Error'
               examples:
+                notASale:
+                  summary: Order is not a sale
+                  value:
+                    message: Orders of type `auth_request` are not sales and cannot be refunded. Only checkout and subscription orders can be refunded.
+                    details:
+                      orderType: auth_request
                 notPaid:
                   summary: Order not paid
                   value:
@@ -2373,6 +2393,8 @@ paths:
         Creates a full refund for an order, refunding all items.
 
         **Requirements:**
+        - Order must be a sale: a checkout or subscription order. Payment-method
+          authorization requests and billing-details verification charges cannot be refunded.
         - Order must have `paid` status
         - Order's payment provider must support refunds
         - Order must not be already fully refunded
@@ -2409,6 +2431,8 @@ paths:
                 id: refund_Rk5pQrSvWm8NjLhYbUcP
                 resource: refund
                 orderId: null
+                metadata:
+                  reason: Customer requested cancellation
                 customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 createdAt: '2024-01-21T09:00:00Z'
@@ -2468,7 +2492,29 @@ paths:
         '409':
           $ref: '#/components/responses/Conflict'
         '422':
-          $ref: '#/components/responses/ValidationFailed'
+          description: |
+            Validation failed. Common errors:
+            - Order is not a sale. Uses the standard error shape, and `details.orderType`
+              names the order's type, informational only. Possible values: every order
+              type except `checkout_order` and `mandated_order`, for example `auth_request`
+              (payment-method authorization) or `update_details_order` (billing-details
+              verification charge).
+            - Order is not in `paid` status
+            - Order's payment provider does not support refunds
+            - Order is already fully refunded
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/Error'
+              examples:
+                notASale:
+                  summary: Order is not a sale
+                  value:
+                    message: Orders of type `auth_request` are not sales and cannot be refunded. Only checkout and subscription orders can be refunded.
+                    details:
+                      orderType: auth_request
         default:
           $ref: '#/components/responses/UnexpectedError'
   /orders/{orderId}/refunds/{refundId}:
@@ -2495,6 +2541,7 @@ paths:
                 id: refund_Xk9pQrSvWm4NjLhYbUcP
                 resource: refund
                 orderId: order_Bm7xNvPwKr3YjTgHcZaE
+                metadata: null
                 customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 createdAt: '2024-01-20T14:00:00Z'
@@ -2812,6 +2859,7 @@ paths:
                   - id: refund_Xk9pQrSvWm4NjLhYbUcP
                     resource: refund
                     orderId: order_Bm7xNvPwKr3YjTgHcZaE
+                    metadata: null
                     customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                     testmode: false
                     createdAt: '2024-01-20T14:00:00Z'
@@ -2901,6 +2949,7 @@ paths:
                 id: refund_Xk9pQrSvWm4NjLhYbUcP
                 resource: refund
                 orderId: order_Bm7xNvPwKr3YjTgHcZaE
+                metadata: null
                 customerId: customer_Wt5mNvBxKw7YcZaEjLhR
                 testmode: false
                 createdAt: '2024-01-20T14:00:00Z'
@@ -5907,6 +5956,20 @@ components:
             - it
             - pt
             - pl
+            - cs
+            - ca
+            - da
+            - el
+            - fi
+            - hu
+            - is
+            - lt
+            - lv
+            - nb
+            - sk
+            - sl
+            - sv
+            - tr
             - null
           example: de
         status:
@@ -5998,8 +6061,10 @@ components:
             - 'null'
           description: |
             Trial period in days for subscription plans.
-            Only applicable when `id` references a subscription plan.
-          minimum: 0
+            Only allowed when `id` references a subscription plan; on any other
+            product a value returns a `422`.
+            Omit it or send `null` for no trial.
+          minimum: 1
           example: 14
         metadata:
           $ref: '#/components/schemas/Metadata'
@@ -6068,7 +6133,9 @@ components:
             The language also carries through to the payment provider's own hosted
             page, in whatever format that provider expects.
 
-            Supported languages: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`.
+            Supported languages: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`,
+            `cs`, `ca`, `da`, `el`, `fi`, `hu`, `is`, `lt`, `lv`, `nb`, `sk`, `sl`,
+            `sv`, `tr`. Norwegian is served as `nb`; `no` and `nn` fold to it.
             Anything else is a `422` naming the supported set.
 
             Omit it (or send `null`) to detect the language from the shopper's
@@ -6248,12 +6315,20 @@ components:
             - `saas` — software supplied as a service (hosted, licensed or otherwise
               delivered online)
             - `ebook` — an electronic publication supplied as a download or stream
+            - `digital_download` — files the customer keeps that aren't a book or
+              software, such as photos, fonts, templates or music
+            - `online_course` — recorded lessons the customer follows at their own pace
+            - `audiobook` — a book to listen to, streamed or downloaded
 
             Set when the product is created. Subscription plans accept `saas` only;
-            an e-book is a one-time purchase, so sell it as a one-off product.
+            e-books, digital downloads, online courses and audiobooks are one-time
+            purchases, so sell them as one-off products.
           enum:
             - saas
             - ebook
+            - digital_download
+            - online_course
+            - audiobook
           example: saas
         status:
           type: string
@@ -6301,6 +6376,9 @@ components:
               enum:
                 - saas
                 - ebook
+                - digital_download
+                - online_course
+                - audiobook
           example:
             basePrice:
               currency: EUR
@@ -6363,12 +6441,20 @@ components:
             - `saas` — software supplied as a service (hosted, licensed or otherwise
               delivered online)
             - `ebook` — an electronic publication supplied as a download or stream
+            - `digital_download` — files the customer keeps that aren't a book or
+              software, such as photos, fonts, templates or music
+            - `online_course` — recorded lessons the customer follows at their own pace
+            - `audiobook` — a book to listen to, streamed or downloaded
 
             Set when the product is created. Subscription plans accept `saas` only;
-            an e-book is a one-time purchase, so sell it as a one-off product.
+            e-books, digital downloads, online courses and audiobooks are one-time
+            purchases, so sell them as one-off products.
           enum:
             - saas
             - ebook
+            - digital_download
+            - online_course
+            - audiobook
           example: saas
         taxBehavior:
           type: string
@@ -6451,6 +6537,10 @@ components:
             - `week` - Weekly billing
             - `month` - Monthly billing
             - `year` - Yearly billing
+
+            New plans and interval changes accept only `month` or `year` with
+            `intervalCount: 1`. `day` and `week` appear only on plans created
+            before that restriction.
           enum:
             - day
             - week
@@ -6460,8 +6550,9 @@ components:
         intervalCount:
           type: integer
           description: |
-            Number of interval units between billing cycles.
-            For example, `interval: month` with `intervalCount: 3` bills every 3 months.
+            Number of interval units between billing cycles. Always `1` for new
+            plans and interval changes; plans created before that restriction may
+            carry another value.
           minimum: 1
           example: 1
         productType:
@@ -6512,10 +6603,10 @@ components:
           properties:
             name:
               type: string
-              example: Pro Weekly
+              example: Pro Yearly
             description:
               type: string
-              example: Billed weekly
+              example: Billed yearly
             basePrice:
               $ref: '#/components/schemas/Money'
             interval:
@@ -6533,7 +6624,7 @@ components:
               enum:
                 - saas
           example:
-            interval: week
+            interval: year
             intervalCount: 1
         updateStatus:
           type:
@@ -6613,21 +6704,18 @@ components:
         interval:
           type: string
           description: |
-            Billing interval unit. `day` is sandbox-only (test mode); live plans
-            support `week`, `month`, and `year`.
+            Billing interval unit: `month` or `year`, in live and test mode alike.
           enum:
-            - day
-            - week
             - month
             - year
           example: month
         intervalCount:
           type: integer
-          minimum: 1
+          enum:
+            - 1
           description: |
-            Number of interval units between billing cycles. Bounded per unit:
-            up to 365 days, 52 weeks, or 12 months. For `year`, billing is always
-            annual and this value is ignored.
+            Number of interval units between billing cycles. Must be `1`: a plan
+            bills every month or every year.
           example: 1
     Order:
       type: object
@@ -6732,7 +6820,12 @@ components:
           description: Amount of the captured payment returned to the customer, before taxes, via refund or chargeback (settled)
         refundableSubtotal:
           $ref: '#/components/schemas/Money'
-          description: Remaining amount that can still be refunded, before taxes.
+          description: |
+            Remaining amount that can still be refunded, before taxes. Always zero
+            for an order that is not a sale (any order type other than
+            `checkout_order` and `mandated_order`, such as a payment-method
+            authorization or a verification charge), because such orders cannot
+            be refunded.
         taxSummary:
           type: array
           description: Tax breakdown by rate
@@ -6922,6 +7015,7 @@ components:
         - subtotal
         - taxSummary
         - lines
+        - metadata
         - links
       additionalProperties: false
       properties:
@@ -6943,6 +7037,13 @@ components:
             the payload; `null` until the refund is processed, then set to the
             credit-note order id.
           example: order_Vr8kQdFhSrG4Y3DnfsdqH
+        metadata:
+          allOf:
+            - $ref: '#/components/schemas/Metadata'
+          description: |
+            The `metadata` sent when the refund was created. Always present;
+            `null` when none was sent, including for refunds created before
+            metadata was stored.
         customerId:
           type: string
           description: ID of the customer receiving the refund
@@ -8172,12 +8273,20 @@ components:
             - `saas` — software supplied as a service (hosted, licensed or otherwise
               delivered online)
             - `ebook` — an electronic publication supplied as a download or stream
+            - `digital_download` — files the customer keeps that aren't a book or
+              software, such as photos, fonts, templates or music
+            - `online_course` — recorded lessons the customer follows at their own pace
+            - `audiobook` — a book to listen to, streamed or downloaded
 
             Set when the product is created. Subscription plans accept `saas` only;
-            an e-book is a one-time purchase, so sell it as a one-off product.
+            e-books, digital downloads, online courses and audiobooks are one-time
+            purchases, so sell them as one-off products.
           enum:
             - saas
             - ebook
+            - digital_download
+            - online_course
+            - audiobook
           example: saas
     UpdateSubscriptionPlanRequest:
       type: object
@@ -8199,11 +8308,11 @@ components:
           minLength: 3
           maxLength: 255
           description: New display name of the plan.
-          example: Pro Weekly
+          example: Pro Yearly
         description:
           type: string
           description: New description of the plan.
-          example: Billed weekly
+          example: Billed yearly
         basePrice:
           $ref: '#/components/schemas/EurMoney'
           description: New price per billing interval, in EUR.
@@ -8214,16 +8323,18 @@ components:
           example: saas
         interval:
           type: string
+          description: |
+            New billing interval unit: `month` or `year`, in live and test mode
+            alike. Required when `intervalCount` is provided.
           enum:
-            - day
-            - week
             - month
             - year
-          example: week
+          example: year
         intervalCount:
           type: integer
-          minimum: 1
-          description: Required when `interval` is provided.
+          enum:
+            - 1
+          description: Must be `1`. Required when `interval` is provided.
           example: 1
     TaxSummaryRate:
       type: object

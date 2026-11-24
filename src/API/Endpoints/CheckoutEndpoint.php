@@ -26,11 +26,25 @@ class CheckoutEndpoint extends BaseEndpoint
     }
 
     /**
+     * A product's `trialDays` must be at least 1 and only applies to a
+     * subscription plan; omit it or pass `null` for no trial. A value below 1
+     * throws before the request is sent, since Vatly answers it with a `422`.
+     *
      * @return Checkout|BaseResource
-     *@throws ApiException
+     * @throws ApiException
      */
     public function create(array $payload, array $filters = []): BaseResource
     {
+        foreach ($payload['products'] ?? [] as $index => $product) {
+            $trialDays = is_array($product) ? ($product['trialDays'] ?? null) : null;
+
+            if (is_numeric($trialDays) && $trialDays < 1) {
+                throw new ApiException(
+                    "products[{$index}].trialDays must be at least 1. Omit it or pass null for no trial."
+                );
+            }
+        }
+
         return $this->rest_create($payload, $filters);
     }
 

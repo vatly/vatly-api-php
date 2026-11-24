@@ -15,7 +15,7 @@ Below you'll find all properties for the Vatly One-Off Product resource.
 | `description` | `string \| null` | Description of the product. |
 | `basePrice` | `Money` | The price as a `Money` object — read `->value` (decimal string) and `->currency` (ISO 4217 code). |
 | `taxBehavior` | `string` | Whether `basePrice` is tax-`exclusive` (B2B; tax added at checkout) or tax-`inclusive` (B2C; price already includes tax). Immutable after creation. See `Vatly\API\Types\TaxBehavior`. |
-| `productType` | `string` | Tax classification: `saas` or `ebook`. |
+| `productType` | `string` | Tax classification: `saas`, `ebook`, `digital_download`, `online_course` or `audiobook`. |
 | `testmode` | `bool` | Whether this is a test product. |
 | `status` | `string` | The status: `active` (purchasable), `pending` (awaiting approval), or `rejected`. |
 | `archivedAt` | `string \| null` | When the product was archived (ISO 8601), or `null` while it is on sale. Use `$product->isArchived()` for a boolean. |
@@ -43,7 +43,7 @@ you can trial checkout immediately.
 | `name` | `string` | Display name (3–255 characters). |
 | `description` | `string` | Detailed description of the product. |
 | `basePrice` | `array` | Price as `['value' => '299.00', 'currency' => 'EUR']`. |
-| `productType` | `string` | Tax classification: `saas` or `ebook`. |
+| `productType` | `string` | Tax classification: `saas`, `ebook`, `digital_download`, `online_course` or `audiobook`. |
 
 ### Optional attributes
 
@@ -94,7 +94,7 @@ The returned product carries `pendingUpdates` and `updateStatus`.
 | `name` | `string` | New display name (3–255 characters). |
 | `description` | `string` | New description. |
 | `basePrice` | `array` | New price as `['value' => '349.00', 'currency' => 'EUR']`. |
-| `productType` | `string` | `saas` or `ebook`. |
+| `productType` | `string` | `saas`, `ebook`, `digital_download`, `online_course` or `audiobook`. |
 
 
 

@@ -26,8 +26,8 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
      * `pending` status and must be approved by Vatly before use in checkouts;
      * plans created with a `test_` token are auto-approved (`active`).
      *
-     * `productType` must be `saas`. The `day` interval is sandbox-only; live
-     * plans support `week`, `month`, and `year`.
+     * `productType` must be `saas`. `interval` must be `month` or `year` with
+     * `intervalCount` 1, in live and test mode alike.
      *
      * @return SubscriptionPlan|BaseResource
      * @throws ApiException
@@ -52,7 +52,8 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
      * change is held as a pending update and reviewed by Vatly before it takes
      * effect (`updateStatus` moves `pending` → `reviewing` → applied); in test mode
      * it is approved automatically. The interval cannot be changed once the plan
-     * has ever been used by a subscription; the price stays changeable.
+     * has ever been used by a subscription; the price stays changeable. A new
+     * `interval` must be `month` or `year`, sent together with `intervalCount` 1.
      *
      * @return SubscriptionPlan|BaseResource|null
      * @throws ApiException

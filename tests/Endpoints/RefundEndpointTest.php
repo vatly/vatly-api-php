@@ -117,6 +117,7 @@ class RefundEndpointTest extends BaseEndpointTest
         $this->assertEquals('16.00', $refund->taxSummary->items[0]->amount->value);
         $this->assertEquals('EUR', $refund->taxSummary->items[0]->amount->currency);
         $this->assertEquals('2023-01-11T10:50:50+02:00', $refund->createdAt);
+        $this->assertEquals('123456', $refund->metadata->refund_id);
 
         $this->assertEquals('https://api.vatly.com/v1/refunds/refund_dummy_id', $refund->links->self->href);
         $this->assertEquals('application/hal+json', $refund->links->self->type);

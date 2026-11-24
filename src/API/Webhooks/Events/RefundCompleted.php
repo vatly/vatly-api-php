@@ -8,6 +8,7 @@ use Vatly\API\Resources\Refund as ApiRefund;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
+use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
 
 /**
  * Event representing a refund completing (funds returned to the customer) at Vatly.
@@ -22,6 +23,8 @@ use Vatly\API\Types\WebhookEventName;
  */
 class RefundCompleted
 {
+    use NormalizesWebhookMetadata;
+
     public const VATLY_EVENT_NAME = WebhookEventName::REFUND_COMPLETED;
 
     public function __construct(
@@ -49,6 +52,14 @@ class RefundCompleted
          * store it if useful but do not treat it as permanent.
          */
         public ?string $customerInvoiceUrl = null,
+        /**
+         * The `metadata` sent when the refund was created, as a string map, or
+         * null when none was sent (including refunds created before Vatly stored
+         * refund metadata).
+         *
+         * @var array<string, mixed>|null
+         */
+        public ?array $metadata = null,
     ) {
         //
     }
@@ -66,6 +77,7 @@ class RefundCompleted
             testmode: $refund->testmode,
             orderId: $refund->orderId,
             customerInvoiceUrl: $refund->links->customerInvoice->href ?? null,
+            metadata: self::normalizeMetadata($refund->metadata),
         );
     }
 }

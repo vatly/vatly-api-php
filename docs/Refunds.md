@@ -21,6 +21,7 @@ Below you'll find all properties for the Vatly Refund resource.
 | `taxSummary` | `TaxSummaryCollection` | Tax breakdown by rate. |
 | `lines` | `array` | The refund lines. Use `$refund->lines()` for a collection of `RefundLine` objects. |
 | `testmode` | `bool` | Whether this is a test refund. |
+| `metadata` | `object \| null` | The `metadata` sent when the refund was created, read as `$refund->metadata->ticketId`. `null` when none was sent, including refunds created before Vatly stored refund metadata. |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 | `links` | `RefundLinks` | Links to this refund, the original order, the credit note order (`null` until there is one) and `customerInvoice`, the customer-portal page of the refund's credit note (`null` until the refund is processed). The `customerInvoice` URL is signed and expires after 72 hours (the customer then sees a page to request a new link). |
 
@@ -32,7 +33,7 @@ Below you'll find all properties for the Vatly Refund resource.
 
 
 
-Refund part of an order, line by line.
+Refund part of an order, line by line. Only sales can be refunded: checkout and subscription orders. Any other order, such as a payment-method authorization, returns `422` with the order's type in `details.orderType`.
 
 ### Required attributes
 
@@ -44,7 +45,7 @@ Refund part of an order, line by line.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `metadata` | `array` | Your custom metadata. |
+| `metadata` | `array \| null` | Your custom metadata: string values only, at most 50 keys, keys up to 40 characters and values up to 500 characters (anything else returns `422`). `null` is the same as leaving it out. |
 
 ### Refund items
 
@@ -67,10 +68,12 @@ $refund = $vatly->orderRefunds->createForOrderId('order_abc123', [
             'description' => 'Partial refund',
         ],
     ],
+    'metadata' => ['ticketId' => 'SUPPORT-12345'],
 ]);
 
 echo $refund->id;
 echo $refund->status;
+echo $refund->metadata->ticketId; // 'SUPPORT-12345'
 ```
 
 
@@ -83,13 +86,13 @@ echo $refund->status;
 
 
 
-Refund everything that can still be refunded on an order.
+Refund everything that can still be refunded on an order. As with a partial refund, only checkout and subscription orders can be refunded.
 
 ### Optional attributes
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `metadata` | `array` | Your custom metadata. |
+| `metadata` | `array \| null` | Your custom metadata: string values only, at most 50 keys, keys up to 40 characters and values up to 500 characters (anything else returns `422`). `null` is the same as leaving it out. |
 
 
 

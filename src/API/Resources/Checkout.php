@@ -54,7 +54,9 @@ class Checkout extends BaseResource
 
     /**
      * The language the hosted checkout is presented in, as sent on creation
-     * (one of `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`). `null` means you
+     * (one of `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`, `cs`, `ca`, `da`,
+     * `el`, `fi`, `hu`, `is`, `lt`, `lv`, `nb`, `sk`, `sl`, `sv`, `tr`;
+     * Norwegian is served as `nb`). `null` means you
      * did not specify one, so the checkout picks a language from the shopper's
      * browser.
      */

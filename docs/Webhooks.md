@@ -209,6 +209,8 @@ Webhooks are refused until a secret is configured: `Webhook::parse()` throws `Va
 - carries `from*()` factory methods — `fromApiOrder()`, `fromApiRefund()`, `fromApiChargeback()`, `fromApiSubscription()` to build from an enriched API resource, and/or `fromWebhook(WebhookReceived $webhook)` to build from the raw payload;
 - carries money as [`Money`](../src/API/Types/Money.php) values (decimal-string + currency) and the per-rate VAT breakdown as a [`TaxSummaryCollection`](../src/API/Types/TaxSummaryCollection.php). Flatten to integer cents at your persistence edge via [`Money::toCents()`](../src/API/Types/Money.php).
 
+The refund events (`RefundCompleted`, `RefundFailed`, `RefundCanceled`) carry `metadata`: the metadata sent when the refund was created, as an array of strings, or `null` when none was sent (including refunds created before Vatly stored refund metadata).
+
 ```php
 use Vatly\API\Resources\Order;
 use Vatly\API\Webhooks\Events\OrderPaid;

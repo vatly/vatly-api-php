@@ -57,6 +57,16 @@ class Refund extends BaseResource
      */
     public string $originalOrderId;
 
+    /**
+     * The `metadata` sent when the refund was created: an object of string
+     * values, or `null` when none was sent (including refunds created before
+     * Vatly stored refund metadata, and older responses without the key).
+     *
+     * @var object|null
+     * @example ["ticketId" => "SUPPORT-12345"]
+     */
+    public $metadata = null;
+
     public function lines(): RefundLineCollection
     {
         return ResourceFactory::createCursorResourceCollection(

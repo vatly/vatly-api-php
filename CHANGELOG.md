@@ -4,6 +4,24 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **`metadata` on refunds.** `Refund->metadata` holds the `metadata` sent when the refund was created (an object of string values, read as `$refund->metadata->ticketId`), or `null` when none was sent, including refunds created before Vatly stored refund metadata. The `RefundCompleted`, `RefundFailed` and `RefundCanceled` webhook DTOs carry it as `?array $metadata`. Additive: an optional last constructor argument defaulting to `null`, and a response or payload without the key still yields `null`.
+- Refund requests (`createForOrderId()`, `createFullRefundForOrderId()`, `Order->refund()`, `Order->fullRefund()`) already passed `metadata` through; the docs now show it.
+
+### Changed
+
+- **`trialDays` below 1 is refused before sending.** `checkouts->create()` throws an `ApiException` naming the product (for example `products[0].trialDays must be at least 1`) when a product's `trialDays` is `0` or negative, instead of sending a request Vatly answers with `422`. Before Vatly's change, `0` started a trial that had already ended and skipped the charge at checkout. Omit `trialDays` or pass `null` for no trial. `trialDays` on a one-off product also returns `422` from Vatly now.
+- **Synced `openapi.yaml`** with the published spec:
+  - Request fields the spec marks nullable accept `null`, treated as omitted: checkout `metadata`, `products[].price` and `products[].trialDays`, customer `metadata`, refund `metadata`, and subscription update `anchor`.
+  - Request `metadata` must be an object of string values, at most 50 keys, keys up to 40 characters and values up to 500 characters; anything else returns `422`.
+  - `Refund.metadata` is a new response field, always present.
+  - Refunds of an order that is not a sale (such as a payment-method authorization) return `422` with `details.orderType`, and such an order's `refundableSubtotal` is always zero.
+  - 14 new checkout `locale` values: `cs`, `ca`, `da`, `el`, `fi`, `hu`, `is`, `lt`, `lv`, `nb`, `sk`, `sl`, `sv`, `tr` (Norwegian is served as `nb`).
+  - New one-off product types: `digital_download`, `online_course` and `audiobook`.
+  - New and changed subscription plans accept only `interval: month` or `year` with `intervalCount: 1`; existing plans keep their interval.
+- Docblocks and docs pages describe the new locales, product types, plan intervals and metadata limits.
+
 ## v0.1.0-alpha.36
 
 ### Fixed
