@@ -8,6 +8,7 @@ use Vatly\API\Resources\Refund as ApiRefund;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\Types\WebhookEventName;
+use Vatly\API\Webhooks\Concerns\NormalizesWebhookMetadata;
 
 /**
  * Event representing a pending refund being canceled before it is sent at Vatly.
@@ -22,6 +23,8 @@ use Vatly\API\Types\WebhookEventName;
  */
 class RefundCanceled
 {
+    use NormalizesWebhookMetadata;
+
     public const VATLY_EVENT_NAME = WebhookEventName::REFUND_CANCELED;
 
     public function __construct(
@@ -40,6 +43,14 @@ class RefundCanceled
          * the other refund events and so consumers never need a follow-up GetRefund.
          */
         public ?string $orderId = null,
+        /**
+         * The `metadata` sent when the refund was created, as a string map, or
+         * null when none was sent (including refunds created before Vatly stored
+         * refund metadata).
+         *
+         * @var array<string, mixed>|null
+         */
+        public ?array $metadata = null,
     ) {
         //
     }
@@ -56,6 +67,7 @@ class RefundCanceled
             originalOrderId: $refund->originalOrderId,
             testmode: $refund->testmode,
             orderId: $refund->orderId,
+            metadata: self::normalizeMetadata($refund->metadata),
         );
     }
 }

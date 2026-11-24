@@ -20,7 +20,7 @@ Below you'll find all properties for the Vatly Subscription resource.
 | `billingAddress` | `Address`           | Customer's billing address for this subscription. |
 | `basePrice` | `Money`             | Price per billing cycle before taxes. |
 | `quantity` | `int`               | Number of subscription units (e.g. seats). |
-| `interval` | `string`            | Billing interval unit: `day`, `week`, `month`, or `year`. |
+| `interval` | `string`            | Billing interval unit: `month` or `year` (subscriptions on plans created before that restriction can show `day` or `week`). |
 | `intervalCount` | `int`               | Number of interval units between billing cycles. |
 | `status` | `string`            | The subscription status (see [Subscription statuses](#subscription-statuses)). |
 | `cancellationReason` | `string \| null`    | Why the subscription was canceled — `payment_failure` (recovery exhausted after failed renewals), `merchant_request`, or `customer_request` (self-service portal) — or `null` unless a cancellation has been requested. See `Vatly\API\Types\CancellationReason`. |
@@ -120,7 +120,7 @@ Change a subscription's plan, quantity and/or price. **At least one of
 | `prorationCharge` | `bool` | Whether an immediate change is charged at all (default `true`). With `false`, the change applies now and nothing is charged for it: a downgrade gets no credit. The next renewal bills the new price, unless a change is already scheduled for that renewal: that change still applies. During a trial, the trial keeps running and its end bills the new plan. Sending `invoiceImmediately: true`, `anchor`, `resetAnchor`, `trialUntil` or a plan with a different interval with `false` returns `422`. |
 | `applyImmediately` | `bool` | Apply the change now (`true`) or at the end of the current period (`false`, default). |
 | `invoiceImmediately` | `bool` | Invoice and charge the proration now instead of on the next renewal. Only applies when `applyImmediately` and `prorate` are both `true`. The proration order is created and charged asynchronously, typically within 15 to 30 minutes, so `update()` does not return it. Vatly waits briefly so that other charges for the same customer made around the same time are combined into one order and one payment instead of several. Follow the `order.paid` webhook (or `order.payment_failed`), whose order line has `relatedResources->subscriptionId` set to the subscription. In test mode, settle or decline its pending payment with `$vatly->testHelpers->simulateOrderPayment()`. Defaults to `false`, which parks the proration delta on the current cycle and bills it as a line on the next renewal invoice (and waives it if the subscription is cancelled first). **Set this to `true` on yearly and other long-interval plans**, where the deferral to the next renewal costs you the most. |
-| `anchor` | `string \| null` | Set the billing anchor to a specific date (`YYYY-MM-DD`, UTC). Cannot be combined with `resetAnchor`. |
+| `anchor` | `string \| null` | Set the billing anchor to a specific date (`YYYY-MM-DD`, UTC). `null` is the same as leaving it out. Cannot be combined with `resetAnchor`. |
 | `resetAnchor` | `bool` | Reset the billing anchor to now. Cannot be combined with `anchor`. |
 | `trialUntil` | `string \| null` | Extend or set a trial until this date (ISO 8601). Cannot be combined with `anchor`. |
 

@@ -35,7 +35,8 @@ class OneOffProduct extends BaseResource
     public string $taxBehavior;
 
     /**
-     * What kind of product this is: `saas` or `ebook`.
+     * What kind of product this is: `saas`, `ebook`, `digital_download`,
+     * `online_course` or `audiobook`.
      */
     public ?string $productType = null;
 

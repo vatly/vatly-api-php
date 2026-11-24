@@ -588,6 +588,69 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertCount(1, $event->taxSummary->items);
         $this->assertSame('VAT', $event->taxSummary->items[0]->taxRate->name);
         $this->assertSame(1718, $event->taxSummary->items[0]->amount->toCents());
+        $this->assertNull($event->metadata);
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string, 2: class-string}>
+     */
+    public static function refundEventProvider(): array
+    {
+        return [
+            'completed' => ['refund.completed', 'refunded', RefundCompleted::class],
+            'failed' => ['refund.failed', 'failed', RefundFailed::class],
+            'canceled' => ['refund.canceled', 'canceled', RefundCanceled::class],
+        ];
+    }
+
+    /**
+     * @dataProvider refundEventProvider
+     */
+    public function test_refund_events_carry_the_refund_metadata(string $eventName, string $status, string $eventClass): void
+    {
+        $event = $this->factory->createFromWebhook($this->makeWebhook(
+            eventName: $eventName,
+            entityType: 'refund',
+            entityId: 'refund_meta_1',
+            object: $this->fatRefund([
+                'id' => 'refund_meta_1',
+                'customerId' => 'cus_456',
+                'status' => $status,
+                'originalOrderId' => 'ord_original_1',
+                'total' => ['currency' => 'EUR', 'value' => '10.00'],
+                'subtotal' => ['currency' => 'EUR', 'value' => '8.26'],
+                'taxRates' => [],
+                'metadata' => ['ticketId' => 'SUPPORT-12345', 'reason' => 'duplicate'],
+            ]),
+        ));
+
+        $this->assertInstanceOf($eventClass, $event);
+        $this->assertSame(['ticketId' => 'SUPPORT-12345', 'reason' => 'duplicate'], $event->metadata);
+    }
+
+    /**
+     * @dataProvider refundEventProvider
+     */
+    public function test_refund_events_carry_null_metadata_when_none_was_sent(string $eventName, string $status, string $eventClass): void
+    {
+        $event = $this->factory->createFromWebhook($this->makeWebhook(
+            eventName: $eventName,
+            entityType: 'refund',
+            entityId: 'refund_meta_2',
+            object: $this->fatRefund([
+                'id' => 'refund_meta_2',
+                'customerId' => 'cus_456',
+                'status' => $status,
+                'originalOrderId' => 'ord_original_1',
+                'total' => ['currency' => 'EUR', 'value' => '10.00'],
+                'subtotal' => ['currency' => 'EUR', 'value' => '8.26'],
+                'taxRates' => [],
+                'metadata' => null,
+            ]),
+        ));
+
+        $this->assertInstanceOf($eventClass, $event);
+        $this->assertNull($event->metadata);
     }
 
     public function test_it_creates_refund_failed_event_from_fat_payload(): void
@@ -1257,6 +1320,10 @@ class WebhookEventFactoryTest extends BaseTestCase
 
         if (array_key_exists('links', $data)) {
             $object['links'] = $data['links'];
+        }
+
+        if (array_key_exists('metadata', $data)) {
+            $object['metadata'] = $data['metadata'];
         }
 
         return $object;

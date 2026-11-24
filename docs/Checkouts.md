@@ -21,7 +21,7 @@ Below you'll find all properties for the Vatly Checkout resource.
 | `redirectUrlSuccess` | `string` | Success redirect URL. |
 | `redirectUrlCanceled` | `string` | Cancel redirect URL. |
 | `metadata` | `array` | Your custom metadata. |
-| `locale` | `string \| null` | The language the hosted checkout is presented in (`en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`), echoed back as the folded language. `null` means none was specified and the checkout picks a language from the shopper's browser. |
+| `locale` | `string \| null` | The language the hosted checkout is presented in (`en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`, `cs`, `ca`, `da`, `el`, `fi`, `hu`, `is`, `lt`, `lv`, `nb`, `sk`, `sl`, `sv`, `tr`), echoed back as the folded language. `null` means none was specified and the checkout picks a language from the shopper's browser. |
 | `expiresAt` | `string \| null` | Expiration timestamp (ISO 8601). |
 | `createdAt` | `string` | Creation timestamp (ISO 8601). |
 | `links` | `CheckoutLinks` | Links to this checkout, the hosted checkout page (`checkoutUrl`) and the order (`null` until there is one). |
@@ -50,8 +50,8 @@ Create a new hosted checkout for your customer.
 | --- | --- | --- |
 | `customerId` | `string` | Existing customer ID to associate with this checkout. |
 | `billingAddress` | `array` | Editable prefill for the billing address fields on the hosted checkout (`fullName`, `companyName`, `taxId`, `streetAndNumber`, `streetAdditional`, `city`, `region`, `postalCode`, `country`, `email`). A supplied `country` takes precedence over the shopper's IP address for determining their country. A supplied `taxId` is only a prefill, and is not registered until the buyer submits the checkout. |
-| `metadata` | `array` | Your custom metadata to store with the checkout. |
-| `locale` | `string` | Language to present the hosted checkout in — set this when you already know the customer's language. Accepts a bare language code (`de`), a BCP 47 tag (`de-AT`), or a POSIX/ISO 15897 locale (`de_DE`); all three fold to the language. Supported: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl` (anything else returns `422`). Omit (or `null`) to detect the language from the shopper's `Accept-Language` header, falling back to English. The response echoes back the folded language. |
+| `metadata` | `array \| null` | Your custom metadata: string values only, at most 50 keys, keys up to 40 characters and values up to 500 characters (anything else returns `422`). `null` is the same as leaving it out. |
+| `locale` | `string` | Language to present the hosted checkout in — set this when you already know the customer's language. Accepts a bare language code (`de`), a BCP 47 tag (`de-AT`), or a POSIX/ISO 15897 locale (`de_DE`); all three fold to the language. Supported: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`, `cs`, `ca`, `da`, `el`, `fi`, `hu`, `is`, `lt`, `lv`, `nb`, `sk`, `sl`, `sv`, `tr` (anything else returns `422`). Norwegian is served as `nb`; `no` and `nn` fold to it. Omit (or `null`) to detect the language from the shopper's `Accept-Language` header, falling back to English. The response echoes back the folded language. |
 
 
 
@@ -103,7 +103,7 @@ If you omit `idempotencyKey`, the SDK generates an `Idempotency-Key` header auto
 
 Each entry in `products` references a product you have **already created in the [Vatly dashboard](https://my.vatly.com)** — there is no API endpoint to create products on the fly. The `id` is either a `one_off_product_…` or `subscription_plan_…` id.
 
-To charge an amount other than the product's dashboard price, set a `price` override (a `Money` object). For the full list of accepted item fields and their validation rules, see the `CheckoutProduct` schema in the [OpenAPI spec](https://docs.vatly.com/openapi.yaml).
+To charge an amount other than the product's dashboard price, set a `price` override (a `Money` object). To start a subscription plan with a trial, set `trialDays` to at least `1`; omit it or pass `null` for no trial. A `trialDays` below `1` throws an `ApiException` before the request is sent, and a `trialDays` on a one-off product returns `422`. For the full list of accepted item fields and their validation rules, see the `CheckoutProduct` schema in the [OpenAPI spec](https://docs.vatly.com/openapi.yaml).
 
 ```php
 // Override the price of a pre-configured product at checkout time.

@@ -365,4 +365,58 @@ class CheckoutEndpointTest extends BaseEndpointTest
         $this->assertInstanceOf(Checkout::class, $checkout);
         $this->assertEquals('de', $checkout->locale);
     }
+
+    /**
+     * @test
+     * @dataProvider trialDaysBelowOneProvider
+     */
+    public function it_refuses_trial_days_below_one_without_sending($trialDays): void
+    {
+        try {
+            $this->client->checkouts->create([
+                'products' => [
+                    ['id' => 'subscription_plan_ok', 'trialDays' => 14],
+                    ['id' => 'subscription_plan_abc', 'trialDays' => $trialDays],
+                ],
+                'redirectUrlSuccess' => 'https://example.com/success',
+                'redirectUrlCanceled' => 'https://example.com/canceled',
+            ]);
+            $this->fail('Expected an ApiException.');
+        } catch (\Vatly\API\Exceptions\ApiException $exception) {
+            $this->assertStringContainsString('products[1].trialDays', $exception->getMessage());
+        }
+
+        $this->assertSame(0, $this->httpClient->countRecordedSends());
+    }
+
+    public static function trialDaysBelowOneProvider(): array
+    {
+        return [
+            'zero' => [0],
+            'zero as string' => ['0'],
+            'negative' => [-3],
+        ];
+    }
+
+    /** @test */
+    public function it_sends_trial_days_of_one_and_null(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray(['id' => 'checkout_dummy_id', 'resource' => 'checkout']);
+
+        $this->client->checkouts->create([
+            'products' => [
+                ['id' => 'subscription_plan_abc', 'trialDays' => 1],
+                ['id' => 'one_off_product_abc', 'trialDays' => null],
+            ],
+            'redirectUrlSuccess' => 'https://example.com/success',
+            'redirectUrlCanceled' => 'https://example.com/canceled',
+        ], ['idempotencyKey' => 'key-1']);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/checkouts',
+            [],
+            '{"products":[{"id":"subscription_plan_abc","trialDays":1},{"id":"one_off_product_abc","trialDays":null}],"redirectUrlSuccess":"https:\/\/example.com\/success","redirectUrlCanceled":"https:\/\/example.com\/canceled"}'
+        );
+    }
 }

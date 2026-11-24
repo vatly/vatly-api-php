@@ -233,6 +233,27 @@ class OrderRefundEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function it_sends_null_metadata_on_a_refund_and_reads_it_back(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => 'refund_dummy_id',
+            'resource' => 'refund',
+            'metadata' => null,
+        ]);
+
+        $refund = $this->client->orderRefunds->createFullRefundForOrderId('order_meta', ['metadata' => null]);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/orders/order_meta/refunds/full',
+            [],
+            '{"metadata":null}'
+        );
+        $this->assertInstanceOf(Refund::class, $refund);
+        $this->assertNull($refund->metadata);
+    }
+
+    /** @test */
     public function a_full_refund_does_not_change_the_path_of_later_calls(): void
     {
         $this->httpClient->setSendReturnObjectFromArray([

@@ -40,7 +40,7 @@ Create a new customer.
 | Name | Type | Description |
 | --- | --- | --- |
 | `name` | `string` | The customer's name. |
-| `metadata` | `array` | Your custom metadata. |
+| `metadata` | `array \| null` | Your custom metadata: string values only, at most 50 keys, keys up to 40 characters and values up to 500 characters (anything else returns `422`). `null` is the same as leaving it out. |
 
 
 

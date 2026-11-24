@@ -15,8 +15,8 @@ Below you'll find all properties for the Vatly Subscription Plan resource.
 | `description` | `string \| null` | Description of the plan. |
 | `basePrice` | `Money` | Price per interval as a `Money` object — read `->value` (decimal string) and `->currency` (ISO 4217 code). |
 | `taxBehavior` | `string` | Whether `basePrice` is tax-`exclusive` (B2B) or tax-`inclusive` (B2C). Immutable after creation. See `Vatly\API\Types\TaxBehavior`. |
-| `interval` | `string` | Billing interval: `day`, `week`, `month`, or `year`. |
-| `intervalCount` | `integer` | Number of intervals between billings. |
+| `interval` | `string` | Billing interval: `month` or `year`. Plans created before that restriction can still show `day` or `week`. |
+| `intervalCount` | `integer` | Number of intervals between billings. Always `1` for new plans; older plans can show another value. |
 | `productType` | `string` | Tax classification. Always `saas` for plans. |
 | `testmode` | `bool` | Whether this is a test plan. |
 | `status` | `string` | The status: `active` (subscribable), `pending` (awaiting approval), or `rejected`. |
@@ -45,8 +45,8 @@ checkouts; a plan created with a `test_` token is auto-approved (`active`).
 | `description` | `string` | Detailed description of the plan. |
 | `basePrice` | `array` | Price per interval as `['value' => '29.00', 'currency' => 'EUR']`. |
 | `productType` | `string` | Tax classification. Only `saas` is billable on a recurring basis. |
-| `interval` | `string` | Billing interval unit. `day` is sandbox-only; live plans support `week`, `month`, `year`. |
-| `intervalCount` | `integer` | Interval units between billings (≤ 365 days / 52 weeks / 12 months). For `year`, billing is always annual and this is ignored. |
+| `interval` | `string` | Billing interval unit: `month` or `year`, in live and test mode alike. Anything else returns `422`. |
+| `intervalCount` | `integer` | Must be `1`: a plan bills every month or every year. |
 
 ### Optional attributes
 
@@ -91,6 +91,8 @@ update; while an update is being reviewed, further requests return `409`.
 
 The `interval` cannot be changed once the plan has ever been used by a
 subscription (active or not) — that returns `409`. The price stays changeable.
+A new `interval` must be `month` or `year`, sent together with `intervalCount: 1`;
+anything else returns `422`. A plan that already bills on another interval keeps it.
 
 ### Optional attributes
 
@@ -99,8 +101,8 @@ subscription (active or not) — that returns `409`. The price stays changeable.
 | `name` | `string` | New display name (3–255 characters). |
 | `description` | `string` | New description. |
 | `basePrice` | `array` | New price per interval as `['value' => '9.00', 'currency' => 'EUR']`. |
-| `interval` | `string` | New billing interval. Requires `intervalCount`. |
-| `intervalCount` | `integer` | Required when `interval` is provided. |
+| `interval` | `string` | New billing interval: `month` or `year`. Requires `intervalCount`. |
+| `intervalCount` | `integer` | Must be `1`. Required when `interval` is provided. |
 | `productType` | `string` | `saas`. |
 
 
@@ -108,14 +110,14 @@ subscription (active or not) — that returns `409`. The price stays changeable.
 
 ```php
 $plan = $vatly->subscriptionPlans->update('subscription_plan_abc123', [
-    'name' => 'Pro Weekly',
+    'name' => 'Pro Yearly',
     'basePrice' => ['value' => '9.00', 'currency' => 'EUR'],
-    'interval' => 'week',
+    'interval' => 'year',
     'intervalCount' => 1,
 ]);
 
 echo $plan->updateStatus;              // 'pending'
-echo $plan->pendingUpdates->interval;  // 'week'
+echo $plan->pendingUpdates->interval;  // 'year'
 ```
 
 
