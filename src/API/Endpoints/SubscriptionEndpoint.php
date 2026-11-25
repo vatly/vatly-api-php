@@ -90,7 +90,7 @@ class SubscriptionEndpoint extends BaseEndpoint
         $this->validateSubscriptionId($subscriptionId);
 
         // POST /subscriptions/{id}/billing-update-link
-        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/billing-update-link";
+        $resource = "{$this->getResourcePath()}/" . rawurlencode($subscriptionId) . "/billing-update-link";
 
         $result = $this->client->performHttpCall(
             self::REST_CREATE,
@@ -124,7 +124,7 @@ class SubscriptionEndpoint extends BaseEndpoint
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($subscriptionId) . "/resume";
+        $resource = "{$this->getResourcePath()}/" . rawurlencode($subscriptionId) . "/resume";
 
         $result = $this->client->performHttpCall(
             self::REST_CREATE,

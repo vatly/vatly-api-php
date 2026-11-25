@@ -101,7 +101,7 @@ class CustomerEndpoint extends BaseEndpoint
             throw new ApiException("Invalid resource id.");
         }
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/portal-sessions";
+        $resource = "{$this->getResourcePath()}/" . rawurlencode($id) . "/portal-sessions";
 
         $result = $this->client->performHttpCall(
             self::REST_CREATE,

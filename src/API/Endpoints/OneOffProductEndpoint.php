@@ -75,7 +75,7 @@ class OneOffProductEndpoint extends BaseEndpoint
 
         $this->client->performHttpCall(
             self::REST_CREATE,
-            "{$this->getResourcePath()}/" . urlencode($id) . "/archive" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive" . $this->buildQueryString($filters),
         );
     }
 
@@ -95,7 +95,7 @@ class OneOffProductEndpoint extends BaseEndpoint
 
         $result = $this->client->performHttpCall(
             self::REST_DELETE,
-            "{$this->getResourcePath()}/" . urlencode($id) . "/archive" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive" . $this->buildQueryString($filters),
         );
 
         if ($result === null) {

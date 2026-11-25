@@ -404,4 +404,19 @@ class OrderRefundEndpointTest extends BaseEndpointTest
             null
         );
     }
+
+    /** @test */
+    public function order_and_refund_ids_are_encoded_as_single_path_segments(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray(['id' => 'refund_1', 'resource' => 'refund', 'originalOrderId' => 'order_1']);
+
+        $this->client->orderRefunds->getForOrderId('order_1/../x?y=1#z', 'refund 1/2');
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_GET,
+            self::API_ENDPOINT_URL.'/orders/order_1%2F..%2Fx%3Fy%3D1%23z/refunds/refund%201%2F2',
+            [],
+            null
+        );
+    }
 }

@@ -56,7 +56,7 @@ class OrderEndpoint extends BaseEndpoint
     {
         $this->validateOrderId($id);
 
-        $resource = "{$this->getResourcePath()}/" . urlencode($id) . "/invoice-update-link";
+        $resource = "{$this->getResourcePath()}/" . rawurlencode($id) . "/invoice-update-link";
 
         $result = $this->client->performHttpCall(
             self::REST_CREATE,

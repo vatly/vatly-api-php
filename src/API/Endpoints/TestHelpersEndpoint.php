@@ -43,7 +43,7 @@ class TestHelpersEndpoint
     {
         $result = $this->client->performHttpCall(
             VatlyApiClient::HTTP_POST,
-            "test-helpers/subscriptions/" . urlencode($subscriptionId) . "/fast-forward-renewal",
+            "test-helpers/subscriptions/" . rawurlencode($subscriptionId) . "/fast-forward-renewal",
             empty($body) ? null : json_encode($body),
         );
 
@@ -79,7 +79,7 @@ class TestHelpersEndpoint
     {
         $result = $this->client->performHttpCall(
             VatlyApiClient::HTTP_POST,
-            "test-helpers/orders/" . urlencode($orderId) . "/simulate-payment",
+            "test-helpers/orders/" . rawurlencode($orderId) . "/simulate-payment",
             json_encode($body),
         );
 
