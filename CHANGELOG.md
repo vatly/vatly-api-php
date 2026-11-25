@@ -4,6 +4,8 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.37
+
 ### Added
 
 - **`metadata` on refunds.** `Refund->metadata` holds the `metadata` sent when the refund was created (an object of string values, read as `$refund->metadata->ticketId`), or `null` when none was sent, including refunds created before Vatly stored refund metadata. The `RefundCompleted`, `RefundFailed` and `RefundCanceled` webhook DTOs carry it as `?array $metadata`. Additive: an optional last constructor argument defaulting to `null`, and a response or payload without the key still yields `null`.
