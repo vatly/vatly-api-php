@@ -4,6 +4,15 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.38
+
+### Security
+
+- **Requests only go to the configured API endpoint.** `next()` and `previous()` on a page take only the path and query from the response's `links` href and send them to the endpoint configured on the client, so a link naming another host never receives the API key. A link outside `/v1/`, or with `.` or `..` segments, throws an `ApiException`.
+- **`performHttpCallToFullUrl()` refuses URLs outside the configured endpoint** and throws an `ApiException` without sending. It is deprecated; use `performHttpCall()` with a path.
+- **https only.** `setApiEndpoint()` throws an `ApiException` for any URL that is not https. Plain `http://` is allowed only for `localhost`, `127.0.0.1` and `[::1]`. The cURL client is limited to https as well, with the same localhost exception.
+- **Path segments are URL-encoded with `rawurlencode()`**, including the parent IDs in nested paths (`orderRefunds`, `orderChargebacks`, `customerSubscriptions`) and the order ID that `Refund->cancel()` takes from the refund. An ID can no longer add path segments or a query string. Real Vatly IDs contain no reserved characters, so their URLs are unchanged.
+
 ## v0.1.0-alpha.37
 
 ### Added

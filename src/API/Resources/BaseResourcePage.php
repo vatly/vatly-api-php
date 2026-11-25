@@ -65,7 +65,7 @@ abstract class BaseResourcePage extends ArrayObject
             return null;
         }
 
-        $result = $this->apiClient->performHttpCallToFullUrl(VatlyApiClient::HTTP_GET, $this->links->next->href);
+        $result = $this->apiClient->performHttpCall(VatlyApiClient::HTTP_GET, $this->apiPathFromLink($this->links->next->href));
 
         $collection = new static($this->apiClient, $result->count, $result->links);
 
@@ -88,7 +88,7 @@ abstract class BaseResourcePage extends ArrayObject
             return null;
         }
 
-        $result = $this->apiClient->performHttpCallToFullUrl(VatlyApiClient::HTTP_GET, $this->links->prev->href);
+        $result = $this->apiClient->performHttpCall(VatlyApiClient::HTTP_GET, $this->apiPathFromLink($this->links->prev->href));
 
         $collection = new static($this->apiClient, $result->count, $result->links);
 
@@ -97,6 +97,34 @@ abstract class BaseResourcePage extends ArrayObject
         }
 
         return $collection;
+    }
+
+    /**
+     * The API path of a pagination link, sent to the configured API endpoint.
+     * Only the path and query of the link are used, never its host.
+     *
+     * @throws ApiException
+     */
+    private function apiPathFromLink(string $href): string
+    {
+        $path = (string) parse_url($href, PHP_URL_PATH);
+        $query = parse_url($href, PHP_URL_QUERY);
+        $versionPrefix = '/' . VatlyApiClient::API_VERSION . '/';
+        $position = strpos($path, $versionPrefix);
+
+        if ($position === false) {
+            throw new ApiException("Unexpected pagination link: '{$href}'.");
+        }
+
+        $apiPath = substr($path, $position + strlen($versionPrefix));
+
+        foreach (explode('/', $apiPath) as $segment) {
+            if (in_array(rawurldecode($segment), ['', '.', '..'], true)) {
+                throw new ApiException("Unexpected pagination link: '{$href}'.");
+            }
+        }
+
+        return is_string($query) && $query !== '' ? "{$apiPath}?{$query}" : $apiPath;
     }
 
     /**

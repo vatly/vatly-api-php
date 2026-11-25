@@ -104,7 +104,7 @@ abstract class BaseEndpoint
 
         $headers = $this->extractIdempotencyHeaders($filters);
 
-        $id = urlencode($id);
+        $id = rawurlencode($id);
         $result = $this->client->performHttpCall(
             self::REST_UPDATE,
             "{$this->getResourcePath()}/{$id}" . $this->buildQueryString($filters),
@@ -133,7 +133,7 @@ abstract class BaseEndpoint
             throw new ApiException("Invalid resource id.");
         }
 
-        $id = urlencode($id);
+        $id = rawurlencode($id);
         $result = $this->client->performHttpCall(
             self::REST_READ,
             "{$this->getResourcePath()}/{$id}" . $this->buildQueryString($filters),
@@ -157,7 +157,7 @@ abstract class BaseEndpoint
             throw new ApiException("Invalid resource id.");
         }
 
-        $id = urlencode($id);
+        $id = rawurlencode($id);
         $result = $this->client->performHttpCall(
             self::REST_DELETE,
             "{$this->getResourcePath()}/{$id}",
@@ -201,7 +201,7 @@ abstract class BaseEndpoint
                 throw new ApiException("Subresource '{$this->resourcePath}' used without parent '$parentResource' ID.");
             }
 
-            return "$parentResource/{$this->parentId}/$childResource";
+            return "$parentResource/" . rawurlencode($this->parentId) . "/$childResource";
         }
 
         return $this->resourcePath;

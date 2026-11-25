@@ -7,6 +7,7 @@ namespace Vatly\API\HttpClient;
 use Composer\CaBundle\CaBundle;
 use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Exceptions\CurlConnectTimeoutException;
+use Vatly\API\Support\LoopbackHost;
 use Vatly\API\VatlyApiClient;
 
 class CurlHttpClient implements HttpClientInterface
@@ -78,6 +79,8 @@ class CurlHttpClient implements HttpClientInterface
         curl_setopt($curl, CURLOPT_TIMEOUT, self::DEFAULT_TIMEOUT);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($curl, CURLOPT_CAINFO, CaBundle::getBundledCaBundlePath());
+        // Only https leaves this machine; plain http is allowed for a local API only.
+        curl_setopt($curl, CURLOPT_PROTOCOLS, LoopbackHost::isLoopbackUrl($url) ? CURLPROTO_HTTPS | CURLPROTO_HTTP : CURLPROTO_HTTPS);
 
         switch ($httpMethod) {
             case VatlyApiClient::HTTP_POST:

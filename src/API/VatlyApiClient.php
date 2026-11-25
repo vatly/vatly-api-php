@@ -24,6 +24,7 @@ use Vatly\API\HttpClient\DefaultHttpClientFactory;
 use Vatly\API\HttpClient\HttpClientFactoryInterface;
 use Vatly\API\HttpClient\HttpClientInterface;
 use Vatly\API\HttpClient\Idempotency\DefaultIdempotencyKeyGenerator;
+use Vatly\API\Support\LoopbackHost;
 use Vatly\API\Traits\HandlesIdempotency;
 
 class VatlyApiClient
@@ -154,9 +155,19 @@ class VatlyApiClient
         $this->versionStrings[] = str_replace([' ', "\t", "\n", "\r"], '-', $versionString);
     }
 
+    /**
+     * @throws ApiException when the URL does not use https (plain http is only allowed for localhost)
+     */
     public function setApiEndpoint(string $url): VatlyApiClient
     {
-        $this->apiEndpoint = rtrim(trim($url), '/');
+        $url = rtrim(trim($url), '/');
+        $scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+
+        if ($scheme !== 'https' && ! ($scheme === 'http' && LoopbackHost::isLoopbackUrl($url))) {
+            throw new ApiException("Invalid API endpoint: '{$url}'. The API endpoint must use https, except for localhost.");
+        }
+
+        $this->apiEndpoint = $url;
 
         return $this;
     }
@@ -205,19 +216,31 @@ class VatlyApiClient
     {
         $url = $this->apiEndpoint . "/" . self::API_VERSION . "/" . $apiMethod;
 
-        return $this->performHttpCallToFullUrl($httpMethod, $url, $httpBody, $requestHeaders);
+        return $this->sendRequest($httpMethod, $url, $httpBody, $requestHeaders);
     }
 
     /**
-     * Perform a http call to a full url. This method is used by the resource specific classes.
+     * Perform a http call to a full url on the configured API endpoint.
      *
-     * @param $httpMethod
-     * @param $url
-     * @param $httpBody
+     * @deprecated Use performHttpCall() with a path relative to the API version instead.
+     *
      * @return object|null
-     * @throws \Vatly\API\Exceptions\ApiException
+     * @throws \Vatly\API\Exceptions\ApiException when the URL is not on the configured API endpoint
      */
     public function performHttpCallToFullUrl(string $httpMethod, string $url, ?string $httpBody = null, array $requestHeaders = []): ?object
+    {
+        // The API key is only ever sent to the configured endpoint, never to a URL from elsewhere.
+        if (strpos($url, $this->apiEndpoint . '/') !== 0) {
+            throw new ApiException("Refusing to send a request to '{$url}': it is not on the configured API endpoint '{$this->apiEndpoint}'.");
+        }
+
+        return $this->sendRequest($httpMethod, $url, $httpBody, $requestHeaders);
+    }
+
+    /**
+     * @throws \Vatly\API\Exceptions\ApiException
+     */
+    private function sendRequest(string $httpMethod, string $url, ?string $httpBody, array $requestHeaders): ?object
     {
         if (empty($this->apiKey)) {
             throw new ApiException("You have not set an API key. Please use setApiKey() to set the API key.");
