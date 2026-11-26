@@ -16,6 +16,9 @@ use Vatly\API\Types\ScheduledSubscriptionUpdate;
 use Vatly\API\Types\TaxSummaryCollection;
 use Vatly\API\VatlyApiClient;
 
+/**
+ * @internal Hydrates resources from API responses; not covered by semver.
+ */
 #[\AllowDynamicProperties]
 class ResourceFactory
 {

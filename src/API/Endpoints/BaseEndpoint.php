@@ -182,6 +182,7 @@ abstract class BaseEndpoint
 
     /**
      * @param string $resourcePath
+     * @internal Used by the endpoints; not covered by semver.
      */
     public function setResourcePath(string $resourcePath): void
     {
@@ -191,6 +192,7 @@ abstract class BaseEndpoint
     /**
      * @return string
      * @throws ApiException
+     * @internal Used by the endpoints; not covered by semver.
      */
     public function getResourcePath(): string
     {

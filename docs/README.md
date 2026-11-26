@@ -228,6 +228,13 @@ try {
 
 ---
 
+## Backward compatibility
+
+From v1.0.0, this package follows [semantic versioning](https://semver.org): a minor or patch release does not break code that uses its public API. These are not part of that API:
+
+- Anything marked `@internal`, such as `ResourceFactory`, the webhook event constructors (build events with `WebhookEventFactory`), and `FakeIdempotencyKeyGenerator`.
+- Extending the SDK's classes. Subclassing them is not covered by semver; only these interfaces are meant to be implemented: `HttpClientInterface`, `HttpClientFactoryInterface` and `IdempotencyKeyGeneratorContract`.
+
 ## Requirements
 
 - PHP 8.0+

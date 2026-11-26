@@ -27,6 +27,7 @@ class CheckoutPaid
 
     /**
      * @param array<string, mixed>|null $metadata
+     * @internal Build events with WebhookEventFactory or the static from*() constructors; this constructor may gain arguments in any position.
      */
     public function __construct(
         public string $checkoutId,

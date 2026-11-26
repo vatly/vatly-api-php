@@ -17,6 +17,7 @@ use Vatly\API\Types\Mandate;
  *
  * Defensive: returns `null` unless `object.mandate` is an array carrying a
  * string `method`, so a missing/`null`/malformed mandate never throws.
+ * @internal Shared by the webhook event DTOs; not covered by semver.
  */
 trait ParsesWebhookMandate
 {

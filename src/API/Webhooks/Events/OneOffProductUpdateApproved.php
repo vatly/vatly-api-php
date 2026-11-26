@@ -22,6 +22,9 @@ class OneOffProductUpdateApproved
 {
     public const VATLY_EVENT_NAME = WebhookEventName::ONE_OFF_PRODUCT_UPDATE_APPROVED;
 
+    /**
+     * @internal Build events with WebhookEventFactory or the static from*() constructors; this constructor may gain arguments in any position.
+     */
     public function __construct(
         public string $oneOffProductId,
         public bool $testmode,

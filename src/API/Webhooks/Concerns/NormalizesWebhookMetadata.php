@@ -13,6 +13,7 @@ namespace Vatly\API\Webhooks\Concerns;
  * built directly from an API resource may still see a `stdClass`. This keeps
  * consumers on a single, predictable shape regardless of which path produced
  * the event.
+ * @internal Shared by the webhook event DTOs; not covered by semver.
  */
 trait NormalizesWebhookMetadata
 {

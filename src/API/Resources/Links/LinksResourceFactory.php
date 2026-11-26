@@ -4,6 +4,9 @@ namespace Vatly\API\Resources\Links;
 
 use Vatly\API\Types\Link;
 
+/**
+ * @internal Hydrates links from API responses; not covered by semver.
+ */
 class LinksResourceFactory
 {
     public static function createResourceFromApiResult($apiResult, BaseLinksResource $resource): BaseLinksResource
