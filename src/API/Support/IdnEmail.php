@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Vatly\API\Support;
 
+/**
+ * @internal Normalizes request emails; not covered by semver.
+ */
 class IdnEmail
 {
     /**

@@ -24,6 +24,9 @@ class SubscriptionUpdated
 {
     public const VATLY_EVENT_NAME = WebhookEventName::SUBSCRIPTION_UPDATED;
 
+    /**
+     * @internal Build events with WebhookEventFactory or the static from*() constructors; this constructor may gain arguments in any position.
+     */
     public function __construct(
         public string $customerId,
         public string $subscriptionId,

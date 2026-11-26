@@ -3,13 +3,13 @@
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\OneOffProduct;
 use Vatly\API\Resources\OneOffProductCollection;
-use Vatly\API\Resources\ResourceFactory;
 
+/**
+ * @extends BaseEndpoint<OneOffProduct, OneOffProductCollection>
+ */
 class OneOffProductEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "one-off-products";
@@ -26,19 +26,17 @@ class OneOffProductEndpoint extends BaseEndpoint
      * `pending` status and must be approved by Vatly before use in checkouts;
      * products created with a `test_` token are auto-approved (`active`).
      *
-     * @return OneOffProduct|BaseResource
      * @throws ApiException
      */
-    public function create(array $payload, array $filters = []): BaseResource
+    public function create(array $payload, array $options = []): OneOffProduct
     {
-        return $this->rest_create($payload, $filters);
+        return $this->rest_create($payload, $options);
     }
 
     /**
      * @throws ApiException
-     * @return OneOffProduct|BaseResource
      */
-    public function get(string $id, array $parameters = []): BaseResource
+    public function get(string $id, array $parameters = []): OneOffProduct
     {
         return $this->rest_read($id, $parameters);
     }
@@ -51,12 +49,11 @@ class OneOffProductEndpoint extends BaseEndpoint
      * it is approved automatically. The returned product carries `pendingUpdates`
      * and `updateStatus`.
      *
-     * @return OneOffProduct|BaseResource|null
      * @throws ApiException
      */
-    public function update(string $id, array $data = [], array $filters = []): ?BaseResource
+    public function update(string $id, array $data = [], array $options = []): OneOffProduct
     {
-        return $this->rest_update($id, $data, $filters);
+        return $this->rest_update($id, $data, $options);
     }
 
     /**
@@ -67,7 +64,7 @@ class OneOffProductEndpoint extends BaseEndpoint
      *
      * @throws ApiException
      */
-    public function archive(string $id, array $filters = []): void
+    public function archive(string $id, array $options = []): void
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
@@ -75,7 +72,9 @@ class OneOffProductEndpoint extends BaseEndpoint
 
         $this->client->performHttpCall(
             self::REST_CREATE,
-            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive",
+            null,
+            $this->idempotencyHeaders($options)
         );
     }
 
@@ -84,10 +83,9 @@ class OneOffProductEndpoint extends BaseEndpoint
      * (`DELETE /v1/one-off-products/{id}/archive`). Returns the product, now on
      * sale again.
      *
-     * @return OneOffProduct|BaseResource|null
      * @throws ApiException
      */
-    public function unarchive(string $id, array $filters = []): ?BaseResource
+    public function unarchive(string $id, array $options = []): OneOffProduct
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
@@ -95,18 +93,15 @@ class OneOffProductEndpoint extends BaseEndpoint
 
         $result = $this->client->performHttpCall(
             self::REST_DELETE,
-            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive",
+            null,
+            $this->idempotencyHeaders($options)
         );
 
-        if ($result === null) {
-            return null;
-        }
-
-        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
+        return $this->hydrate($result);
     }
 
     /**
-     * @return OneOffProductCollection|BaseResourcePage
      * @throws ApiException
      */
     public function page(
@@ -114,11 +109,11 @@ class OneOffProductEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ): BaseResourcePage {
+    ): OneOffProductCollection {
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
-    protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
+    protected function getResourcePageObject(int $count, PaginationLinks $links): OneOffProductCollection
     {
         return new OneOffProductCollection($this->client, $count, $links);
     }

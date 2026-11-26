@@ -196,27 +196,28 @@ class Order extends BaseResource
     }
 
     /**
-     * @param array $data
-     * @return BaseResource|Refund
+     * @param array<string, mixed> $data The refund request (`items`, optional `metadata`).
      * @throws ApiException
      */
-    public function refund(array $data)
+    public function refund(array $data): Refund
     {
         return $this->apiClient->orderRefunds->createForOrderId($this->id, $data);
     }
 
     /**
-     * @param array $data
-     * @return BaseResource|Refund
+     * @param array<string, mixed> $data Optional `metadata`.
      * @throws ApiException
      */
-    public function fullRefund(array $data)
+    public function fullRefund(array $data = []): Refund
     {
         return $this->apiClient->orderRefunds->createFullRefundForOrderId($this->id, $data);
     }
 
-    public function requestAddressUpdateLink(array $data = []): Link
+    /**
+     * @throws ApiException
+     */
+    public function requestAddressUpdateLink(): Link
     {
-        return $this->apiClient->orders->requestAddressUpdateLink($this->id, $data);
+        return $this->apiClient->orders->requestAddressUpdateLink($this->id);
     }
 }

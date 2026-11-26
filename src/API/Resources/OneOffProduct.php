@@ -82,12 +82,11 @@ class OneOffProduct extends BaseResource
      * Submit an update to this product. In live mode the change is held as a
      * pending update and reviewed by Vatly before it takes effect.
      *
-     * @return OneOffProduct|BaseResource|null
      * @throws ApiException
      */
-    public function update(array $data = [], array $filters = []): ?BaseResource
+    public function update(array $data = [], array $options = []): OneOffProduct
     {
-        return $this->apiClient->oneOffProducts->update($this->id, $data, $filters);
+        return $this->apiClient->oneOffProducts->update($this->id, $data, $options);
     }
 
     /**
@@ -95,19 +94,18 @@ class OneOffProduct extends BaseResource
      *
      * @throws ApiException
      */
-    public function archive(array $filters = []): void
+    public function archive(array $options = []): void
     {
-        $this->apiClient->oneOffProducts->archive($this->id, $filters);
+        $this->apiClient->oneOffProducts->archive($this->id, $options);
     }
 
     /**
      * Put this product back on sale.
      *
-     * @return OneOffProduct|BaseResource|null
      * @throws ApiException
      */
-    public function unarchive(array $filters = []): ?BaseResource
+    public function unarchive(array $options = []): OneOffProduct
     {
-        return $this->apiClient->oneOffProducts->unarchive($this->id, $filters);
+        return $this->apiClient->oneOffProducts->unarchive($this->id, $options);
     }
 }

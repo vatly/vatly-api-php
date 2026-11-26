@@ -96,10 +96,9 @@ class Subscription extends BaseResource
     public SubscriptionLinks $links;
 
     /**
-     * @return Subscription|BaseResource
      * @throws ApiException
      */
-    public function update(array $data = []): BaseResource
+    public function update(array $data = []): Subscription
     {
         return $this->apiClient->subscriptions->update($this->id, $data);
     }
@@ -115,19 +114,21 @@ class Subscription extends BaseResource
     }
 
     /**
+     * Cancel this subscription at the end of the billing period, or now with `immediately: true`.
+     *
      * @throws ApiException
      */
-    public function cancel(array $data = []): ?BaseResource
+    public function cancel(bool $immediately = false): void
     {
-        return $this->apiClient->subscriptions->cancel($this->id, $data);
+        $this->apiClient->subscriptions->cancel($this->id, $immediately);
     }
 
     /**
      * @throws ApiException
      */
-    public function resume(array $data = []): ?BaseResource
+    public function resume(): Subscription
     {
-        return $this->apiClient->subscriptions->resume($this->id, $data);
+        return $this->apiClient->subscriptions->resume($this->id);
     }
 
     public function isCanceled(): bool

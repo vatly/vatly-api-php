@@ -348,4 +348,19 @@ class OneOffProductEndpointTest extends BaseEndpointTest
 
         $this->assertNull($nextProductCollection->next());
     }
+
+    /** @test */
+    public function archive_sends_the_idempotency_key_as_a_header_not_in_the_query(): void
+    {
+        $this->httpClient->setSendReturnNull();
+        $this->client->oneOffProducts->archive('one_off_product_123', ['idempotencyKey' => 'archive-key-1']);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_POST,
+            self::API_ENDPOINT_URL.'/one-off-products/one_off_product_123/archive',
+            [],
+            null
+        );
+        $this->assertSame('archive-key-1', $this->httpClient->lastSentHeaders()['Idempotency-Key']);
+    }
 }

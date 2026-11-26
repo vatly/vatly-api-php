@@ -13,6 +13,10 @@ use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Support\IdnEmail;
 use Vatly\API\VatlyApiClient;
 
+/**
+ * @template TResource of BaseResource
+ * @template TPage of BaseResourcePage
+ */
 abstract class BaseEndpoint
 {
     public const REST_CREATE = VatlyApiClient::HTTP_POST;
@@ -68,55 +72,46 @@ abstract class BaseEndpoint
     }
 
     /**
-     * @param array $body
-     * @param array $filters
-     * @return BaseResource
+     * @param array<string, mixed> $body
+     * @param array{idempotencyKey?: string} $options
+     * @return TResource
      * @throws \Vatly\API\Exceptions\ApiException
      */
-    protected function rest_create(array $body, array $filters): BaseResource
+    protected function rest_create(array $body, array $options): BaseResource
     {
-        $headers = $this->extractIdempotencyHeaders($filters);
-
         $result = $this->client->performHttpCall(
             self::REST_CREATE,
-            $this->getResourcePath() . $this->buildQueryString($filters),
+            $this->getResourcePath(),
             $this->parseRequestBody($body),
-            $headers
+            $this->idempotencyHeaders($options)
         );
 
-        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
+        return $this->hydrate($result);
     }
 
     /**
      * Sends a PATCH request to a single Vatly API object.
      *
-     * @param string $id
-     * @param array $body
-     *
-     * @return null|BaseResource
+     * @param array<string, mixed> $body
+     * @param array{idempotencyKey?: string} $options
+     * @return TResource
      * @throws \Vatly\API\Exceptions\ApiException
      */
-    protected function rest_update(string $id, array $body = [], array $filters = []): ?BaseResource
+    protected function rest_update(string $id, array $body = [], array $options = []): BaseResource
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
         }
 
-        $headers = $this->extractIdempotencyHeaders($filters);
-
         $id = rawurlencode($id);
         $result = $this->client->performHttpCall(
             self::REST_UPDATE,
-            "{$this->getResourcePath()}/{$id}" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/{$id}",
             $this->parseRequestBody($body),
-            $headers
+            $this->idempotencyHeaders($options)
         );
 
-        if ($result == null) {
-            return null;
-        }
-
-        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
+        return $this->hydrate($result);
     }
 
     /**
@@ -124,7 +119,7 @@ abstract class BaseEndpoint
      *
      * @param string $id Id of the object to retrieve.
      * @param array $filters
-     * @return BaseResource
+     * @return TResource
      * @throws ApiException
      */
     protected function rest_read($id, array $filters): BaseResource
@@ -139,49 +134,53 @@ abstract class BaseEndpoint
             "{$this->getResourcePath()}/{$id}" . $this->buildQueryString($filters),
         );
 
-        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
+        return $this->hydrate($result);
     }
 
     /**
-     * Sends a DELETE request to a single Vatly API object.
+     * Sends a DELETE request to a single Vatly API object, which answers `204 No Content`.
      *
-     * @param string $id
-     * @param array $body
-     *
-     * @return BaseResource|null
+     * @param array<string, scalar> $query
      * @throws ApiException
      */
-    protected function rest_delete($id, array $body = []): ?BaseResource
+    protected function rest_delete(string $id, array $query = []): void
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
         }
 
         $id = rawurlencode($id);
-        $result = $this->client->performHttpCall(
+        $this->client->performHttpCall(
             self::REST_DELETE,
-            "{$this->getResourcePath()}/{$id}",
-            $this->parseRequestBody($body)
+            "{$this->getResourcePath()}/{$id}" . $this->buildQueryString($query)
         );
+    }
 
-        if ($result == null) {
-            return null;
+    /**
+     * Hydrate the resource from an API response that always carries a body.
+     *
+     * @return TResource
+     * @throws ApiException when the response had no body
+     */
+    protected function hydrate(?object $result): BaseResource
+    {
+        if ($result === null) {
+            throw new ApiException("The Vatly API returned no response body.");
         }
 
         return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
     }
 
-
-
     /**
      * Get the object that is used by this API endpoint. Every API endpoint uses one type of object.
      *
-     * @return BaseResource
+     * @return TResource
      */
     abstract protected function getResourceObject(): BaseResource;
 
     /**
      * @param string $resourcePath
+     * @internal Used by the endpoints; not covered by semver.
      */
     public function setResourcePath(string $resourcePath): void
     {
@@ -191,6 +190,7 @@ abstract class BaseEndpoint
     /**
      * @return string
      * @throws ApiException
+     * @internal Used by the endpoints; not covered by semver.
      */
     public function getResourcePath(): string
     {
@@ -207,16 +207,20 @@ abstract class BaseEndpoint
         return $this->resourcePath;
     }
 
-    private function extractIdempotencyHeaders(array &$filters): array
+    /**
+     * @param array<string, mixed> $options
+     * @return array<string, string>
+     * @throws ApiException for an option other than `idempotencyKey`
+     */
+    protected function idempotencyHeaders(array $options): array
     {
-        $headers = [];
-
-        if (isset($filters['idempotencyKey'])) {
-            $headers['Idempotency-Key'] = $filters['idempotencyKey'];
-            unset($filters['idempotencyKey']);
+        foreach (array_keys($options) as $option) {
+            if ($option !== 'idempotencyKey') {
+                throw new ApiException("Unknown option '{$option}'. The only option is 'idempotencyKey'.");
+            }
         }
 
-        return $headers;
+        return isset($options['idempotencyKey']) ? ['Idempotency-Key' => (string) $options['idempotencyKey']] : [];
     }
 
     /**
@@ -238,7 +242,7 @@ abstract class BaseEndpoint
      * @param int $count
      * @param PaginationLinks $links
      *
-     * @return BaseResourcePage
+     * @return TPage
      */
     abstract protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage;
 
@@ -250,7 +254,7 @@ abstract class BaseEndpoint
      * @param int|null $limit
      * @param array $filters
      *
-     * @return BaseResourcePage
+     * @return TPage
      * @throws \Vatly\API\Exceptions\ApiException
      */
     protected function rest_list(

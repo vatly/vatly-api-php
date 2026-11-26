@@ -170,6 +170,15 @@ The SDK provides access to all Vatly API resources.
 
 ---
 
+## Identifying your integration
+
+Every request's `User-Agent` starts with `vatly/vatly-api-php/<version>`, followed by the PHP and HTTP client versions. A package or plugin built on this client adds its own token with `addVersionString()`, using its Composer package name (or plugin slug) and version, so Vatly sees every package involved:
+
+```php
+$vatly->addVersionString('acme/vatly-shop-plugin/1.4.0');
+// User-Agent: vatly/vatly-api-php/0.1.0-alpha.40 PHP/8.4.1 curl/8.5.0 acme/vatly-shop-plugin/1.4.0
+```
+
 ## Error handling
 
 Every exception the SDK throws implements `Vatly\API\Exceptions\VatlyException`, so one `catch` covers API errors and webhook signature failures.
@@ -218,6 +227,13 @@ try {
 ```
 
 ---
+
+## Backward compatibility
+
+From v1.0.0, this package follows [semantic versioning](https://semver.org): a minor or patch release does not break code that uses its public API. These are not part of that API:
+
+- Anything marked `@internal`, such as `ResourceFactory`, the webhook event constructors (build events with `WebhookEventFactory`), and `FakeIdempotencyKeyGenerator`.
+- Extending the SDK's classes. Subclassing them is not covered by semver; only these interfaces are meant to be implemented: `HttpClientInterface`, `HttpClientFactoryInterface` and `IdempotencyKeyGeneratorContract`.
 
 ## Requirements
 

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
 use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\WebhookEvent;
 
+/**
+ * @extends BaseEndpoint<WebhookEvent, BaseResourcePage>
+ */
 class WebhookEventEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "webhook-events";
@@ -22,10 +24,9 @@ class WebhookEventEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return WebhookEvent|BaseResource
      * @throws ApiException
      */
-    public function get(string $id, array $parameters = []): BaseResource
+    public function get(string $id, array $parameters = []): WebhookEvent
     {
         return $this->rest_read($id, $parameters);
     }

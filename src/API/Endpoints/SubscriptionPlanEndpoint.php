@@ -3,13 +3,13 @@
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
-use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\SubscriptionPlan;
 use Vatly\API\Resources\SubscriptionPlanCollection;
 
+/**
+ * @extends BaseEndpoint<SubscriptionPlan, SubscriptionPlanCollection>
+ */
 class SubscriptionPlanEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "subscription-plans";
@@ -29,19 +29,17 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
      * `productType` must be `saas`. `interval` must be `month` or `year` with
      * `intervalCount` 1, in live and test mode alike.
      *
-     * @return SubscriptionPlan|BaseResource
      * @throws ApiException
      */
-    public function create(array $payload, array $filters = []): BaseResource
+    public function create(array $payload, array $options = []): SubscriptionPlan
     {
-        return $this->rest_create($payload, $filters);
+        return $this->rest_create($payload, $options);
     }
 
     /**
      * @throws ApiException
-     * @return SubscriptionPlan|BaseResource
      */
-    public function get(string $id, array $parameters = []): BaseResource
+    public function get(string $id, array $parameters = []): SubscriptionPlan
     {
         return $this->rest_read($id, $parameters);
     }
@@ -55,12 +53,11 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
      * has ever been used by a subscription; the price stays changeable. A new
      * `interval` must be `month` or `year`, sent together with `intervalCount` 1.
      *
-     * @return SubscriptionPlan|BaseResource|null
      * @throws ApiException
      */
-    public function update(string $id, array $data = [], array $filters = []): ?BaseResource
+    public function update(string $id, array $data = [], array $options = []): SubscriptionPlan
     {
-        return $this->rest_update($id, $data, $filters);
+        return $this->rest_update($id, $data, $options);
     }
 
     /**
@@ -71,7 +68,7 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
      *
      * @throws ApiException
      */
-    public function archive(string $id, array $filters = []): void
+    public function archive(string $id, array $options = []): void
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
@@ -79,7 +76,9 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
 
         $this->client->performHttpCall(
             self::REST_CREATE,
-            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive",
+            null,
+            $this->idempotencyHeaders($options)
         );
     }
 
@@ -88,10 +87,9 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
      * (`DELETE /v1/subscription-plans/{id}/archive`). Returns the plan, now open
      * to new business again.
      *
-     * @return SubscriptionPlan|BaseResource|null
      * @throws ApiException
      */
-    public function unarchive(string $id, array $filters = []): ?BaseResource
+    public function unarchive(string $id, array $options = []): SubscriptionPlan
     {
         if (empty($id)) {
             throw new ApiException("Invalid resource id.");
@@ -99,18 +97,15 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
 
         $result = $this->client->performHttpCall(
             self::REST_DELETE,
-            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive" . $this->buildQueryString($filters),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/archive",
+            null,
+            $this->idempotencyHeaders($options)
         );
 
-        if ($result === null) {
-            return null;
-        }
-
-        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
+        return $this->hydrate($result);
     }
 
     /**
-     * @return SubscriptionPlanCollection|BaseResourcePage
      * @throws ApiException
      */
     public function page(
@@ -118,11 +113,11 @@ class SubscriptionPlanEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ): BaseResourcePage {
+    ): SubscriptionPlanCollection {
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
-    protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
+    protected function getResourcePageObject(int $count, PaginationLinks $links): SubscriptionPlanCollection
     {
         return new SubscriptionPlanCollection($this->client, $count, $links);
     }

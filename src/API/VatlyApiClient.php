@@ -33,7 +33,7 @@ class VatlyApiClient
     /**
      * The version of this client.
      */
-    public const CLIENT_VERSION = '0.1.0-alpha.39';
+    public const CLIENT_VERSION = '0.1.0-alpha.40';
 
     /**
      * Endpoint of the remote API.
@@ -135,7 +135,7 @@ class VatlyApiClient
 
     protected function initializeVersionString(): void
     {
-        $this->addVersionString('Vatly/'.self::CLIENT_VERSION);
+        $this->addVersionString('vatly/vatly-api-php/'.self::CLIENT_VERSION);
         $this->addVersionString('PHP/'.phpversion());
         $this->addVersionString($this->httpClient->versionString());
     }
@@ -148,6 +148,16 @@ class VatlyApiClient
         return $this->versionStrings;
     }
 
+    /**
+     * Add a token to the `User-Agent`, after the ones already there.
+     *
+     * Every package or integration between the merchant's code and this client
+     * adds its own token, so Vatly sees the whole chain. Use the Composer package
+     * name (or the plugin's slug) and its version: `vendor/package/1.2.3`.
+     * Whitespace becomes `-`.
+     *
+     * @example $vatly->addVersionString('vatly/vatly-fluent-php/0.8.0-alpha.36');
+     */
     public function addVersionString(string $versionString): void
     {
         $this->versionStrings[] = str_replace([' ', "\t", "\n", "\r"], '-', $versionString);

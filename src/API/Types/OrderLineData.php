@@ -27,6 +27,9 @@ use Vatly\API\Resources\OrderLine as ApiOrderLine;
  */
 class OrderLineData
 {
+    /**
+     * @internal Build events with WebhookEventFactory or the static from*() constructors; this constructor may gain arguments in any position.
+     */
     public function __construct(
         public string $vatlyId,
         public string $description,

@@ -42,10 +42,9 @@ class Customer extends BaseResource
      * Update this customer's identity fields (`name`, `email`). Billing-address
      * details are not editable here.
      *
-     * @return Customer|BaseResource
      * @throws ApiException
      */
-    public function update(array $data = []): ?BaseResource
+    public function update(array $data = []): Customer
     {
         return $this->apiClient->customers->update($this->id, $data);
     }
@@ -53,7 +52,7 @@ class Customer extends BaseResource
     /**
      * @throws ApiException
      */
-    public function subscriptions()
+    public function subscriptions(): SubscriptionCollection
     {
         return $this->apiClient->customerSubscriptions->pageForCustomerId($this->id);
     }
@@ -61,7 +60,7 @@ class Customer extends BaseResource
     /**
      * @throws ApiException
      */
-    public function subscription(string $subscriptionId, array $parameters = [])
+    public function subscription(string $subscriptionId, array $parameters = []): Subscription
     {
         return $this->apiClient->customerSubscriptions->getForCustomerId($this->id, $subscriptionId, $parameters);
     }

@@ -6,6 +6,9 @@ namespace Vatly\API;
 
 use Vatly\API\Exceptions\IncompatiblePlatformException;
 
+/**
+ * @internal Checks the platform when the client is constructed; not covered by semver.
+ */
 class CompatibilityChecker
 {
     /**

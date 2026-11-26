@@ -77,9 +77,6 @@ class CreditNoteLinksTest extends BaseTestCase
     {
         $apiResult = json_decode((string) json_encode(['id' => 'x_1', 'links' => $links]));
 
-        $resource = ResourceFactory::createResourceFromApiResult($apiResult, new $resourceClass($this->client));
-        assert($resource instanceof Refund || $resource instanceof Chargeback);
-
-        return $resource;
+        return ResourceFactory::createResourceFromApiResult($apiResult, new $resourceClass($this->client));
     }
 }
