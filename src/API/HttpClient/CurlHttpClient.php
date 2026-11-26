@@ -82,6 +82,17 @@ class CurlHttpClient implements HttpClientInterface
         // Only https leaves this machine; plain http is allowed for a local API only.
         curl_setopt($curl, CURLOPT_PROTOCOLS, LoopbackHost::isLoopbackUrl($url) ? CURLPROTO_HTTPS | CURLPROTO_HTTP : CURLPROTO_HTTPS);
 
+        $responseHeaders = [];
+        curl_setopt($curl, CURLOPT_HEADERFUNCTION, function ($curl, string $headerLine) use (&$responseHeaders): int {
+            $parts = explode(':', $headerLine, 2);
+
+            if (count($parts) === 2) {
+                $responseHeaders[strtolower(trim($parts[0]))] = trim($parts[1]);
+            }
+
+            return strlen($headerLine);
+        });
+
         switch ($httpMethod) {
             case VatlyApiClient::HTTP_POST:
                 curl_setopt($curl, CURLOPT_POST, true);
@@ -123,7 +134,7 @@ class CurlHttpClient implements HttpClientInterface
         $statusCode = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
         curl_close($curl);
 
-        return $this->parseResponseBody($response, $statusCode, $httpBody);
+        return $this->parseResponseBody($response, $statusCode, $responseHeaders);
     }
 
     /**
@@ -178,51 +189,31 @@ class CurlHttpClient implements HttpClientInterface
     }
 
     /**
-     * @param string $response
-     * @param int $statusCode
-     * @param string $httpBody
-     * @return object|null
-     * @throws \Vatly\Api\Exceptions\ApiException
+     * @param array<string, string> $responseHeaders Lower-cased header names.
+     * @throws \Vatly\API\Exceptions\ApiException An {@see ApiException::fromResponse()} subclass for an error status.
      */
-    protected function parseResponseBody(string $response, int $statusCode, ?string $httpBody): ?object
+    protected function parseResponseBody(string $response, int $statusCode, array $responseHeaders = []): ?object
     {
-        if (empty($response)) {
+        if ($statusCode >= 400) {
+            throw ApiException::fromResponse($statusCode, $response, $responseHeaders);
+        }
+
+        if ($response === '') {
             if ($statusCode === VatlyApiClient::HTTP_NO_CONTENT) {
                 return null;
             }
 
-            throw new ApiException("No response body found.");
+            throw new ApiException("No response body found (HTTP status {$statusCode}).");
         }
 
-        $body = @json_decode($response);
+        $body = json_decode($response);
 
-        // GUARDS
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new ApiException("Unable to decode Vatly response: '{$response}'.");
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_object($body)) {
+            throw new ApiException("Unable to decode the Vatly API response (HTTP status {$statusCode}).");
         }
 
         if (isset($body->error)) {
-            throw new ApiException($body->error->message);
-        }
-
-        if ($statusCode >= 400) {
-            $message = "Error {$statusCode} executing API call: {$body->message})";
-
-            $field = null;
-
-            if (! empty($body->field)) {
-                $field = $body->field;
-            }
-
-            if (isset($body->links, $body->links->documentation)) {
-                $message .= ". Documentation: {$body->links->documentation->href}";
-            }
-
-            if ($httpBody) {
-                $message .= ". Request body: {$httpBody}";
-            }
-
-            throw new ApiException($message, $statusCode, $field);
+            throw ApiException::fromResponse($statusCode, $response, $responseHeaders);
         }
 
         return $body;

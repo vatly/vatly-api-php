@@ -6,6 +6,6 @@ namespace Vatly\API\Exceptions;
 
 use Exception;
 
-class InvalidSignatureException extends Exception
+class InvalidSignatureException extends Exception implements VatlyException
 {
 }

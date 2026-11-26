@@ -194,7 +194,7 @@ class VatlyApiClient
         $apiKey = trim($apiKey);
 
         if (! preg_match('/^(live|test)_[\w|]{18,}$/', $apiKey)) {
-            throw new ApiException("Invalid API key: '{$apiKey}'. An API key must start with 'test_' or 'live_' and must be at least 18 characters long.");
+            throw new ApiException("Invalid API key. An API key must start with 'test_' or 'live_' and must be at least 18 characters long.");
         }
 
         $this->apiKey = $apiKey;

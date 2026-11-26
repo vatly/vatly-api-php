@@ -30,6 +30,18 @@ class VatlyApiClientTest extends BaseTestCase
     }
 
     /** @test */
+    public function aRejectedApiKeyIsNotRepeatedInTheExceptionMessage(): void
+    {
+        try {
+            (new VatlyApiClient)->setApiKey('live_sk_ab12cd34ef56gh78ij90!');
+            $this->fail('Expected the API key to be refused.');
+        } catch (ApiException $exception) {
+            $this->assertStringStartsWith('Invalid API key.', $exception->getMessage());
+            $this->assertStringNotContainsString('ab12cd34ef56gh78ij90', $exception->getMessage());
+        }
+    }
+
+    /** @test */
     public function paginationLinksAreSentToTheConfiguredEndpointWhateverHostTheyName(): void
     {
         $this->client->setApiEndpoint('https://api.vatly.test');
