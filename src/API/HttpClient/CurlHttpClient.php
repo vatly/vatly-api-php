@@ -145,7 +145,7 @@ class CurlHttpClient implements HttpClientInterface
      */
     public function versionString(): string
     {
-        return 'Curl/*';
+        return 'curl/' . (curl_version()['version'] ?? '*');
     }
 
     /**

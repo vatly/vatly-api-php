@@ -176,7 +176,7 @@ Every request's `User-Agent` starts with `vatly/vatly-api-php/<version>`, follow
 
 ```php
 $vatly->addVersionString('acme/vatly-shop-plugin/1.4.0');
-// User-Agent: vatly/vatly-api-php/0.1.0-alpha.40 PHP/8.4.1 Curl/* acme/vatly-shop-plugin/1.4.0
+// User-Agent: vatly/vatly-api-php/0.1.0-alpha.40 PHP/8.4.1 curl/8.5.0 acme/vatly-shop-plugin/1.4.0
 ```
 
 ## Error handling
