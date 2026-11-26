@@ -4,6 +4,10 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- **The `User-Agent` names the Composer package:** `vatly/vatly-api-php/0.1.0-alpha.40` instead of `Vatly/0.1.0-alpha.39`, so a request can be traced to the exact package and version.
+
 ## v0.1.0-alpha.39
 
 ### Security

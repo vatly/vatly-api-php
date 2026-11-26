@@ -30,6 +30,14 @@ class VatlyApiClientTest extends BaseTestCase
     }
 
     /** @test */
+    public function theUserAgentNamesTheComposerPackageAndItsVersion(): void
+    {
+        $versionStrings = (new VatlyApiClient)->getVersionStrings();
+
+        $this->assertSame('vatly/vatly-api-php/' . VatlyApiClient::CLIENT_VERSION, $versionStrings[0]);
+    }
+
+    /** @test */
     public function aRejectedApiKeyIsNotRepeatedInTheExceptionMessage(): void
     {
         try {

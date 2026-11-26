@@ -33,7 +33,7 @@ class VatlyApiClient
     /**
      * The version of this client.
      */
-    public const CLIENT_VERSION = '0.1.0-alpha.39';
+    public const CLIENT_VERSION = '0.1.0-alpha.40';
 
     /**
      * Endpoint of the remote API.
@@ -135,7 +135,7 @@ class VatlyApiClient
 
     protected function initializeVersionString(): void
     {
-        $this->addVersionString('Vatly/'.self::CLIENT_VERSION);
+        $this->addVersionString('vatly/vatly-api-php/'.self::CLIENT_VERSION);
         $this->addVersionString('PHP/'.phpversion());
         $this->addVersionString($this->httpClient->versionString());
     }
