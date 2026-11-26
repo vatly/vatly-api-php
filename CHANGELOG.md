@@ -4,6 +4,8 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.40
+
 ### Upgrading
 
 - **Upgrade vatly-fluent-php to v0.8.0-alpha.37 or later first.** Earlier versions pass `filters:` as a named argument, which this release renames to `$options`. Do not release this version before that fluent-php release is out.
