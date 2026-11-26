@@ -21,8 +21,14 @@ All notable changes to `vatly-api-php` will be documented in this file.
 - **Breaking for `CurlHttpClient` subclasses:** the protected `parseResponseBody()` takes the response headers instead of the request body: `parseResponseBody(string $response, int $statusCode, array $responseHeaders = [])`.
 - An error status with an empty body now throws the status's exception (for example `AuthenticationException` for an empty `401`) instead of `ApiException('No response body found.')`.
 
+### Removed
+
+- **Breaking: `VatlyApiClient::setApiVersion()`.** It never had an effect: every request went to `/v1` whatever it was given (#52). Remove the call. `getApiVersion()` stays and returns `v1`, the API version this client speaks; a new API version will come with a new major version of this package.
+- **Breaking: the deprecated `VatlyApiClient::performHttpCallToFullUrl()`.** Use `performHttpCall()` with a path relative to the API version, such as `performHttpCall('GET', 'orders')`.
+
 ### Fixed
 
+- The `User-Agent` names the real package version (`Vatly/0.1.0-alpha.39`) instead of `Vatly/0.0.1`.
 - An error response with a `field` key no longer throws a `TypeError` (the field was passed to `Exception` as the previous exception).
 - An error response without `message` no longer raises an "Undefined property" warning, and messages no longer end with a stray `)`.
 

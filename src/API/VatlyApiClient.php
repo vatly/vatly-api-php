@@ -33,7 +33,7 @@ class VatlyApiClient
     /**
      * The version of this client.
      */
-    public const CLIENT_VERSION = '0.0.1';
+    public const CLIENT_VERSION = '0.1.0-alpha.39';
 
     /**
      * Endpoint of the remote API.
@@ -69,8 +69,6 @@ class VatlyApiClient
     protected array $versionStrings;
 
     protected string $apiEndpoint = self::API_ENDPOINT;
-
-    protected string $apiVersion = self::API_VERSION;
 
     protected ?string $apiKey;
 
@@ -177,16 +175,12 @@ class VatlyApiClient
         return $this->apiEndpoint;
     }
 
-    public function setApiVersion(string $version): VatlyApiClient
-    {
-        $this->apiVersion = $version;
-
-        return $this;
-    }
-
+    /**
+     * The Vatly API version this client speaks. A new API version comes with a new major version of this package.
+     */
     public function getApiVersion(): string
     {
-        return $this->apiVersion;
+        return self::API_VERSION;
     }
 
     public function setApiKey(string $apiKey): VatlyApiClient
@@ -215,24 +209,6 @@ class VatlyApiClient
     public function performHttpCall(string $httpMethod, string $apiMethod, ?string $httpBody = null, array $requestHeaders = []): ?object
     {
         $url = $this->apiEndpoint . "/" . self::API_VERSION . "/" . $apiMethod;
-
-        return $this->sendRequest($httpMethod, $url, $httpBody, $requestHeaders);
-    }
-
-    /**
-     * Perform a http call to a full url on the configured API endpoint.
-     *
-     * @deprecated Use performHttpCall() with a path relative to the API version instead.
-     *
-     * @return object|null
-     * @throws \Vatly\API\Exceptions\ApiException when the URL is not on the configured API endpoint
-     */
-    public function performHttpCallToFullUrl(string $httpMethod, string $url, ?string $httpBody = null, array $requestHeaders = []): ?object
-    {
-        // The API key is only ever sent to the configured endpoint, never to a URL from elsewhere.
-        if (strpos($url, $this->apiEndpoint . '/') !== 0) {
-            throw new ApiException("Refusing to send a request to '{$url}': it is not on the configured API endpoint '{$this->apiEndpoint}'.");
-        }
 
         return $this->sendRequest($httpMethod, $url, $httpBody, $requestHeaders);
     }

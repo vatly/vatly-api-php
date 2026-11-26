@@ -84,26 +84,6 @@ class VatlyApiClientTest extends BaseTestCase
     }
 
     /** @test */
-    public function fullUrlCallsOnlyReachTheConfiguredEndpoint(): void
-    {
-        $this->httpClient->setSendReturnObjectFromArray(['ok' => true]);
-
-        $this->client->performHttpCallToFullUrl('GET', 'https://api.vatly.com/v1/orders');
-        $this->assertWasSentOnly('GET', 'https://api.vatly.com/v1/orders', [], null);
-
-        foreach (['https://api.vatly.com.attacker.example/v1/orders', 'https://api.vatly.com@attacker.example/v1/orders', 'http://api.vatly.com/v1/orders'] as $url) {
-            try {
-                $this->client->performHttpCallToFullUrl('GET', $url);
-                $this->fail("Expected '{$url}' to be refused.");
-            } catch (ApiException $exception) {
-                $this->assertStringContainsString('not on the configured API endpoint', $exception->getMessage());
-            }
-        }
-
-        $this->assertSame(1, $this->httpClient->countRecordedSends());
-    }
-
-    /** @test */
     public function theApiEndpointMustUseHttpsExceptForLocalhost(): void
     {
         foreach (['https://api.vatly.com/', 'http://localhost:8000', 'http://127.0.0.1:8000', 'http://[::1]:8000'] as $url) {
