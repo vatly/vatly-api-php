@@ -4,6 +4,8 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.39
+
 ### Security
 
 - **Exception messages no longer contain the request body.** An API error message used to end with `Request body: {...}`, which put customer emails, addresses and metadata into logs and into any UI that shows the message. The message is now the API's own `message`.
