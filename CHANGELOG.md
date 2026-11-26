@@ -6,6 +6,7 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ### Upgrading
 
+- **Upgrade vatly-fluent-php to v0.8.0-alpha.37 or later first.** Earlier versions pass `filters:` as a named argument, which this release renames to `$options`. Do not release this version before that fluent-php release is out.
 - **Endpoint methods return the concrete resource**, such as `Checkout`, `Order` or `SubscriptionCollection`, instead of `BaseResource` or `?BaseResource`. Calling code keeps working; only subclasses that override these methods need the narrower return type.
 - **`$filters` on create, update, archive and unarchive is now `$options`**, and it accepts only `idempotencyKey`. Any other key throws an `ApiException` before the request is sent. If you pass it by name, rename it:
   ```php
