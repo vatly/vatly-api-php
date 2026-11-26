@@ -3,13 +3,14 @@
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\Order;
 use Vatly\API\Resources\Refund;
 use Vatly\API\Resources\RefundCollection;
 
+/**
+ * @extends BaseEndpoint<Refund, RefundCollection>
+ */
 class OrderRefundEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "orders_refunds";
@@ -25,10 +26,9 @@ class OrderRefundEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return BaseResource|Refund
      * @throws ApiException
      */
-    public function getForOrderId(string $orderId, string $refundId, array $parameters = [])
+    public function getForOrderId(string $orderId, string $refundId, array $parameters = []): Refund
     {
         $this->parentId = $orderId;
 
@@ -36,7 +36,6 @@ class OrderRefundEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return BaseResourcePage|RefundCollection
      * @throws ApiException
      */
     public function pageForOrderId(
@@ -45,49 +44,48 @@ class OrderRefundEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ) {
+    ): RefundCollection {
         $this->parentId = $orderId;
 
         return parent::rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
     /**
-     * It creates a refund for an order.
-     * @param Order $order
-     * @param array $array
-     * @param array $filters
-     * @return BaseResource|Refund
+     * Refund part of an order.
+     *
+     * @param array<string, mixed> $data The refund request (`items`, optional `metadata`).
+     * @param array{idempotencyKey?: string} $options
      * @throws ApiException
      */
-    public function createForOrder(Order $order, array $array, array $filters = [])
+    public function createForOrder(Order $order, array $data, array $options = []): Refund
     {
-        return $this->createForOrderId($order->id, $array, $filters);
+        return $this->createForOrderId($order->id, $data, $options);
     }
 
     /**
-     * It creates a refund for an order id.
-     * @param string $orderId The order's ID, for example: order_66fc8a40718b46bea50f1a25f456d243
-     * @param array $data An array containing details of the refund.
+     * Refund part of an order.
      *
-     * @return BaseResource|Refund
+     * @param string $orderId The order's ID, for example: order_66fc8a40718b46bea50f1a25f456d243
+     * @param array<string, mixed> $data The refund request (`items`, optional `metadata`).
+     * @param array{idempotencyKey?: string} $options
      * @throws ApiException
      */
-    public function createForOrderId(string $orderId, array $data, array $filters = [])
+    public function createForOrderId(string $orderId, array $data, array $options = []): Refund
     {
         $this->parentId = $orderId;
 
-        return parent::rest_create($data, $filters);
+        return parent::rest_create($data, $options);
     }
 
     /**
-     * It creates a full refund for an order id.
-     * @param string $orderId The order's ID, for example: order_66fc8a40718b46bea50f1a25f456d243
-     * @param array $data An array containing details of the refund.
+     * Refund the rest of an order.
      *
-     * @return BaseResource|Refund
+     * @param string $orderId The order's ID, for example: order_66fc8a40718b46bea50f1a25f456d243
+     * @param array<string, mixed> $data Optional `metadata`.
+     * @param array{idempotencyKey?: string} $options
      * @throws ApiException
      */
-    public function createFullRefundForOrderId(string $orderId, array $data, array $filters = [])
+    public function createFullRefundForOrderId(string $orderId, array $data = [], array $options = []): Refund
     {
         $this->parentId = $orderId;
 
@@ -95,19 +93,18 @@ class OrderRefundEndpoint extends BaseEndpoint
         $fullRefunds = clone $this;
         $fullRefunds->setResourcePath($this->resourcePath . '/full');
 
-        return $fullRefunds->rest_create($data, $filters);
+        return $fullRefunds->rest_create($data, $options);
     }
 
     /**
-     * It cancels a refund for an order id.
-     * It will throw an ApiException if the refund id is invalid or if the refund cannot be cancelled.
-     * @return null
-     * @throws ApiException
+     * Cancel a refund that has not been processed yet.
+     *
+     * @throws ApiException when the refund cannot be canceled
      */
-    public function cancelRefundForOrderId(string $orderId, string $refundId)
+    public function cancelRefundForOrderId(string $orderId, string $refundId): void
     {
         $this->parentId = $orderId;
 
-        return parent::rest_delete($refundId);
+        parent::rest_delete($refundId);
     }
 }

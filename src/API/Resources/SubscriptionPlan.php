@@ -85,12 +85,11 @@ class SubscriptionPlan extends BaseResource
      * Submit an update to this plan. In live mode the change is held as a
      * pending update and reviewed by Vatly before it takes effect.
      *
-     * @return SubscriptionPlan|BaseResource|null
      * @throws ApiException
      */
-    public function update(array $data = [], array $filters = []): ?BaseResource
+    public function update(array $data = [], array $options = []): SubscriptionPlan
     {
-        return $this->apiClient->subscriptionPlans->update($this->id, $data, $filters);
+        return $this->apiClient->subscriptionPlans->update($this->id, $data, $options);
     }
 
     /**
@@ -98,19 +97,18 @@ class SubscriptionPlan extends BaseResource
      *
      * @throws ApiException
      */
-    public function archive(array $filters = []): void
+    public function archive(array $options = []): void
     {
-        $this->apiClient->subscriptionPlans->archive($this->id, $filters);
+        $this->apiClient->subscriptionPlans->archive($this->id, $options);
     }
 
     /**
      * Re-open this plan to new business.
      *
-     * @return SubscriptionPlan|BaseResource|null
      * @throws ApiException
      */
-    public function unarchive(array $filters = []): ?BaseResource
+    public function unarchive(array $options = []): SubscriptionPlan
     {
-        return $this->apiClient->subscriptionPlans->unarchive($this->id, $filters);
+        return $this->apiClient->subscriptionPlans->unarchive($this->id, $options);
     }
 }

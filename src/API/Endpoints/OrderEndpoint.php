@@ -3,13 +3,14 @@
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\Order;
 use Vatly\API\Resources\OrderCollection;
 use Vatly\API\Types\Link;
 
+/**
+ * @extends BaseEndpoint<Order, OrderCollection>
+ */
 class OrderEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "orders";
@@ -24,9 +25,8 @@ class OrderEndpoint extends BaseEndpoint
 
     /**
      * @throws ApiException
-     * @return Order|BaseResource
      */
-    public function get(string $id, array $parameters = [])
+    public function get(string $id, array $parameters = []): Order
     {
         $this->validateOrderId($id);
 
@@ -34,7 +34,6 @@ class OrderEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return OrderCollection|BaseResourcePage
      * @throws ApiException
      */
     public function page(
@@ -42,7 +41,7 @@ class OrderEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ): BaseResourcePage {
+    ): OrderCollection {
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
@@ -52,22 +51,19 @@ class OrderEndpoint extends BaseEndpoint
      *
      * @throws ApiException
      */
-    public function requestAddressUpdateLink(string $id, array $data = []): Link
+    public function requestAddressUpdateLink(string $id): Link
     {
         $this->validateOrderId($id);
 
-        $resource = "{$this->getResourcePath()}/" . rawurlencode($id) . "/invoice-update-link";
-
         $result = $this->client->performHttpCall(
             self::REST_CREATE,
-            $resource,
-            $this->parseRequestBody($data),
+            "{$this->getResourcePath()}/" . rawurlencode($id) . "/invoice-update-link",
         );
 
         return new Link($result->href, $result->type);
     }
 
-    protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
+    protected function getResourcePageObject(int $count, PaginationLinks $links): OrderCollection
     {
         return new OrderCollection($this->client, $count, $links);
     }

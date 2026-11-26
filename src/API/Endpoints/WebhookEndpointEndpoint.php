@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\WebhookEndpoint;
 use Vatly\API\Resources\WebhookEndpointCollection;
 
+/**
+ * @extends BaseEndpoint<WebhookEndpoint, WebhookEndpointCollection>
+ */
 class WebhookEndpointEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "webhook-endpoints";
@@ -38,19 +39,17 @@ class WebhookEndpointEndpoint extends BaseEndpoint
      * an empty array to create a dormant endpoint. `webhook.setup` is not
      * subscribable — it is always sent.
      *
-     * @return WebhookEndpoint|BaseResource
      * @throws ApiException
      */
-    public function create(array $payload, array $filters = []): BaseResource
+    public function create(array $payload, array $options = []): WebhookEndpoint
     {
-        return $this->rest_create($payload, $filters);
+        return $this->rest_create($payload, $options);
     }
 
     /**
-     * @return WebhookEndpoint|BaseResource
      * @throws ApiException
      */
-    public function get(string $id, array $parameters = []): BaseResource
+    public function get(string $id, array $parameters = []): WebhookEndpoint
     {
         return $this->rest_read($id, $parameters);
     }
@@ -64,12 +63,11 @@ class WebhookEndpointEndpoint extends BaseEndpoint
      * endpoint dormant. New event names are never added automatically.
      * Sending an empty body is a no-op that returns the current endpoint.
      *
-     * @return WebhookEndpoint|BaseResource|null
      * @throws ApiException
      */
-    public function update(string $id, array $data = [], array $filters = []): ?BaseResource
+    public function update(string $id, array $data = [], array $options = []): WebhookEndpoint
     {
-        return $this->rest_update($id, $data, $filters);
+        return $this->rest_update($id, $data, $options);
     }
 
     /**
@@ -86,7 +84,6 @@ class WebhookEndpointEndpoint extends BaseEndpoint
      * List the webhook endpoints for the token's mode. A storefront may have up
      * to five endpoints per mode, so this returns up to five endpoints.
      *
-     * @return WebhookEndpointCollection|BaseResourcePage
      * @throws ApiException
      */
     public function page(
@@ -94,11 +91,11 @@ class WebhookEndpointEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ): BaseResourcePage {
+    ): WebhookEndpointCollection {
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
-    protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
+    protected function getResourcePageObject(int $count, PaginationLinks $links): WebhookEndpointCollection
     {
         return new WebhookEndpointCollection($this->client, $count, $links);
     }

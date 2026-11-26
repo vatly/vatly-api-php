@@ -4,6 +4,26 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Upgrading
+
+- **Endpoint methods return the concrete resource**, such as `Checkout`, `Order` or `SubscriptionCollection`, instead of `BaseResource` or `?BaseResource`. Calling code keeps working; only subclasses that override these methods need the narrower return type.
+- **`$filters` on create, update, archive and unarchive is now `$options`**, and it accepts only `idempotencyKey`. Any other key throws an `ApiException` before the request is sent. If you pass it by name, rename it:
+  ```php
+  // Before
+  $vatly->checkouts->create($payload, filters: ['idempotencyKey' => $key]);
+  // After
+  $vatly->checkouts->create($payload, options: ['idempotencyKey' => $key]);
+  ```
+- **`subscriptions->cancel($id, ['immediately' => true])` is now `cancel($id, immediately: true)`**, and returns nothing (the API answers `204`). `$subscription->cancel()` changes the same way.
+- **`subscriptions->resume($id)`, `orders->requestAddressUpdateLink($id)`** and their resource methods no longer take a `$data` array: the API ignores a body there. `resume()` returns `Subscription`, not `?BaseResource`.
+- **`orderRefunds->cancelRefundForOrderId()` and `Refund->cancel()` return `void`** instead of `null`.
+- **Renamed parameters** (only matters for named arguments): `createForOrder(Order $order, array $data, array $options = [])` (was `$array`) and `listForCustomer(Customer $customer)` (was `$customerId`).
+- **`@internal` is not covered by semver**: `ResourceFactory`, `LinksResourceFactory`, `setResourcePath()`/`getResourcePath()`, `IdnEmail`, the `Webhooks\Concerns` traits, `CompatibilityChecker`, `FakeIdempotencyKeyGenerator`, and the webhook event constructors (build events with `WebhookEventFactory`). Extending the SDK's classes is not covered either; see "Backward compatibility" in `docs/README.md`.
+
+### Fixed
+
+- **`archive()` and `unarchive()` send `idempotencyKey` as the `Idempotency-Key` header.** They added it to the query string, so Vatly never saw it.
+
 ### Changed
 
 - **The `User-Agent` names the Composer package:** `vatly/vatly-api-php/0.1.0-alpha.40` instead of `Vatly/0.1.0-alpha.39`, so a request can be traced to the exact package and version.

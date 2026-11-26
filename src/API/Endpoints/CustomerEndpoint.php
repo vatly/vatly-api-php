@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
 use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Customer;
 use Vatly\API\Resources\CustomerCollection;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Types\PortalSession;
 
+/**
+ * @extends BaseEndpoint<Customer, CustomerCollection>
+ */
 class CustomerEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "customers";
@@ -27,19 +29,17 @@ class CustomerEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return Customer|BaseResource
-     *@throws ApiException
+     * @throws ApiException
      */
-    public function create(array $payload, array $filters = []): BaseResource
+    public function create(array $payload, array $options = []): Customer
     {
-        return $this->rest_create($payload, $filters);
+        return $this->rest_create($payload, $options);
     }
 
     /**
-     * @return Customer|BaseResource
-     *@throws ApiException
+     * @throws ApiException
      */
-    public function get(string $id, array $parameters = []): BaseResource
+    public function get(string $id, array $parameters = []): Customer
     {
         return $this->rest_read($id, $parameters);
     }
@@ -48,19 +48,17 @@ class CustomerEndpoint extends BaseEndpoint
      * Update a customer's identity fields. Only `name` and `email` are editable;
      * both are optional. Billing-address fields are not accepted here.
      *
-     * @return Customer|BaseResource|null
      * @throws ApiException
      */
-    public function update(string $id, array $data = [], array $filters = []): ?BaseResource
+    public function update(string $id, array $data = [], array $options = []): Customer
     {
-        return $this->rest_update($id, $data, $filters);
+        return $this->rest_update($id, $data, $options);
     }
 
     /**
-     * @return CustomerCollection|BaseResourcePage
      * @throws ApiException
      */
-    public function page(?string $startingAfter = null, ?string $endingBefore = null, ?int $limit = null, array $parameters = [])
+    public function page(?string $startingAfter = null, ?string $endingBefore = null, ?int $limit = null, array $parameters = []): CustomerCollection
     {
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
@@ -71,7 +69,6 @@ class CustomerEndpoint extends BaseEndpoint
      * write. An address can be held by more than one customer, in which case all
      * of them are returned, so this always yields a (possibly empty) collection.
      *
-     * @return CustomerCollection|BaseResourcePage
      * @throws ApiException
      */
     public function listByEmail(string $email, array $parameters = []): BaseResourcePage
@@ -112,7 +109,7 @@ class CustomerEndpoint extends BaseEndpoint
         return PortalSession::createResourceFromApiResult($result);
     }
 
-    protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
+    protected function getResourcePageObject(int $count, PaginationLinks $links): CustomerCollection
     {
         return new CustomerCollection($this->client, $count, $links);
     }

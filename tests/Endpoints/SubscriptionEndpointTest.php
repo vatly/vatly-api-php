@@ -212,6 +212,33 @@ class SubscriptionEndpointTest extends BaseEndpointTest
     }
 
     /** @test */
+    public function cancel_immediately_sends_the_immediately_query_parameter(): void
+    {
+        $this->httpClient->setSendReturnNull();
+        $this->client->subscriptions->cancel('subscription_123', immediately: true);
+
+        $this->assertWasSentOnly(
+            VatlyApiClient::HTTP_DELETE,
+            self::API_ENDPOINT_URL.'/subscriptions/subscription_123?immediately=true',
+            [],
+            null
+        );
+    }
+
+    /** @test */
+    public function an_unknown_option_is_refused_before_sending(): void
+    {
+        try {
+            $this->client->subscriptions->update('subscription_123', ['quantity' => 2], ['immediately' => true]);
+            $this->fail('Expected the option to be refused.');
+        } catch (\Vatly\API\Exceptions\ApiException $exception) {
+            $this->assertSame("Unknown option 'immediately'. The only option is 'idempotencyKey'.", $exception->getMessage());
+        }
+
+        $this->assertSame(0, $this->httpClient->countRecordedSends());
+    }
+
+    /** @test */
     public function can_resume_subscription()
     {
         /** @var Subscription $subscription */

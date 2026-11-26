@@ -79,13 +79,12 @@ class Refund extends BaseResource
     }
 
     /**
+     * Cancel this refund, if it has not been processed yet.
+     *
      * @throws ApiException
-     * @return null
      */
-    public function cancel()
+    public function cancel(): void
     {
         $this->apiClient->orderRefunds->cancelRefundForOrderId($this->originalOrderId, $this->id);
-
-        return null;
     }
 }

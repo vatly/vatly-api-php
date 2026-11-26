@@ -4,15 +4,15 @@ namespace Vatly\API\Endpoints;
 
 use InvalidArgumentException;
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Customer;
 use Vatly\API\Resources\Links\PaginationLinks;
-use Vatly\API\Resources\ResourceFactory;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
 use Vatly\API\Types\Link;
 
+/**
+ * @extends BaseEndpoint<Subscription, SubscriptionCollection>
+ */
 class SubscriptionEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "subscriptions";
@@ -26,27 +26,31 @@ class SubscriptionEndpoint extends BaseEndpoint
 
     /**
      * @throws ApiException
-     * @return Subscription|BaseResource
      */
-    public function get(string $subscriptionId, array $parameters = []): BaseResource
+    public function get(string $subscriptionId, array $parameters = []): Subscription
     {
         $this->validateSubscriptionId($subscriptionId);
 
         return $this->rest_read($subscriptionId, $parameters);
     }
 
-    public function listForCustomerId(string $customerId)
+    /**
+     * @throws ApiException
+     */
+    public function listForCustomerId(string $customerId): SubscriptionCollection
     {
         return $this->client->customerSubscriptions->pageForCustomerId($customerId);
     }
 
-    public function listForCustomer(Customer $customerId)
+    /**
+     * @throws ApiException
+     */
+    public function listForCustomer(Customer $customer): SubscriptionCollection
     {
-        return $this->listForCustomerId($customerId->id);
+        return $this->listForCustomerId($customer->id);
     }
 
     /**
-     * @return SubscriptionCollection|BaseResourcePage
      * @throws ApiException
      */
     public function page(
@@ -54,11 +58,11 @@ class SubscriptionEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ): BaseResourcePage {
+    ): SubscriptionCollection {
         return $this->rest_list($startingAfter, $endingBefore, $limit, $parameters);
     }
 
-    protected function getResourcePageObject(int $count, PaginationLinks $links): BaseResourcePage
+    protected function getResourcePageObject(int $count, PaginationLinks $links): SubscriptionCollection
     {
         return new SubscriptionCollection($this->client, $count, $links);
     }
@@ -66,11 +70,11 @@ class SubscriptionEndpoint extends BaseEndpoint
     /**
      * @throws ApiException
      */
-    public function update(string $subscriptionId, array $data = [], array $filters = []): ?BaseResource
+    public function update(string $subscriptionId, array $data = [], array $options = []): Subscription
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        return $this->rest_update($subscriptionId, $data, $filters);
+        return $this->rest_update($subscriptionId, $data, $options);
     }
 
     /**
@@ -102,13 +106,17 @@ class SubscriptionEndpoint extends BaseEndpoint
     }
 
     /**
+     * Cancel a subscription. By default it stays active until the end of the
+     * current billing period (and can be resumed until then); pass
+     * `immediately: true` to end it now.
+     *
      * @throws ApiException
      */
-    public function cancel(string $subscriptionId, array $data = []): ?BaseResource
+    public function cancel(string $subscriptionId, bool $immediately = false): void
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        return $this->rest_delete($subscriptionId, $data);
+        $this->rest_delete($subscriptionId, $immediately ? ['immediately' => true] : []);
     }
 
     /**
@@ -120,23 +128,16 @@ class SubscriptionEndpoint extends BaseEndpoint
      *
      * @throws ApiException
      */
-    public function resume(string $subscriptionId, array $data = []): ?BaseResource
+    public function resume(string $subscriptionId): Subscription
     {
         $this->validateSubscriptionId($subscriptionId);
 
-        $resource = "{$this->getResourcePath()}/" . rawurlencode($subscriptionId) . "/resume";
-
         $result = $this->client->performHttpCall(
             self::REST_CREATE,
-            $resource,
-            $this->parseRequestBody($data),
+            "{$this->getResourcePath()}/" . rawurlencode($subscriptionId) . "/resume",
         );
 
-        if ($result === null) {
-            return null;
-        }
-
-        return ResourceFactory::createResourceFromApiResult($result, $this->getResourceObject());
+        return $this->hydrate($result);
     }
 
     /**

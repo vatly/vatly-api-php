@@ -3,12 +3,13 @@
 namespace Vatly\API\Endpoints;
 
 use Vatly\API\Exceptions\ApiException;
-use Vatly\API\Resources\BaseResource;
-use Vatly\API\Resources\BaseResourcePage;
 use Vatly\API\Resources\Links\PaginationLinks;
 use Vatly\API\Resources\Subscription;
 use Vatly\API\Resources\SubscriptionCollection;
 
+/**
+ * @extends BaseEndpoint<Subscription, SubscriptionCollection>
+ */
 class CustomerSubscriptionEndpoint extends BaseEndpoint
 {
     protected string $resourcePath = "customers_subscriptions";
@@ -24,10 +25,9 @@ class CustomerSubscriptionEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return BaseResource|Subscription
      * @throws ApiException
      */
-    public function getForCustomerId(string $customerId, string $subscriptionId, array $parameters = [])
+    public function getForCustomerId(string $customerId, string $subscriptionId, array $parameters = []): Subscription
     {
         $this->parentId = $customerId;
 
@@ -35,7 +35,6 @@ class CustomerSubscriptionEndpoint extends BaseEndpoint
     }
 
     /**
-     * @return BaseResourcePage|SubscriptionCollection
      * @throws ApiException
      */
     public function pageForCustomerId(
@@ -44,7 +43,7 @@ class CustomerSubscriptionEndpoint extends BaseEndpoint
         ?string $endingBefore = null,
         ?int $limit = null,
         array $parameters = []
-    ) {
+    ): SubscriptionCollection {
         $this->parentId = $customerId;
 
         return parent::rest_list($startingAfter, $endingBefore, $limit, $parameters);

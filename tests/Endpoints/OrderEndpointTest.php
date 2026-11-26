@@ -352,7 +352,7 @@ class OrderEndpointTest extends BaseEndpointTest
 
         $this->httpClient->setSendReturnObjectFromArray($responseBodyArray);
 
-        $response = $this->client->orders->requestAddressUpdateLink($orderId, []);
+        $response = $this->client->orders->requestAddressUpdateLink($orderId);
 
         $this->assertWasSentOnly(
             VatlyApiClient::HTTP_POST,
@@ -361,29 +361,6 @@ class OrderEndpointTest extends BaseEndpointTest
             null
         );
         $this->assertEquals(self::API_ENDPOINT_URL."/customer/invoices/$orderId?editable=true&signature=1234567890abcdef", $response->href);
-    }
-
-    /** @test */
-    public function request_address_update_link_punycodes_email_domains_in_billing_address(): void
-    {
-        $orderId = 'order_dummy_id';
-        $this->httpClient->setSendReturnObjectFromArray([
-            'href' => self::API_ENDPOINT_URL."/customer/invoices/$orderId?editable=true&signature=1234567890abcdef",
-            'type' => 'text/html',
-        ]);
-
-        $this->client->orders->requestAddressUpdateLink($orderId, [
-            'billingAddress' => [
-                'email' => 'billing@müller.de',
-            ],
-        ]);
-
-        $this->assertWasSentOnly(
-            VatlyApiClient::HTTP_POST,
-            self::API_ENDPOINT_URL.'/orders/'.$orderId.'/invoice-update-link',
-            [],
-            '{"billingAddress":{"email":"billing@xn--mller-kva.de"}}'
-        );
     }
 
     /** @test */

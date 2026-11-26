@@ -45,10 +45,9 @@ class WebhookEndpoint extends BaseResource
      * `enabledEvents` subscription set (a full-set replacement). The secret is
      * write-only and never returned.
      *
-     * @return WebhookEndpoint|BaseResource|null
      * @throws ApiException
      */
-    public function update(array $data = []): ?BaseResource
+    public function update(array $data = []): WebhookEndpoint
     {
         return $this->apiClient->webhookEndpoints->update($this->id, $data);
     }

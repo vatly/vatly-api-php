@@ -25,10 +25,11 @@ class ResourceFactory
     /**
      * Create resource object from Api result
      *
+     * @template T of BaseResource
      * @param object $apiResult
-     * @param BaseResource $resource
+     * @param T $resource
      *
-     * @return BaseResource
+     * @return T
      */
     public static function createResourceFromApiResult(object $apiResult, BaseResource $resource): BaseResource
     {
