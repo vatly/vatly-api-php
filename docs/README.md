@@ -172,31 +172,50 @@ The SDK provides access to all Vatly API resources.
 
 ## Error handling
 
+Every exception the SDK throws implements `Vatly\API\Exceptions\VatlyException`, so one `catch` covers API errors and webhook signature failures.
 
+When the API answers with an error, the SDK throws an `ApiException`, or the subclass for the HTTP status:
 
-The SDK throws specific exceptions for different error types.
-
-### Exception types
-
-| Name | Type | Description |
+| Status | Exception | When |
 | --- | --- | --- |
-| `ApiException` | `exception` | API errors, including authentication, validation, and transport failures. |
+| `401` | `AuthenticationException` | The API key is missing or invalid. |
+| `403` | `ForbiddenException` | The API key is invalid, revoked, or not allowed to perform this operation. |
+| `404` | `NotFoundException` | The resource does not exist, or not in the API key's mode. |
+| `409` | `ConflictException` | For example, an idempotency key reused with other parameters, or a request still in progress. |
+| `422` | `ValidationException` | The request is invalid. `getErrors()` lists the messages per field. |
+| `429` | `RateLimitException` | Too many requests. Wait `getRetryAfter()` seconds. |
+| other | `ApiException` | Any other error status. |
 
+An `ApiException` without a status code means no response arrived (for example, a connection error), or the SDK refused the call before sending it.
 
+| Method | Returns |
+| --- | --- |
+| `getMessage()` | The API's error message. It never contains the request body or the API key. |
+| `getStatusCode()` | The HTTP status, or `null` when there was no response. |
+| `getErrors()` | Validation messages per field (dot notation), such as `['products.0.id' => ['The selected products.0.id is invalid.']]`. |
+| `getDetails()` | The error's `details` object, such as `['idempotency_outcome' => 'in_progress']`. |
+| `getRetryAfter()` | Seconds from the `Retry-After` header, sent on `429` and on a `409` while an idempotent request is in progress. |
+| `getResponseBody()` | The raw response body. |
 
+Branch on the exception class or status code, not on the message text.
 
 ```php
 use Vatly\API\Exceptions\ApiException;
+use Vatly\API\Exceptions\RateLimitException;
+use Vatly\API\Exceptions\ValidationException;
 
 try {
     $checkout = $vatly->checkouts->create([...]);
+} catch (ValidationException $e) {
+    foreach ($e->getErrors() as $field => $messages) {
+        // e.g. 'products.0.id' => ['The selected products.0.id is invalid.']
+    }
+} catch (RateLimitException $e) {
+    $waitSeconds = $e->getRetryAfter() ?? 60;
 } catch (ApiException $e) {
-    // API error (network, auth, validation, etc.)
-    echo $e->getMessage();
+    $status = $e->getStatusCode(); // null when no response arrived
 }
 ```
-
-
 
 ---
 

@@ -4,6 +4,36 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+## v0.1.0-alpha.39
+
+### Security
+
+- **Exception messages no longer contain the request body.** An API error message used to end with `Request body: {...}`, which put customer emails, addresses and metadata into logs and into any UI that shows the message. The message is now the API's own `message`.
+- **`setApiKey()` no longer repeats a rejected key** in its exception message.
+
+### Added
+
+- **Structured API errors.** `ApiException` now has `getStatusCode()` (`null` when no response arrived), `getErrors()` (a `422`'s messages per field), `getDetails()` (the error's `details` object), `getRetryAfter()` (seconds from the `Retry-After` header) and `getResponseBody()` (the raw body). `ApiException::fromResponse()` builds one from a status, body and headers, for custom HTTP clients.
+- **An exception per error status**, all extending `ApiException`: `AuthenticationException` (401), `ForbiddenException` (403), `NotFoundException` (404), `ConflictException` (409), `ValidationException` (422) and `RateLimitException` (429). Other statuses still throw `ApiException`, so existing `catch (ApiException $e)` blocks keep working.
+- **`Vatly\API\Exceptions\VatlyException`**, an interface that `ApiException` and `InvalidSignatureException` implement, to catch every exception from this package at once.
+
+### Changed
+
+- **Breaking: API error messages changed.** They were `Error 422 executing API call: <message>). Documentation: <url>. Request body: <json>`. They are now the API's `message` alone, such as `The email field is required.`, or `The Vatly API responded with HTTP status 502.` when the response has none. Code that parses the message should read `getStatusCode()`, `getErrors()` or `getDetails()` instead. The documentation link is still in `getResponseBody()`.
+- **Breaking for `CurlHttpClient` subclasses:** the protected `parseResponseBody()` takes the response headers instead of the request body: `parseResponseBody(string $response, int $statusCode, array $responseHeaders = [])`.
+- An error status with an empty body now throws the status's exception (for example `AuthenticationException` for an empty `401`) instead of `ApiException('No response body found.')`.
+
+### Removed
+
+- **Breaking: `VatlyApiClient::setApiVersion()`.** It never had an effect: every request went to `/v1` whatever it was given (#52). Remove the call. `getApiVersion()` stays and returns `v1`, the API version this client speaks; a new API version will come with a new major version of this package.
+- **Breaking: the deprecated `VatlyApiClient::performHttpCallToFullUrl()`.** Use `performHttpCall()` with a path relative to the API version, such as `performHttpCall('GET', 'orders')`.
+
+### Fixed
+
+- The `User-Agent` names the real package version (`Vatly/0.1.0-alpha.39`) instead of `Vatly/0.0.1`.
+- An error response with a `field` key no longer throws a `TypeError` (the field was passed to `Exception` as the previous exception).
+- An error response without `message` no longer raises an "Undefined property" warning, and messages no longer end with a stray `)`.
+
 ## v0.1.0-alpha.38
 
 ### Security

@@ -30,6 +30,18 @@ class VatlyApiClientTest extends BaseTestCase
     }
 
     /** @test */
+    public function aRejectedApiKeyIsNotRepeatedInTheExceptionMessage(): void
+    {
+        try {
+            (new VatlyApiClient)->setApiKey('live_sk_ab12cd34ef56gh78ij90!');
+            $this->fail('Expected the API key to be refused.');
+        } catch (ApiException $exception) {
+            $this->assertStringStartsWith('Invalid API key.', $exception->getMessage());
+            $this->assertStringNotContainsString('ab12cd34ef56gh78ij90', $exception->getMessage());
+        }
+    }
+
+    /** @test */
     public function paginationLinksAreSentToTheConfiguredEndpointWhateverHostTheyName(): void
     {
         $this->client->setApiEndpoint('https://api.vatly.test');
@@ -69,26 +81,6 @@ class VatlyApiClientTest extends BaseTestCase
 
         $this->expectException(ApiException::class);
         $page->next();
-    }
-
-    /** @test */
-    public function fullUrlCallsOnlyReachTheConfiguredEndpoint(): void
-    {
-        $this->httpClient->setSendReturnObjectFromArray(['ok' => true]);
-
-        $this->client->performHttpCallToFullUrl('GET', 'https://api.vatly.com/v1/orders');
-        $this->assertWasSentOnly('GET', 'https://api.vatly.com/v1/orders', [], null);
-
-        foreach (['https://api.vatly.com.attacker.example/v1/orders', 'https://api.vatly.com@attacker.example/v1/orders', 'http://api.vatly.com/v1/orders'] as $url) {
-            try {
-                $this->client->performHttpCallToFullUrl('GET', $url);
-                $this->fail("Expected '{$url}' to be refused.");
-            } catch (ApiException $exception) {
-                $this->assertStringContainsString('not on the configured API endpoint', $exception->getMessage());
-            }
-        }
-
-        $this->assertSame(1, $this->httpClient->countRecordedSends());
     }
 
     /** @test */
