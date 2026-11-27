@@ -2,6 +2,7 @@
 
 namespace Vatly\API\Resources;
 
+use Vatly\API\Types\Discount;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderLineRelatedResources;
 use Vatly\API\Types\TaxSummaryCollection;
@@ -56,4 +57,13 @@ class OrderLine extends BaseResource
     public Money $subtotal;
 
     public TaxSummaryCollection $taxes;
+
+    /**
+     * This line's share of each discount, in the order they apply. Empty when
+     * the line has no discount. `subtotal`, `taxes` and `total` are already
+     * net of these discounts; `basePrice` is before them.
+     *
+     * @var Discount[]
+     */
+    public array $discounts = [];
 }

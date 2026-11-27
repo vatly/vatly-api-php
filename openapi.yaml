@@ -26,14 +26,13 @@ info:
 
     #### Payment methods in test mode
 
-    A few payment methods work in live mode but cannot be completed in test mode,
+    Some payment methods work in live mode but cannot be completed in test mode,
     because the payment provider cannot settle them there. A test-mode checkout
     still lists them, greyed out and labelled as unavailable, so you can see they
     exist without being able to select one:
 
     | Method | Test mode | Reason |
     |--------|-----------|--------|
-    | `banktransfer` | Not selectable | The provider cannot settle bank transfers in test mode |
     | `paybybank` | Not selectable | The provider cannot settle Pay by Bank in test mode |
 
     Every other method behaves identically in both modes. Test a checkout with any
@@ -1906,6 +1905,7 @@ paths:
                     lines:
                       - id: order_item_Mn6xBtPvKw2RjTgYcZaE
                         resource: orderline
+                        discounts: []
                         description: Pro Monthly Subscription
                         quantity: 1
                         basePrice:
@@ -1927,6 +1927,7 @@ paths:
                               currency: EUR
                         productType: subscription
                         productId: subscription_Hn5xWqVfKm8RjTgYbUcP
+                    discounts: []
                     customerDetails:
                       fullName: John Doe
                       companyName: Acme Corp
@@ -2015,6 +2016,7 @@ paths:
                 lines:
                   - id: order_item_Jk4pQrSvWm8NjLhYbUcP
                     resource: orderline
+                    discounts: []
                     description: Pro Monthly Subscription — initial checkout
                     quantity: 1
                     basePrice:
@@ -2038,6 +2040,7 @@ paths:
                     productId: subscription_plan_Hn5xWqVfKm8RjTgYbUcP
                     relatedResources:
                       subscriptionId: subscription_Hn5xWqVfKm8RjTgYbUcP
+                discounts: []
                 customerDetails:
                   fullName: John Doe
                   companyName: Acme Corp
@@ -3236,6 +3239,7 @@ paths:
                   lines:
                     - id: order_item_Mn6xBtPvKw2RjTgYcZaE
                       resource: orderline
+                      discounts: []
                       description: Pro Monthly Subscription
                       quantity: 1
                       basePrice:
@@ -3257,6 +3261,7 @@ paths:
                             currency: EUR
                       productType: subscription
                       productId: subscription_Hn5xWqVfKm8RjTgYbUcP
+                  discounts: []
                   customerDetails:
                     fullName: John Doe
                     companyName: Acme Corp
@@ -4512,6 +4517,7 @@ paths:
                 lines:
                   - id: order_item_Jk4pQrSvWm8NjLhYbUcP
                     resource: orderline
+                    discounts: []
                     description: Pro Monthly Subscription
                     quantity: 1
                     basePrice:
@@ -4533,6 +4539,7 @@ paths:
                           currency: EUR
                     productType: subscription
                     productId: subscription_Hn5xWqVfKm8RjTgYbUcP
+                discounts: []
                 customerDetails:
                   fullName: John Doe
                   companyName: Acme Corp
@@ -6155,6 +6162,32 @@ components:
               quantity: 1
             - id: subscription_plan_Rk5pQrSvWm8NjLhYbUcP
               trialDays: 14
+        discounts:
+          type:
+            - array
+            - 'null'
+          description: |
+            Discounts on the whole checkout, spread over the discountable lines in
+            proportion to each line's subtotal. At most one entry for now; a second returns a `422`.
+            Entries will apply in array order, each on what the earlier ones left.
+
+            The discount reduces the first payment of each product only; renewals
+            are charged the full price. For a subscription on trial, that is its
+            first payment after the trial, which stays discounted if its plan or
+            quantity changes during the trial. A percentage applies to every
+            product's first payment. A fixed amount is split over the same first
+            payments in proportion to their prices, as a percentage of the same
+            size would be, keeping at least the smallest unit payable today. A
+            checkout with tax-inclusive prices and a subscription on trial cannot
+            take a discount yet and returns a `422`.
+
+            The resulting order and its lines list the discount under `discounts`.
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/CheckoutDiscount'
+          example:
+            - description: Black Friday
+              percentage: 20
     Customer:
       type: object
       description: |
@@ -6738,6 +6771,7 @@ components:
         - taxSummary
         - lines
         - customerDetails
+        - discounts
         - links
       additionalProperties: false
       properties:
@@ -6839,6 +6873,15 @@ components:
         customerDetails:
           $ref: '#/components/schemas/BillingDetails'
           description: Customer billing details (buyer)
+        discounts:
+          type: array
+          description: |
+            Every discount on the order, each listed once with the amount it takes
+            off all lines added up, in the order it first appears on the lines.
+            Empty when the order has no discount. Match an entry to its share on
+            each line by `id`.
+          items:
+            $ref: '#/components/schemas/Discount'
         links:
           type: object
           description: HATEOAS links to related resources
@@ -6883,6 +6926,7 @@ components:
         - total
         - subtotal
         - taxes
+        - discounts
       additionalProperties: false
       properties:
         id:
@@ -6905,18 +6949,26 @@ components:
           example: 1
         basePrice:
           $ref: '#/components/schemas/Money'
-          description: Price per unit before taxes
+          description: 'Price per unit before discounts, on the product''s tax basis: excluding taxes for tax-exclusive products, including them for tax-inclusive products'
         total:
           $ref: '#/components/schemas/Money'
-          description: Total price including taxes (basePrice * quantity + taxes)
+          description: Total price including taxes, after discounts (subtotal + taxes)
         subtotal:
           $ref: '#/components/schemas/Money'
-          description: Subtotal before taxes (basePrice * quantity)
+          description: Subtotal excluding taxes, after discounts
         taxes:
           type: array
           description: Tax breakdown by rate for this line
           items:
             $ref: '#/components/schemas/TaxSummaryItem'
+        discounts:
+          type: array
+          description: |
+            This line's share of each discount, in the order they apply. Empty when
+            the line has no discount. `subtotal`, `taxes` and `total` are already
+            net of these discounts.
+          items:
+            $ref: '#/components/schemas/Discount'
         productType:
           type:
             - string
@@ -8157,6 +8209,41 @@ components:
             every 5 minutes) and the field updates from `null` to the resolved
             value once the sync completes.
           example: '4242'
+    CheckoutDiscount:
+      type: object
+      description: |
+        A discount: a `percentage` or a fixed `amount`, not both.
+      additionalProperties: false
+      properties:
+        description:
+          type:
+            - string
+            - 'null'
+          maxLength: 255
+          description: Label shown on the checkout and the invoice.
+          example: Black Friday
+        percentage:
+          oneOf:
+            - type: number
+            - type: string
+          description: |
+            Percentage to take off, above 0 and below 100, with at most three
+            decimals.
+          example: 20
+        amount:
+          allOf:
+            - $ref: '#/components/schemas/EurMoney'
+          description: |
+            Fixed amount to take off, in EUR, on the same basis as the products'
+            prices: excluding VAT on tax-exclusive products, including VAT on
+            tax-inclusive ones. €10.00 off a €121.00 price including VAT charges
+            €111.00. It must be below the subtotal of the products it discounts,
+            on that same basis, counting a subscription on trial at its first
+            payment. When the customer pays in another currency, it is converted
+            at checkout.
+
+            The order always reports a discount's `amount` excluding VAT, like
+            `subtotal`: the €10.00 above reads 8.26 at 21% VAT.
     UpdateCustomerRequest:
       type: object
       description: |
@@ -8368,6 +8455,58 @@ components:
         amount:
           $ref: '#/components/schemas/Money'
           description: Tax amount for this rate
+    Discount:
+      type: object
+      description: |
+        A discount applied to an order. Amounts exclude VAT; the line's `taxes`
+        already reflect the discount.
+      required:
+        - id
+        - description
+        - discountType
+        - percentage
+        - amount
+      additionalProperties: false
+      properties:
+        id:
+          type:
+            - string
+            - 'null'
+          description: |
+            Identifies this discount on this order. Every line's share of a
+            discount and the order's entry for it carry the same id. It names one
+            application, not a reusable coupon: every order, and every subscription
+            renewal, gets new ids. `null` only on discounts applied before ids were
+            introduced.
+          example: discount_KKYYk6SohKNdSqKyHAzZJ2
+        description:
+          type:
+            - string
+            - 'null'
+          description: The label sent with the discount, if any.
+          example: Black Friday
+        discountType:
+          type:
+            - string
+            - 'null'
+          description: |
+            How the discount is defined: `percentage` or `fixed_amount`. More
+            values may be added; treat an unknown value as a discount of an
+            unknown kind. `null` only on discounts applied before it was recorded.
+          example: percentage
+        percentage:
+          type:
+            - string
+            - 'null'
+          description: |
+            The percentage taken off, as a decimal string, for a `percentage`
+            discount. `null` for a `fixed_amount` discount.
+          example: '20.00'
+        amount:
+          $ref: '#/components/schemas/Money'
+          description: |
+            The amount taken off, excluding VAT, also when the products' prices
+            include VAT: €10.00 off a €121.00 price at 21% reads 8.26.
     RefundItem:
       type: object
       description: An item to refund from an order

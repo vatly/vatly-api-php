@@ -52,6 +52,7 @@ Create a new hosted checkout for your customer.
 | `billingAddress` | `array` | Editable prefill for the billing address fields on the hosted checkout (`fullName`, `companyName`, `taxId`, `streetAndNumber`, `streetAdditional`, `city`, `region`, `postalCode`, `country`, `email`). A supplied `country` takes precedence over the shopper's IP address for determining their country. A supplied `taxId` is only a prefill, and is not registered until the buyer submits the checkout. |
 | `metadata` | `array \| null` | Your custom metadata: string values only, at most 50 keys, keys up to 40 characters and values up to 500 characters (anything else returns `422`). `null` is the same as leaving it out. |
 | `locale` | `string` | Language to present the hosted checkout in — set this when you already know the customer's language. Accepts a bare language code (`de`), a BCP 47 tag (`de-AT`), or a POSIX/ISO 15897 locale (`de_DE`); all three fold to the language. Supported: `en`, `de`, `fr`, `nl`, `es`, `it`, `pt`, `pl`, `cs`, `ca`, `da`, `el`, `fi`, `hu`, `is`, `lt`, `lv`, `nb`, `sk`, `sl`, `sv`, `tr` (anything else returns `422`). Norwegian is served as `nb`; `no` and `nn` fold to it. Omit (or `null`) to detect the language from the shopper's `Accept-Language` header, falling back to English. The response echoes back the folded language. |
+| `discounts` | `array \| null` | A discount on the whole checkout: at most one entry for now (a second returns `422`). Each entry has a `percentage` or a fixed `amount` (a `Money` array in `EUR`), not both, plus an optional `description`. See [Discounts](#discounts). |
 
 
 
@@ -143,6 +144,28 @@ $checkout = $vatly->checkouts->create([
 
 
 ---
+
+### Discounts
+
+Send `discounts` with one entry: a `percentage` (above 0 and below 100, at most three decimals) or a fixed `amount` in `EUR`, not both. An optional `description` (up to 255 characters) labels it on the checkout and the invoice. It reduces the first payment of each product only; renewals are charged the full price.
+
+A fixed `amount` follows the products' tax basis: it excludes VAT on tax-exclusive products and includes VAT on tax-inclusive ones. A checkout with tax-inclusive prices and a subscription on trial cannot take a discount yet and returns `422`. Validation errors are keyed by position, such as `discounts.0.percentage`.
+
+```php
+$checkout = $vatly->checkouts->create([
+    'products' => [
+        ['id' => 'subscription_plan_Rk5pQrSvWm8NjLhYbUcP'],
+    ],
+    'discounts' => [
+        ['description' => 'Black Friday', 'percentage' => 20],
+        // or: ['description' => 'Welcome', 'amount' => ['value' => '10.00', 'currency' => 'EUR']],
+    ],
+    'redirectUrlSuccess' => 'https://example.com/success',
+    'redirectUrlCanceled' => 'https://example.com/canceled',
+]);
+```
+
+The resulting order and its lines list the discount under `discounts`; see [Discounts on the order](Orders.md#discount-properties).
 
 ## Retrieve a checkout
 

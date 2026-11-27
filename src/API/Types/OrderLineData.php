@@ -47,6 +47,15 @@ class OrderLineData
          * the subscription is available.
          */
         public ?OrderLineRelatedResources $relatedResources = null,
+        /**
+         * This line's share of each discount, in the order they apply. Empty
+         * when the line has no discount or the payload leaves the key out.
+         * `subtotal`, `taxSummary` and `total` are already net of these
+         * discounts; `basePrice` is before them.
+         *
+         * @var Discount[]
+         */
+        public array $discounts = [],
     ) {
     }
 
@@ -63,6 +72,7 @@ class OrderLineData
             productType: $line->productType,
             productId: $line->productId,
             relatedResources: $line->relatedResources,
+            discounts: $line->discounts,
         );
     }
 }

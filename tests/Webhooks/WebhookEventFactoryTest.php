@@ -7,6 +7,8 @@ namespace Vatly\Tests\Webhooks;
 use DateTimeInterface;
 use Vatly\API\Resources\OneOffProduct as ApiOneOffProduct;
 use Vatly\API\Resources\SubscriptionPlan as ApiSubscriptionPlan;
+use Vatly\API\Types\Discount;
+use Vatly\API\Types\DiscountType;
 use Vatly\API\Webhooks\Events\CheckoutCanceled;
 use Vatly\API\Webhooks\Events\CheckoutExpired;
 use Vatly\API\Webhooks\Events\CheckoutFailed;
@@ -431,6 +433,106 @@ class WebhookEventFactoryTest extends BaseTestCase
         $this->assertSame(2, $event->lines[1]->quantity);
         $this->assertNull($event->lines[1]->productType);
         $this->assertNull($event->lines[1]->productId);
+    }
+
+    /**
+     * @return array<string, array{string, class-string}>
+     */
+    public static function discountedOrderEvents(): array
+    {
+        return [
+            'order.paid' => ['order.paid', OrderPaid::class],
+            'order.payment_failed' => ['order.payment_failed', OrderPaymentFailed::class],
+        ];
+    }
+
+    /**
+     * @dataProvider discountedOrderEvents
+     *
+     * @param class-string $eventClass
+     */
+    public function test_order_events_carry_order_and_line_discounts(string $eventName, string $eventClass): void
+    {
+        $discount = fn (string $value) => [
+            'id' => 'discount_KKYYk6SohKNdSqKyHAzZJ2',
+            'description' => 'Welcome',
+            'discountType' => 'fixed_amount',
+            'percentage' => null,
+            'amount' => ['currency' => 'EUR', 'value' => $value],
+        ];
+
+        $webhook = $this->makeWebhook(
+            eventName: $eventName,
+            entityType: 'order',
+            entityId: 'ord_123',
+            object: $this->fatOrder([
+                'id' => 'ord_123',
+                'customerId' => 'cus_456',
+                'status' => 'paid',
+                'total' => ['currency' => 'EUR', 'value' => '111.00'],
+                'subtotal' => ['currency' => 'EUR', 'value' => '91.74'],
+                'taxRates' => [
+                    ['name' => 'VAT', 'percentage' => 21.0, 'taxablePercentage' => 100.0, 'amount' => '19.26'],
+                ],
+                'discounts' => [$discount('8.26')],
+                'lines' => [
+                    [
+                        'id' => 'order_item_discounted',
+                        'description' => 'Pro plan',
+                        'quantity' => 1,
+                        'basePrice' => '121.00',
+                        'total' => '111.00',
+                        'subtotal' => '91.74',
+                        'discounts' => [$discount('8.26')],
+                    ],
+                    [
+                        'id' => 'order_item_from_older_payload',
+                        'description' => 'Add-on',
+                        'quantity' => 1,
+                        'basePrice' => '0.00',
+                        'total' => '0.00',
+                        'subtotal' => '0.00',
+                    ],
+                ],
+            ]),
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf($eventClass, $event);
+        $this->assertCount(1, $event->discounts);
+        $this->assertInstanceOf(Discount::class, $event->discounts[0]);
+        $this->assertSame('discount_KKYYk6SohKNdSqKyHAzZJ2', $event->discounts[0]->id);
+        $this->assertSame(DiscountType::FIXED_AMOUNT, $event->discounts[0]->discountType);
+        $this->assertNull($event->discounts[0]->percentage);
+        $this->assertSame(826, $event->discounts[0]->amount->toCents());
+
+        $this->assertCount(1, $event->lines[0]->discounts);
+        $this->assertSame('discount_KKYYk6SohKNdSqKyHAzZJ2', $event->lines[0]->discounts[0]->id);
+        $this->assertSame('8.26', $event->lines[0]->discounts[0]->amount->value);
+        $this->assertSame([], $event->lines[1]->discounts);
+    }
+
+    public function test_order_paid_event_has_no_discounts_when_the_payload_has_no_discounts_key(): void
+    {
+        $webhook = $this->makeWebhook(
+            eventName: 'order.paid',
+            entityType: 'order',
+            entityId: 'ord_123',
+            object: $this->fatOrder([
+                'id' => 'ord_123',
+                'customerId' => 'cus_456',
+                'status' => 'paid',
+                'total' => ['currency' => 'EUR', 'value' => '12.10'],
+                'subtotal' => ['currency' => 'EUR', 'value' => '10.00'],
+                'taxRates' => [],
+            ]),
+        );
+
+        $event = $this->factory->createFromWebhook($webhook);
+
+        $this->assertInstanceOf(OrderPaid::class, $event);
+        $this->assertSame([], $event->discounts);
     }
 
     public function test_it_creates_payment_failed_event_from_fat_payload(): void
@@ -1283,10 +1385,14 @@ class WebhookEventFactoryTest extends BaseTestCase
                     'total' => ['currency' => $currency, 'value' => $line['total']],
                     'subtotal' => ['currency' => $currency, 'value' => $line['subtotal']],
                     'taxes' => [],
-                ],
+                ] + (array_key_exists('discounts', $line) ? ['discounts' => $line['discounts']] : []),
                 $data['lines'] ?? [],
             ),
         ];
+
+        if (array_key_exists('discounts', $data)) {
+            $object['discounts'] = $data['discounts'];
+        }
 
         if (array_key_exists('links', $data)) {
             $object['links'] = $data['links'];

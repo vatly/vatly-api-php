@@ -5,6 +5,7 @@ namespace Vatly\API\Resources;
 use Vatly\API\Exceptions\ApiException;
 use Vatly\API\Resources\Links\OrderLinks;
 use Vatly\API\Types\Address;
+use Vatly\API\Types\Discount;
 use Vatly\API\Types\Link;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
@@ -84,6 +85,16 @@ class Order extends BaseResource
      * @var OrderLine[]|array
      */
     public array $lines;
+
+    /**
+     * Every discount on the order, each listed once with the amount it takes
+     * off all lines added up, in the order it first appears on the lines.
+     * Empty when the order has no discount. Match an entry to its share on
+     * each line by `id`.
+     *
+     * @var Discount[]
+     */
+    public array $discounts = [];
 
 
     /**

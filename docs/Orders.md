@@ -21,6 +21,7 @@ Below you'll find all properties for the Vatly Order resource.
 | `refundableSubtotal` | `Money` | Remaining amount that can still be refunded, before taxes. |
 | `taxSummary` | `TaxSummaryCollection` | Tax breakdown by rate. |
 | `lines` | `array` | The order lines. Use `$order->lines()` for a collection of `OrderLine` objects. |
+| `discounts` | `Discount[]` | Every discount on the order, each listed once with the amount it takes off all lines added up. Empty when the order has no discount. Match an entry to its share on each line by `id`. See [Discount properties](#discount-properties). |
 | `customerDetails` | `Address` | Customer billing details. |
 | `paymentMethod` | `string \| null` | The payment method used, for example `ideal` or `creditcard`. |
 | `invoiceNumber` | `string \| null` | The invoice number, assigned after payment. |
@@ -36,14 +37,15 @@ Below you'll find all properties for the Vatly Order resource.
 | `id` | `string` | Unique identifier for the order line. |
 | `description` | `string` | Line description. |
 | `quantity` | `int` | Quantity. On a subscription line this is the quantity of one subscription, not a count of subscriptions. |
-| `basePrice` | `Money` | Price per unit before taxes. |
-| `total` | `Money` | Line total including taxes. |
-| `subtotal` | `Money` | Line subtotal before taxes. |
+| `basePrice` | `Money` | Price per unit before discounts, on the product's tax basis: excluding taxes for tax-exclusive products, including them for tax-inclusive products. |
+| `total` | `Money` | Line total including taxes, after discounts. |
+| `subtotal` | `Money` | Line subtotal before taxes, after discounts. |
 | `taxes` | `TaxSummaryCollection` | Tax breakdown for this line. |
 | `productType` | `string \| null` | The linked resource type: `subscription_plan` on an initial subscription signup line, `subscription` on a renewal or immediate-update line, `one_off_product` for a one-off product. `null` when the line has no product link. |
 | `productId` | `string \| null` | The linked resource's ID: a plan ID for `subscription_plan`, a subscription ID for `subscription`. |
 | `relatedResources` | `OrderLineRelatedResources \| null` | Additional relationships for this line. `null` on historical lines and on lines unrelated to a subscription. |
 | `relatedResources->subscriptionId` | `string \| null` | The subscription this line belongs to, on signup, renewal and immediate-update lines alike. `null` on a signup line while the subscription is not available yet; retrieve the order again later to read it. |
+| `discounts` | `Discount[]` | This line's share of each discount, in the order they apply. Empty when the line has no discount. `subtotal`, `taxes` and `total` are already net of it. |
 
 To find the subscription a paid checkout created, follow the checkout's `orderId` and read the lines' `relatedResources`:
 
@@ -58,6 +60,18 @@ foreach ($order->lines() as $line) {
 A subscription ID alone does not mean the subscription is active. Check the subscription's status before granting access.
 
 ---
+
+### Discount properties
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `id` | `string \| null` | Identifies this discount on this order; a line's share and the order's entry carry the same id. Every order and renewal gets new ids. `null` only on discounts applied before ids existed. |
+| `description` | `string \| null` | The label sent with the discount, if any. |
+| `discountType` | `string \| null` | `percentage` or `fixed_amount` (`DiscountType::PERCENTAGE`, `DiscountType::FIXED_AMOUNT`). More values may be added; treat an unknown one as a discount of an unknown kind. |
+| `percentage` | `string \| null` | The percentage taken off, as a decimal string, such as `"20.00"`. `null` for a fixed amount. |
+| `amount` | `Money` | The amount taken off, always excluding VAT: €10.00 off a €121.00 price at 21% reads `8.26`. |
+
+The `order.paid` and `order.payment_failed` webhook events carry the same `discounts` on the event and on each `OrderLineData`.
 
 ## Retrieve an order
 
