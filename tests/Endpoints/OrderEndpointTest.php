@@ -7,6 +7,8 @@ use Vatly\API\Resources\Order;
 use Vatly\API\Resources\OrderCollection;
 use Vatly\API\Resources\OrderLine;
 use Vatly\API\Types\CancellationReason;
+use Vatly\API\Types\Discount;
+use Vatly\API\Types\DiscountType;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderStatus;
 use Vatly\API\VatlyApiClient;
@@ -229,6 +231,85 @@ class OrderEndpointTest extends BaseEndpointTest
         $this->assertNull($orderLine->productType);
         $this->assertNull($orderLine->productId);
         $this->assertNull($orderLine->relatedResources);
+    }
+
+    /** @test
+     * @throws ApiException
+     */
+    public function order_and_line_discounts_hydrate_as_discounts_with_money(): void
+    {
+        $orderId = 'order_dummy_id';
+        $percentageDiscount = [
+            'id' => 'discount_KKYYk6SohKNdSqKyHAzZJ2',
+            'description' => 'Black Friday',
+            'discountType' => 'percentage',
+            'percentage' => '20.00',
+            'amount' => ['value' => '20.00', 'currency' => 'USD'],
+        ];
+        $legacyDiscount = [
+            'id' => null,
+            'description' => null,
+            'discountType' => null,
+            'percentage' => null,
+            'amount' => ['value' => '1.50', 'currency' => 'USD'],
+        ];
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => $orderId,
+            'resource' => 'order',
+            'status' => OrderStatus::STATUS_PAID,
+            'total' => ['value' => '78.65', 'currency' => 'USD'],
+            'subtotal' => ['value' => '65.00', 'currency' => 'USD'],
+            'taxSummary' => [],
+            'discounts' => [$percentageDiscount, $legacyDiscount],
+            'lines' => [
+                [
+                    'id' => 'order_item_discounted',
+                    'resource' => 'orderline',
+                    'description' => 'Pro plan',
+                    'quantity' => 1,
+                    'basePrice' => ['value' => '100.00', 'currency' => 'USD'],
+                    'total' => ['value' => '78.65', 'currency' => 'USD'],
+                    'subtotal' => ['value' => '65.00', 'currency' => 'USD'],
+                    'taxes' => [],
+                    'discounts' => [$percentageDiscount, $legacyDiscount],
+                ],
+                [
+                    'id' => 'order_item_without_discounts_key',
+                    'resource' => 'orderline',
+                    'description' => 'Add-on',
+                    'quantity' => 1,
+                    'basePrice' => ['value' => '0.00', 'currency' => 'USD'],
+                    'total' => ['value' => '0.00', 'currency' => 'USD'],
+                    'subtotal' => ['value' => '0.00', 'currency' => 'USD'],
+                    'taxes' => [],
+                ],
+            ],
+        ]);
+
+        $order = $this->client->orders->get($orderId);
+
+        $this->assertCount(2, $order->discounts);
+        $this->assertInstanceOf(Discount::class, $order->discounts[0]);
+        $this->assertSame('discount_KKYYk6SohKNdSqKyHAzZJ2', $order->discounts[0]->id);
+        $this->assertSame('Black Friday', $order->discounts[0]->description);
+        $this->assertSame(DiscountType::PERCENTAGE, $order->discounts[0]->discountType);
+        $this->assertSame('20.00', $order->discounts[0]->percentage);
+        $this->assertInstanceOf(Money::class, $order->discounts[0]->amount);
+        $this->assertSame('USD', $order->discounts[0]->amount->currency);
+        $this->assertSame('20.00', $order->discounts[0]->amount->value);
+
+        $this->assertNull($order->discounts[1]->id);
+        $this->assertNull($order->discounts[1]->description);
+        $this->assertNull($order->discounts[1]->discountType);
+        $this->assertNull($order->discounts[1]->percentage);
+        $this->assertSame('1.50', $order->discounts[1]->amount->value);
+
+        $lines = $order->lines();
+        $this->assertCount(2, $lines[0]->discounts);
+        $this->assertInstanceOf(Discount::class, $lines[0]->discounts[0]);
+        $this->assertSame('discount_KKYYk6SohKNdSqKyHAzZJ2', $lines[0]->discounts[0]->id);
+        $this->assertInstanceOf(Money::class, $lines[0]->discounts[1]->amount);
+        $this->assertSame([], $lines[1]->discounts);
     }
 
     /** @test */

@@ -9,6 +9,7 @@ use ReflectionProperty;
 use Vatly\API\Resources\Links\BaseLinksResource;
 use Vatly\API\Resources\Links\LinksResourceFactory;
 use Vatly\API\Types\Address;
+use Vatly\API\Types\Discount;
 use Vatly\API\Types\Mandate;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderLineRelatedResources;
@@ -89,6 +90,11 @@ class ResourceFactory
                     $resource->{$property} = null === $value
                         ? null
                         : ScheduledSubscriptionUpdate::createResourceFromApiResult($value);
+
+                    break;
+
+                case 'discounts':
+                    $resource->{$property} = Discount::createListFromApiResult($value);
 
                     break;
 

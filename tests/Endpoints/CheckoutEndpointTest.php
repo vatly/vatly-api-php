@@ -109,6 +109,56 @@ class CheckoutEndpointTest extends BaseEndpointTest
         );
     }
 
+    /**
+     * Replays the PHP example from the "Discounts" section of
+     * docs.vatly.com/api-reference/checkouts: `discounts` is a plain array and
+     * reaches the API unchanged, number types included.
+     *
+     * @test
+     */
+    public function create_checkout_sends_discounts_unchanged(): void
+    {
+        $this->httpClient->setSendReturnObjectFromArray([
+            'id' => 'checkout_dummy_id',
+            'resource' => 'checkout',
+            'status' => CheckoutStatus::STATUS_CREATED,
+        ]);
+
+        $this->client->checkouts->create([
+            'products' => [
+                ['id' => 'subscription_plan_Rk5pQrSvWm8NjLhYbUcP'],
+            ],
+            'discounts' => [
+                ['description' => 'Black Friday', 'percentage' => 20],
+            ],
+            'redirectUrlSuccess' => 'https://example.com/success',
+            'redirectUrlCanceled' => 'https://example.com/canceled',
+        ]);
+        $this->client->checkouts->create([
+            'products' => [
+                ['id' => 'subscription_plan_Rk5pQrSvWm8NjLhYbUcP'],
+            ],
+            'discounts' => [
+                ['description' => 'Welcome', 'amount' => ['value' => '10.00', 'currency' => 'EUR']],
+            ],
+        ]);
+
+        $sends = $this->httpClient->recordedSends();
+        $this->assertCount(2, $sends);
+        $this->assertSame(
+            '{"products":[{"id":"subscription_plan_Rk5pQrSvWm8NjLhYbUcP"}],'
+            .'"discounts":[{"description":"Black Friday","percentage":20}],'
+            .'"redirectUrlSuccess":"https:\/\/example.com\/success",'
+            .'"redirectUrlCanceled":"https:\/\/example.com\/canceled"}',
+            $sends[0]['httpBody'],
+        );
+        $this->assertSame(
+            '{"products":[{"id":"subscription_plan_Rk5pQrSvWm8NjLhYbUcP"}],'
+            .'"discounts":[{"description":"Welcome","amount":{"value":"10.00","currency":"EUR"}}]}',
+            $sends[1]['httpBody'],
+        );
+    }
+
     /** @test */
     public function can_create_checkout_with_idempotency_key()
     {

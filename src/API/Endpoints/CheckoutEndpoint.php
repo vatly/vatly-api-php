@@ -31,6 +31,10 @@ class CheckoutEndpoint extends BaseEndpoint
      * subscription plan; omit it or pass `null` for no trial. A value below 1
      * throws before the request is sent, since Vatly answers it with a `422`.
      *
+     * `discounts` takes at most one entry, with a `percentage` or a fixed EUR
+     * `amount` (on the products' tax basis) and an optional `description`. The
+     * resulting order and its lines list it as {@see \Vatly\API\Types\Discount}.
+     *
      * @throws ApiException
      */
     public function create(array $payload, array $options = []): Checkout

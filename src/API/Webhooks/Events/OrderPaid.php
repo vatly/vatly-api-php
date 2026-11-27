@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vatly\API\Webhooks\Events;
 
 use Vatly\API\Resources\Order as ApiOrder;
+use Vatly\API\Types\Discount;
 use Vatly\API\Types\Money;
 use Vatly\API\Types\OrderLineData;
 use Vatly\API\Types\TaxSummaryCollection;
@@ -58,6 +59,15 @@ class OrderPaid
          * store it if useful but do not treat it as permanent.
          */
         public ?string $customerInvoiceUrl = null,
+        /**
+         * Every discount on the order, each listed once with the amount it
+         * takes off all lines added up. Empty when the order has no discount
+         * or the payload leaves the key out. Match an entry to its share on
+         * each line by `id`.
+         *
+         * @var Discount[]
+         */
+        public array $discounts = [],
     ) {
         //
     }
@@ -77,6 +87,7 @@ class OrderPaid
             metadata: self::normalizeMetadata($order->metadata),
             lines: self::mapLines($order),
             customerInvoiceUrl: $order->links->customerInvoice->href ?? null,
+            discounts: $order->discounts,
         );
     }
 

@@ -4,6 +4,11 @@ All notable changes to `vatly-api-php` will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- **Discounts.** `Order->discounts` and `OrderLine->discounts` hydrate as `Discount` objects (`id`, `description`, `discountType`, `percentage`, and `amount` as `Money`), with `DiscountType` constants for the known types. The `OrderPaid` and `OrderPaymentFailed` webhook events and `OrderLineData` carry them too. They are empty arrays when an order has no discount or a payload leaves the key out. Checkout `discounts` were already passed through; the docs now describe them.
+- `openapi.yaml` matches docs.vatly.com/openapi.yaml, which adds checkout and order discounts.
+
 ## v0.1.0-alpha.40
 
 ### Upgrading
